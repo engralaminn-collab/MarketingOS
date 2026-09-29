@@ -287,6 +287,7 @@ jobs:
 
       # ── Rolling restart ──────────────────────────────────────
       - name: Rolling restart
+        id: restart
         env:
           FULL_IMAGE_REF: ${{ steps.image.outputs.ref }}
         run: |
@@ -409,8 +410,12 @@ jobs:
             "docker image prune -f --filter 'label=com.docker.compose.project=aismh' 2>/dev/null || true"
 
       # ── Rollback on failure ──────────────────────────────────
+      # Only roll back if we actually got far enough to replace the running
+      # container. Failing at the secrets check or the persistence preflight
+      # means production was never touched, so there is nothing to undo and a
+      # "rollback failed" line would be misleading noise.
       - name: Rollback to previous image
-        if: failure()
+        if: failure() && steps.restart.outcome == 'failure'
         env:
           PREV_IMAGE: ${{ steps.save-current.outputs.previous_image }}
         run: |
