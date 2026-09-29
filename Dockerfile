@@ -3,7 +3,7 @@
 # MarketingOS — production image
 #
 # RUNTIME POLICY (see also .nvmrc, .node-version, package.json engines.node):
-#   Application / production runtime .... Node 22  (base image below)
+#   Application / production runtime .... Node 22.23.2 (base image below)
 #   Package manager & script runner ..... Bun 1.x  (preserved — the repo is
 #                                         designed around bun install/bun run)
 #   GitHub Actions runner runtime ....... Node 24  (internal to the actions;
@@ -15,7 +15,7 @@
 # .github/workflows/deploy.yml (pull & rolling restart on the VPS).
 # ═══════════════════════════════════════════════════════════════════════════
 
-ARG NODE_VERSION=22
+ARG NODE_VERSION=22.23.2
 ARG BUN_VERSION=1.4.2
 
 # Bun is taken from its official image rather than piped from an install
