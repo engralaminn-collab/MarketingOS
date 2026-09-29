@@ -113,7 +113,8 @@ jobs:
           MISSING=()
           [ -z "${{ secrets.DEPLOY_HOST }}" ] && MISSING+=("DEPLOY_HOST")
           [ -z "${{ secrets.DEPLOY_SSH_KEY }}" ] && MISSING+=("DEPLOY_SSH_KEY")
-          [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] && MISSING+=("DOCKERERHUB_USERNAME")
+          # DOCKERHUB_USERNAME is optional — images are always published to
+          # GHCR, which authenticates with the built-in GITHUB_TOKEN.
           if [ ${#MISSING[@]} -gt 0 ]; then
             echo "❌ Missing required GitHub secrets: ${MISSING[*]}"
             echo "Add them at: Settings → Secrets and variables → Actions"
@@ -178,10 +179,28 @@ jobs:
           echo "👉 Previous image for rollback: ${CURRENT:-none}"
 
       # ── Pull latest image on VPS ─────────────────────────────
+      # Must mirror docker.yml: GHCR is always published, Docker Hub only when
+      # DOCKERHUB_USERNAME is configured.
+      - name: Resolve image reference
+        id: image
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.resolve.outputs.short_sha }}"
+          if [ -n "${DOCKERHUB_USERNAME}" ]; then
+            REF="${DOCKERHUB_USERNAME}/${{ env.IMAGE_NAME }}:${TAG}"
+          else
+            REF="ghcr.io/${{ github.repository }}:${TAG}"
+          fi
+          REF="$(printf '%s' "${REF}" | tr '[:upper:]' '[:lower:]')"
+          echo "ref=${REF}" >> "$GITHUB_OUTPUT"
+          echo "👉 Image to deploy: ${REF}"
+
       - name: Pull latest Docker image
         run: |
           set -euo pipefail
-          IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.resolve.outputs.short_sha }}"
+          IMAGE="${{ steps.image.outputs.ref }}"
           echo "👉 Pulling ${IMAGE} on VPS ..."
           ssh -i ~/.ssh/deploy_key \
             -p "${{ env.DEPLOY_PORT }}" \
@@ -269,9 +288,7 @@ jobs:
       # ── Rolling restart ──────────────────────────────────────
       - name: Rolling restart
         env:
-          IMAGE_TAG: ${{ steps.resolve.outputs.short_sha }}
-          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
-          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          FULL_IMAGE_REF: ${{ steps.image.outputs.ref }}
         run: |
           set -euo pipefail
           # NOTE: pass variables to remote shell via SSH environment (ssh -o SendEnv)
@@ -283,10 +300,10 @@ jobs:
             -o StrictHostKeyChecking=no \
             -o ConnectTimeout=10 \
             "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
-            "IMAGE_TAG='${IMAGE_TAG}' DOCKER_USER='${DOCKER_USER}' IMAGE_NAME='${IMAGE_NAME}' bash -s" << 'DEPLOY_SCRIPT'
+            "FULL_IMAGE_REF='${FULL_IMAGE_REF}' bash -s" << 'DEPLOY_SCRIPT'
             set -euo pipefail
 
-            FULL_IMAGE="${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
+            FULL_IMAGE="${FULL_IMAGE_REF}"
             echo ">>> Deploying ${FULL_IMAGE} ..."
 
             cd /opt/aismh
@@ -469,7 +486,7 @@ jobs:
             echo "| Field | Value |"
             echo "|-------|-------|"
             echo "| **Status** | \`${{ job.status }}\` |"
-            echo "| **Image** | \`${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.resolve.outputs.short_sha }}\` |"
+            echo "| **Image** | \`${{ steps.image.outputs.ref }}\` |"
             echo "| **Commit (short)** | \`${{ steps.resolve.outputs.short_sha }}\` |"
             echo "| **Commit (full)** | \`${{ steps.resolve.outputs.full_sha || github.sha }}\` |"
             echo "| **Previous image** | \`${{ steps.save-current.outputs.previous_image || 'N/A' }}\` |"
