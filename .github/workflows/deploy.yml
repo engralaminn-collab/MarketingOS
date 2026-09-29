@@ -37,7 +37,6 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
-timeout-minutes: 20
 
 env:
   IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME || 'alo-labs-aismh' }}
