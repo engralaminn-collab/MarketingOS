@@ -521,31 +521,49 @@ function ContentViewInner() {
   const [viewMode, setViewMode] = useState<"grid" | "calendar">("grid");
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const fetchContent = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  // Every state update below happens after an `await`, so this can be called
+  // straight from an effect without writing state synchronously during render.
+  // Results from an aborted request (unmount) are dropped.
+  const fetchContent = useCallback(async (signal?: AbortSignal) => {
     try {
       const token =
         typeof window !== "undefined" ? localStorage.getItem("mos_token") : null;
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await fetch("/api/content", { headers });
+      const res = await fetch("/api/content", { headers, signal });
       if (!res.ok) throw new Error(`Request failed (HTTP ${res.status})`);
       const json = await res.json();
+      if (signal?.aborted) return;
       const result = json?.data ?? json;
       const list = Array.isArray(result) ? result : result?.items ?? result?.content ?? [];
       setItems(list as ContentItem[]);
+      setError(null);
     } catch (err: unknown) {
+      if (signal?.aborted) return;
       const message = err instanceof Error ? err.message : "Failed to load content";
       setError(message);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   }, []);
 
+  // Retry / refresh-after-mutation. Runs from event handlers, so showing the
+  // skeleton immediately is safe here.
+  const reloadContent = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    await fetchContent();
+  }, [fetchContent]);
+
   useEffect(() => {
-    fetchContent();
+    const controller = new AbortController();
+    // Dispatched inside an async scope so the effect body itself performs no
+    // state update; every setState in the loader runs after the response awaits.
+    void (async () => {
+      await fetchContent(controller.signal);
+    })();
+    return () => controller.abort();
   }, [fetchContent]);
 
   const handleCreate = async (formData: Record<string, string>) => {
@@ -568,7 +586,7 @@ function ContentViewInner() {
       }),
     });
     if (!res.ok) throw new Error("Create failed");
-    await fetchContent();
+    await reloadContent();
   };
 
   const filteredItems = useMemo(() => {
@@ -595,7 +613,7 @@ function ContentViewInner() {
           <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <FileText className="h-10 w-10 mb-3 opacity-40" />
             <p className="text-sm">{error}</p>
-            <Button variant="outline" className="mt-4" onClick={fetchContent}>
+            <Button variant="outline" className="mt-4" onClick={reloadContent}>
               <Zap className="mr-2 h-4 w-4" /> Retry
             </Button>
           </CardContent>

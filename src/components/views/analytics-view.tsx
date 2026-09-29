@@ -341,31 +341,59 @@ function AnalyticsViewInner() {
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period>("30d");
 
-  const fetchAnalytics = useCallback(async () => {
+  // Every state update below happens after an `await`, so this can be called
+  // straight from an effect without writing state synchronously during render.
+  // Results from an aborted request (period change or unmount) are dropped.
+  const fetchAnalytics = useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        const token =
+          typeof window !== "undefined" ? localStorage.getItem("mos_token") : null;
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(`/api/analytics?period=${period}`, { headers, signal });
+        if (!res.ok) throw new Error(`Request failed (HTTP ${res.status})`);
+        const json = await res.json();
+        if (signal?.aborted) return;
+        const result = json?.data ?? json;
+        setData(result as AnalyticsData);
+        setError(null);
+      } catch (err: unknown) {
+        if (signal?.aborted) return;
+        const message =
+          err instanceof Error ? err.message : "Failed to load analytics";
+        setError(message);
+      } finally {
+        if (!signal?.aborted) setIsLoading(false);
+      }
+    },
+    [period],
+  );
+
+  // Retry from an event handler — safe to show the skeleton immediately.
+  const reloadAnalytics = useCallback(() => {
     setIsLoading(true);
     setError(null);
-    try {
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("mos_token") : null;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+    void fetchAnalytics();
+  }, [fetchAnalytics]);
 
-      const res = await fetch(`/api/analytics?period=${period}`, { headers });
-      if (!res.ok) throw new Error(`Request failed (HTTP ${res.status})`);
-      const json = await res.json();
-      const result = json?.data ?? json;
-      setData(result as AnalyticsData);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load analytics";
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [period]);
+  // Switching period re-runs the effect below; flipping the skeleton on here
+  // preserves the previous loading behaviour without an in-effect setState.
+  const handlePeriodChange = useCallback((next: Period) => {
+    setIsLoading(true);
+    setError(null);
+    setPeriod(next);
+  }, []);
 
   useEffect(() => {
-    fetchAnalytics();
+    const controller = new AbortController();
+    // Dispatched inside an async scope so the effect body itself performs no
+    // state update; every setState in the loader runs after the response awaits.
+    void (async () => {
+      await fetchAnalytics(controller.signal);
+    })();
+    return () => controller.abort();
   }, [fetchAnalytics]);
 
   if (isLoading) return <AnalyticsSkeleton />;
@@ -383,7 +411,7 @@ function AnalyticsViewInner() {
           <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <BarChart3 className="h-10 w-10 mb-3 opacity-40" />
             <p className="text-sm">{error}</p>
-            <Button variant="outline" className="mt-4" onClick={fetchAnalytics}>
+            <Button variant="outline" className="mt-4" onClick={reloadAnalytics}>
               <Zap className="mr-2 h-4 w-4" /> Retry
             </Button>
           </CardContent>
@@ -482,10 +510,10 @@ function AnalyticsViewInner() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <PeriodButton period="7d" active={period === "7d"} onClick={() => setPeriod("7d")} />
-          <PeriodButton period="30d" active={period === "30d"} onClick={() => setPeriod("30d")} />
-          <PeriodButton period="90d" active={period === "90d"} onClick={() => setPeriod("90d")} />
-          <PeriodButton period="1y" active={period === "1y"} onClick={() => setPeriod("1y")} />
+          <PeriodButton period="7d" active={period === "7d"} onClick={() => handlePeriodChange("7d")} />
+          <PeriodButton period="30d" active={period === "30d"} onClick={() => handlePeriodChange("30d")} />
+          <PeriodButton period="90d" active={period === "90d"} onClick={() => handlePeriodChange("90d")} />
+          <PeriodButton period="1y" active={period === "1y"} onClick={() => handlePeriodChange("1y")} />
         </div>
       </div>
 

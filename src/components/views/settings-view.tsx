@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { motion, type Variants } from "framer-motion";
 import { useAppStore } from "@/stores/app-store";
 import { useApiQuery, useApiMutation } from "@/hooks/use-api-query";
@@ -295,38 +295,73 @@ const PRICING_PLANS: PricingPlan[] = [
 // Company Tab
 // ═══════════════════════════════════════════════════════════════════════════════
 
+const COMPANY_FORM_DEFAULTS: CompanyForm = {
+  name: "",
+  website: "",
+  industry: "Technology",
+  country: "United States",
+  primaryColor: "#f97316",
+  secondaryColor: "#3b82f6",
+  accentColor: "#10b981",
+  targetAudience: "",
+  marketingGoals: "",
+};
+
+interface CompanyForm {
+  name: string;
+  website: string;
+  industry: string;
+  country: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  targetAudience: string;
+  marketingGoals: string;
+}
+
+/** Maps an API company record onto the form shape, applying the same defaults. */
+function toCompanyForm(company: any): CompanyForm {
+  return {
+    name: company.name || COMPANY_FORM_DEFAULTS.name,
+    website: company.website || COMPANY_FORM_DEFAULTS.website,
+    industry: company.industry || COMPANY_FORM_DEFAULTS.industry,
+    country: company.country || COMPANY_FORM_DEFAULTS.country,
+    primaryColor: company.primaryColor || COMPANY_FORM_DEFAULTS.primaryColor,
+    secondaryColor: company.secondaryColor || COMPANY_FORM_DEFAULTS.secondaryColor,
+    accentColor: company.accentColor || COMPANY_FORM_DEFAULTS.accentColor,
+    targetAudience: company.targetAudience || COMPANY_FORM_DEFAULTS.targetAudience,
+    marketingGoals: company.marketingGoals || COMPANY_FORM_DEFAULTS.marketingGoals,
+  };
+}
+
 function CompanyTab() {
   // Load real company data from /api/settings/company
   const { data: companyData, refetch } = useApiQuery<{ company: any }>("/api/settings/company");
 
-  const [name, setName] = useState("");
-  const [website, setWebsite] = useState("");
-  const [industry, setIndustry] = useState("Technology");
-  const [country, setCountry] = useState("United States");
-  const [primaryColor, setPrimaryColor] = useState("#f97316");
-  const [secondaryColor, setSecondaryColor] = useState("#3b82f6");
-  const [accentColor, setAccentColor] = useState("#10b981");
-  const [targetAudience, setTargetAudience] = useState("");
-  const [marketingGoals, setMarketingGoals] = useState("");
   const [saving, setSaving] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  // `null` until the user edits something. While it is null the form is derived
+  // straight from the server response, so no effect has to copy data into state.
+  // Once a draft exists it always wins, which means a background refetch (for
+  // example the one fired after a save) can never discard unsaved edits.
+  const [draft, setDraft] = useState<CompanyForm | null>(null);
 
-  // Populate form once when API data arrives
-  useEffect(() => {
-    if (companyData?.company && !loaded) {
-      const c = companyData.company;
-      setName(c.name || "");
-      setWebsite(c.website || "");
-      setIndustry(c.industry || "Technology");
-      setCountry(c.country || "United States");
-      setPrimaryColor(c.primaryColor || "#f97316");
-      setSecondaryColor(c.secondaryColor || "#3b82f6");
-      setAccentColor(c.accentColor || "#10b981");
-      setTargetAudience(c.targetAudience || "");
-      setMarketingGoals(c.marketingGoals || "");
-      setLoaded(true);
-    }
-  }, [companyData, loaded]);
+  // Pulled out of `companyData` first so the memo's inferred dependency is this
+  // value rather than the enclosing response object.
+  const company = companyData?.company ?? null;
+
+  const baseForm = useMemo(
+    () => (company ? toCompanyForm(company) : { ...COMPANY_FORM_DEFAULTS }),
+    [company],
+  );
+
+  const form = draft ?? baseForm;
+
+  const updateField = useCallback(
+    (field: keyof CompanyForm, value: string) => {
+      setDraft((current) => ({ ...(current ?? baseForm), [field]: value }));
+    },
+    [baseForm],
+  );
 
   const saveMutation = useApiMutation({
     method: "PUT",
@@ -336,27 +371,27 @@ function CompanyTab() {
   });
 
   const handleSave = useCallback(() => {
-    if (!name.trim()) {
+    if (!form.name.trim()) {
       toast.error("Company name is required");
       return;
     }
     setSaving(true);
     try {
       saveMutation.mutate({
-        name,
-        website,
-        industry,
-        country,
-        primaryColor,
-        secondaryColor,
-        accentColor,
-        targetAudience,
-        marketingGoals,
+        name: form.name,
+        website: form.website,
+        industry: form.industry,
+        country: form.country,
+        primaryColor: form.primaryColor,
+        secondaryColor: form.secondaryColor,
+        accentColor: form.accentColor,
+        targetAudience: form.targetAudience,
+        marketingGoals: form.marketingGoals,
       });
     } finally {
       setTimeout(() => setSaving(false), 1000);
     }
-  }, [name, website, industry, country, primaryColor, secondaryColor, accentColor, targetAudience, marketingGoals, saveMutation]);
+  }, [form, saveMutation]);
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
@@ -376,8 +411,8 @@ function CompanyTab() {
                 <Label htmlFor="company-name" className="text-xs font-medium">Company Name</Label>
                 <Input
                   id="company-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={form.name}
+                  onChange={(e) => updateField("name", e.target.value)}
                   placeholder="Your company name"
                 />
               </div>
@@ -387,8 +422,8 @@ function CompanyTab() {
                 </Label>
                 <Input
                   id="company-website"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
+                  value={form.website}
+                  onChange={(e) => updateField("website", e.target.value)}
                   placeholder="https://yourcompany.com"
                 />
               </div>
@@ -397,7 +432,7 @@ function CompanyTab() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="industry" className="text-xs font-medium">Industry</Label>
-                <Select value={industry} onValueChange={setIndustry}>
+                <Select value={form.industry} onValueChange={(v) => updateField("industry", v)}>
                   <SelectTrigger id="industry">
                     <SelectValue placeholder="Select industry" />
                   </SelectTrigger>
@@ -413,7 +448,7 @@ function CompanyTab() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="country" className="text-xs font-medium">Country</Label>
-                <Select value={country} onValueChange={setCountry}>
+                <Select value={form.country} onValueChange={(v) => updateField("country", v)}>
                   <SelectTrigger id="country">
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
@@ -445,9 +480,9 @@ function CompanyTab() {
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-3">
               {[
-                { label: "Primary Color", value: primaryColor, onChange: setPrimaryColor },
-                { label: "Secondary Color", value: secondaryColor, onChange: setSecondaryColor },
-                { label: "Accent Color", value: accentColor, onChange: setAccentColor },
+                { label: "Primary Color", value: form.primaryColor, onChange: (v: string) => updateField("primaryColor", v) },
+                { label: "Secondary Color", value: form.secondaryColor, onChange: (v: string) => updateField("secondaryColor", v) },
+                { label: "Accent Color", value: form.accentColor, onChange: (v: string) => updateField("accentColor", v) },
               ].map((color) => (
                 <div key={color.label} className="space-y-2">
                   <Label className="text-xs font-medium">{color.label}</Label>
@@ -491,8 +526,8 @@ function CompanyTab() {
               <Label htmlFor="target-audience" className="text-xs font-medium">Target Audience</Label>
               <Textarea
                 id="target-audience"
-                value={targetAudience}
-                onChange={(e) => setTargetAudience(e.target.value)}
+                value={form.targetAudience}
+                onChange={(e) => updateField("targetAudience", e.target.value)}
                 rows={3}
                 placeholder="Describe your ideal customer..."
               />
@@ -501,8 +536,8 @@ function CompanyTab() {
               <Label htmlFor="marketing-goals" className="text-xs font-medium">Marketing Goals</Label>
               <Textarea
                 id="marketing-goals"
-                value={marketingGoals}
-                onChange={(e) => setMarketingGoals(e.target.value)}
+                value={form.marketingGoals}
+                onChange={(e) => updateField("marketingGoals", e.target.value)}
                 rows={3}
                 placeholder="What are your primary marketing objectives?"
               />

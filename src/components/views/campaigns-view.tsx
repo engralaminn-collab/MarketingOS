@@ -457,30 +457,48 @@ function CampaignsViewInner() {
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const fetchCampaigns = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  // Every state update below happens after an `await`, so this can be called
+  // straight from an effect without writing state synchronously during render.
+  // Results from an aborted request (unmount) are dropped.
+  const fetchCampaigns = useCallback(async (signal?: AbortSignal) => {
     try {
       const token =
         typeof window !== "undefined" ? localStorage.getItem("mos_token") : null;
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await fetch("/api/campaigns", { headers });
+      const res = await fetch("/api/campaigns", { headers, signal });
       if (!res.ok) throw new Error(`Request failed (HTTP ${res.status})`);
       const json = await res.json();
+      if (signal?.aborted) return;
       const result = json?.data ?? json;
       setData(result as CampaignsData);
+      setError(null);
     } catch (err: unknown) {
+      if (signal?.aborted) return;
       const message = err instanceof Error ? err.message : "Failed to load campaigns";
       setError(message);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   }, []);
 
+  // Retry / refresh-after-mutation. Runs from event handlers, so showing the
+  // skeleton immediately is safe here.
+  const reloadCampaigns = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    await fetchCampaigns();
+  }, [fetchCampaigns]);
+
   useEffect(() => {
-    fetchCampaigns();
+    const controller = new AbortController();
+    // Dispatched inside an async scope so the effect body itself performs no
+    // state update; every setState in the loader runs after the response awaits.
+    void (async () => {
+      await fetchCampaigns(controller.signal);
+    })();
+    return () => controller.abort();
   }, [fetchCampaigns]);
 
   const handleCreate = async (formData: Record<string, string>) => {
@@ -504,7 +522,7 @@ function CampaignsViewInner() {
       }),
     });
     if (!res.ok) throw new Error("Create failed");
-    await fetchCampaigns();
+    await reloadCampaigns();
   };
 
   if (isLoading) return <CampaignsSkeleton />;
@@ -520,7 +538,7 @@ function CampaignsViewInner() {
           <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <BarChart3 className="h-10 w-10 mb-3 opacity-40" />
             <p className="text-sm">{error}</p>
-            <Button variant="outline" className="mt-4" onClick={fetchCampaigns}>
+            <Button variant="outline" className="mt-4" onClick={reloadCampaigns}>
               <Zap className="mr-2 h-4 w-4" /> Retry
             </Button>
           </CardContent>
