@@ -19,7 +19,7 @@ export const GET = withAuth(async (request) => {
       where,
       include: {
         user: { select: { id: true, name: true, email: true, avatar: true } },
-        fee: { select: { id: true, amount, paidAmount, status } },
+        fee: { select: { id: true, amount: true, paidAmount: true, status: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -67,7 +67,7 @@ export const POST = withAuth(async (request, { user }) => {
       },
       include: {
         user: { select: { id: true, name: true, email: true } },
-        fee: { select: { id: true, amount, paidAmount, status } },
+        fee: { select: { id: true, amount: true, paidAmount: true, status: true } },
       },
     });
 

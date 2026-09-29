@@ -3,9 +3,16 @@ import { getSessionUser, hasPermission, type SessionUser as AuthUser } from "@/l
 
 export type { AuthUser };
 
+type RouteParams = Record<string, string>;
+
 type AuthContext = {
   user: AuthUser;
-  params?: Promise<Record<string, string>>;
+  /**
+   * Dynamic route segments. Always a promise — routes without segments get an
+   * empty object rather than `undefined`, so handlers can `await params`
+   * unconditionally without a null check.
+   */
+  params: Promise<RouteParams>;
 };
 
 type AuthHandler = (
@@ -21,18 +28,21 @@ interface WithAuthOptions {
 export function withAuth(
   handler: AuthHandler,
   options?: WithAuthOptions
-): (request: Request, context: { params?: Promise<Record<string, string>> }) => Promise<Response> {
+): (request: Request, context?: { params?: Promise<RouteParams> }) => Promise<Response> {
   return async (
     request: Request,
-    rawContext: { params?: Promise<Record<string, string>> }
+    rawContext?: { params?: Promise<RouteParams> }
   ): Promise<Response> => {
+    const params: Promise<RouteParams> =
+      rawContext?.params ?? Promise.resolve({} as RouteParams);
+
     const user = await getSessionUser(request);
 
     if (!user || !user.userId) {
       if (options?.allowPublic) {
         return handler(request, {
           user: { userId: "", email: "", isSuperAdmin: false, companyId: "", role: "" },
-          params: rawContext.params,
+          params,
         });
       }
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -43,6 +53,6 @@ export function withAuth(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return handler(request, { user, params: rawContext.params });
+    return handler(request, { user, params });
   };
 }

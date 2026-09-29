@@ -13,7 +13,7 @@ export const GET = withAuth(async (request, { params }) => {
           include: { studentProfile: { select: { studentId: true } } },
         },
         fee: {
-          select: { id: true, amount, paidAmount, status },
+          select: { id: true, amount: true, paidAmount: true, status: true },
           include: { feeStructure: { select: { name: true, frequency: true } } },
         },
       },

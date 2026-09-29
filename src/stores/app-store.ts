@@ -18,7 +18,23 @@ export type ViewId =
   | 'audit-logs'
   | 'subscriptions'
   | 'settings'
-  | 'ai-agents';
+  | 'ai-agents'
+  // Academic & HRM. The views and API routes for these already existed but
+  // were unreachable because they were never added to this union.
+  | 'students'
+  | 'employees'
+  | 'departments'
+  | 'programs'
+  | 'attendance'
+  | 'assignments'
+  | 'exams'
+  | 'schedule'
+  | 'finance'
+  | 'fees'
+  | 'salary'
+  | 'hrm'
+  | 'leave'
+  | 'partners';
 
 export interface AuthUser {
   id: string;

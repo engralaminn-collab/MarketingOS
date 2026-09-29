@@ -55,6 +55,20 @@ const IntegrationsView = lazy(() => import('@/components/views/integrations-view
 const MessagesView = lazy(() => import('@/components/views/messages-view'));
 const AnnouncementsView = lazy(() => import('@/components/views/announcements-view'));
 const AuditLogsView = lazy(() => import('@/components/views/audit-logs-view'));
+const StudentsView = lazy(() => import('@/components/views/students-view'));
+const EmployeesView = lazy(() => import('@/components/views/employees-view'));
+const DepartmentsView = lazy(() => import('@/components/views/departments-view'));
+const ProgramsView = lazy(() => import('@/components/views/programs-view'));
+const AttendanceView = lazy(() => import('@/components/views/attendance-view'));
+const AssignmentsView = lazy(() => import('@/components/views/assignments-view'));
+const ExamsView = lazy(() => import('@/components/views/exams-view'));
+const ScheduleView = lazy(() => import('@/components/views/schedule-view'));
+const FinanceView = lazy(() => import('@/components/views/finance-view'));
+const FeesView = lazy(() => import('@/components/views/fees-view'));
+const SalaryView = lazy(() => import('@/components/views/salary-view'));
+const HrmView = lazy(() => import('@/components/views/hrm-view'));
+const LeaveView = lazy(() => import('@/components/views/leave-view'));
+const PartnersView = lazy(() => import('@/components/views/partners-view'));
 
 const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   dashboard: DashboardView,
@@ -75,6 +89,20 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   integrations: IntegrationsView,
   subscriptions: SettingsView,
   settings: SettingsView,
+  students: StudentsView,
+  employees: EmployeesView,
+  departments: DepartmentsView,
+  programs: ProgramsView,
+  attendance: AttendanceView,
+  assignments: AssignmentsView,
+  exams: ExamsView,
+  schedule: ScheduleView,
+  finance: FinanceView,
+  fees: FeesView,
+  salary: SalaryView,
+  hrm: HrmView,
+  leave: LeaveView,
+  partners: PartnersView,
 };
 
 interface NavItem {
