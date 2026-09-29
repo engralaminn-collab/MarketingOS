@@ -425,27 +425,52 @@ export function IntegrationsView() {
   const [connectTool, setConnectTool] = useState<Tool | null>(null);
   const [showCategories, setShowCategories] = useState(true);
 
-  const fetchTools = useCallback(async () => {
-    if (!user?.token) return;
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (search) params.set('search', search);
-      if (selectedCategory) params.set('category', selectedCategory);
-      const res = await fetch(`/api/tools?${params}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      const json = await res.json();
-      if (json.tools) setData(json);
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.token, search, selectedCategory]);
+  // Read the token out of the store once, so the callback below closes over a
+  // plain string instead of the whole `user` object. That makes the inferred
+  // dependencies match the declared ones (react-hooks/preserve-manual-memoization)
+  // while still re-running the request whenever the token actually changes.
+  const authToken = user?.token ?? null;
+
+  // Every state update below happens after an `await`, so this can be called
+  // straight from an effect without writing state synchronously during render.
+  // Results from an aborted request (filter change or unmount) are dropped.
+  const fetchTools = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!authToken) return;
+      try {
+        const params = new URLSearchParams();
+        if (search) params.set('search', search);
+        if (selectedCategory) params.set('category', selectedCategory);
+        const res = await fetch(`/api/tools?${params}`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+          signal,
+        });
+        const json = await res.json();
+        if (signal?.aborted) return;
+        if (json.tools) setData(json);
+      } catch {
+        // silent
+      } finally {
+        if (!signal?.aborted) setLoading(false);
+      }
+    },
+    [authToken, search, selectedCategory]
+  );
+
+  // Refresh after a successful connect — runs from an event handler.
+  const reloadTools = useCallback(() => {
+    setLoading(true);
+    void fetchTools();
+  }, [fetchTools]);
 
   React.useEffect(() => {
-    fetchTools();
+    const controller = new AbortController();
+    // Dispatched inside an async scope so the effect body itself performs no
+    // state update; every setState in the loader runs after the response awaits.
+    void (async () => {
+      await fetchTools(controller.signal);
+    })();
+    return () => controller.abort();
   }, [fetchTools]);
 
   const filteredTools = useMemo(() => {
@@ -479,16 +504,20 @@ export function IntegrationsView() {
         body: JSON.stringify({ toolId, credentials }),
       });
       setConnectTool(null);
-      fetchTools();
+      reloadTools();
     } catch {
       // silent
     }
   };
 
+  // Pull the field out before memoizing so the inferred dependency is the
+  // breakdown itself rather than the enclosing `data` object.
+  const categoryBreakdown = data?.categoryBreakdown;
+
   const sortedCategories = useMemo(() => {
-    if (!data?.categoryBreakdown) return [];
-    return Object.entries(data.categoryBreakdown).sort((a, b) => b[1].total - a[1].total);
-  }, [data?.categoryBreakdown]);
+    if (!categoryBreakdown) return [];
+    return Object.entries(categoryBreakdown).sort((a, b) => b[1].total - a[1].total);
+  }, [categoryBreakdown]);
 
   return (
     <div className="space-y-4">

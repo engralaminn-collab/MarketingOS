@@ -2334,6 +2334,7 @@ const TOOLS: ToolSeed[] = [
     icon: 'CheckCircle',
     color: '#F97316',
     sortOrder: 119,
+  },
 ]
 
 // ── Seed Function ────────────────────────────────────────────────────────────

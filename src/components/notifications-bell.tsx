@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, Check, X, Loader2, Inbox, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,29 +49,60 @@ export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  // Starts true because the first request is issued on mount — this replaces the
+  // old synchronous `setIsLoading(true)` that ran while the effect was executing.
+  const [isLoading, setIsLoading] = useState(true);
+  // Guards against overlapping polls when a request outlives the 30s interval.
+  const inFlightRef = useRef(false);
 
-  const fetchNotifications = useCallback(async () => {
-    setIsLoading(true);
+  /**
+   * Loads notifications. Every state update happens after an `await`, so this
+   * is safe to call directly from an effect. Responses belonging to an aborted
+   * request are discarded, which also covers unmount.
+   */
+  const loadNotifications = useCallback(async (signal?: AbortSignal) => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     try {
-      const res = await fetch("/api/notifications?limit=20", { headers: authHeaders() });
+      const res = await fetch("/api/notifications?limit=20", {
+        headers: authHeaders(),
+        signal,
+      });
       if (!res.ok) throw new Error("Failed");
       const json = await res.json();
+      if (signal?.aborted) return;
       setItems(json.data || []);
       setUnreadCount(json.unreadCount || 0);
     } catch {
       // Silent fail — notifications are not critical
     } finally {
-      setIsLoading(false);
+      inFlightRef.current = false;
+      if (!signal?.aborted) setIsLoading(false);
     }
   }, []);
 
+  /** Manual refresh from an event handler — shows the spinner immediately. */
+  const refreshNotifications = useCallback(() => {
+    setIsLoading(true);
+    void loadNotifications();
+  }, [loadNotifications]);
+
   // Fetch on mount + poll every 30 seconds
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
+    const controller = new AbortController();
+    // Dispatched inside an async scope so the effect body itself performs no
+    // state update; every setState in the loader runs after the response awaits.
+    void (async () => {
+      await loadNotifications(controller.signal);
+    })();
+    const interval = setInterval(() => {
+      void loadNotifications(controller.signal);
+    }, 30000);
+    return () => {
+      clearInterval(interval);
+      controller.abort();
+    };
+  }, [loadNotifications]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -92,7 +123,7 @@ export function NotificationsBell() {
       });
       if (!res.ok) throw new Error("Failed");
       toast.success("Marked all as read");
-      fetchNotifications();
+      refreshNotifications();
     } catch {
       toast.error("Failed to mark notifications as read");
     }
@@ -105,7 +136,7 @@ export function NotificationsBell() {
         headers: authHeaders(),
       });
       if (!res.ok) throw new Error("Failed");
-      fetchNotifications();
+      refreshNotifications();
     } catch {
       // Silent
     }
@@ -129,7 +160,7 @@ export function NotificationsBell() {
         className="h-9 w-9 relative"
         onClick={() => {
           setOpen((v) => !v);
-          if (!open) fetchNotifications();
+          if (!open) refreshNotifications();
         }}
       >
         <Bell className="w-4 h-4" />

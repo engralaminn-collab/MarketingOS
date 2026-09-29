@@ -85,7 +85,7 @@ Stage Summary:
   * 120 integration tools across 27 categories
   * 2,000 AI workforce employees across 54 departments
 - Browser-verified via Agent Browser:
-  * Login flow works (admin@marketingos.com / admin123)
+  * Login flow works (seeded administrator account; credentials supplied via ADMIN_SEED_PASSWORD)
   * CEO Dashboard renders with real KPIs (180 leads, $1.17M revenue, 15 campaigns, 25 AI agents)
   * CRM view renders 180 leads with inline status changes + Add Lead dialog
   * CRM Deals tab shows 6-stage kanban pipeline with drag-and-drop
@@ -96,7 +96,7 @@ Stage Summary:
   * Settings view shows real Company info (loaded from DB), API keys, webhooks, sessions
 - Dev server: Next.js 16.3.5 (Turbopack) running on port 3000
 - Preview URL: https://preview-6aac8406.space-z.ai/
-- Login: admin@marketingos.com / admin123
+- Login: seeded administrator account — password comes from the server-side ADMIN_SEED_PASSWORD env var (never committed)
 
 ---
 Task ID: marketingos-real-2

@@ -458,9 +458,10 @@ function DashboardViewInner() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboard = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  // Every state update below happens after an `await`, so this can be called
+  // straight from an effect without writing state synchronously during render.
+  // Results from an aborted request (dependency change or unmount) are dropped.
+  const fetchDashboard = useCallback(async (signal?: AbortSignal) => {
     try {
       const token =
         typeof window !== "undefined"
@@ -473,25 +474,42 @@ function DashboardViewInner() {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const res = await fetch("/api/dashboard", { headers });
+      const res = await fetch("/api/dashboard", { headers, signal });
       if (!res.ok) {
         throw new Error(`Request failed (HTTP ${res.status})`);
       }
       const json = await res.json();
+      if (signal?.aborted) return;
       // Support both { data: ... } envelope and direct response
       const result = json?.data ?? json;
       setData(result as DashboardData);
+      setError(null);
     } catch (err: unknown) {
+      if (signal?.aborted) return;
       const message =
         err instanceof Error ? err.message : "Failed to load dashboard";
       setError(message);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   }, []);
 
+  // Retry / manual refresh. Runs from an event handler, so showing the skeleton
+  // immediately is safe here.
+  const reloadDashboard = useCallback(() => {
+    setIsLoading(true);
+    setError(null);
+    void fetchDashboard();
+  }, [fetchDashboard]);
+
   useEffect(() => {
-    fetchDashboard();
+    const controller = new AbortController();
+    // Dispatched inside an async scope so the effect body itself performs no
+    // state update; every setState in the loader runs after the response awaits.
+    void (async () => {
+      await fetchDashboard(controller.signal);
+    })();
+    return () => controller.abort();
   }, [fetchDashboard]);
 
   // ── Loading ──
@@ -517,7 +535,7 @@ function DashboardViewInner() {
             </p>
             <p className="mt-1 text-sm text-muted-foreground">{error}</p>
             <button
-              onClick={fetchDashboard}
+              onClick={reloadDashboard}
               className="mt-4 flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
             >
               <RefreshCw className="h-3.5 w-3.5" />

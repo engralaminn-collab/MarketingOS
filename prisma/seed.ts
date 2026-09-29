@@ -1,23 +1,85 @@
+import { randomBytes } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import { hashPassword, createToken } from '../src/lib/auth';
 
 const prisma = new PrismaClient();
 
+// ─── Administrator seed identity ─────────────────────────────────────────────
+// The address is an identifier, not a secret, and stays overridable per environment.
+const ADMIN_EMAIL = process.env.ADMIN_SEED_EMAIL || 'admin@marketingos.com';
+
+const MIN_ADMIN_PASSWORD_LENGTH = 12;
+
+/** Generates a cryptographically strong, single-use password. */
+function generateStrongPassword(): string {
+  return randomBytes(24).toString('base64url');
+}
+
+/**
+ * Resolves the administrator password used when the account is first created.
+ *
+ * The value is NEVER hardcoded:
+ *   - Production: `ADMIN_SEED_PASSWORD` is mandatory; the seed refuses to run without it.
+ *   - Non-production: a random one-time password is generated and printed once so the
+ *     developer can sign in. It is not a shared/known default and is never committed.
+ */
+function resolveAdminSeedPassword(): { password: string; generated: boolean } {
+  const fromEnv = process.env.ADMIN_SEED_PASSWORD;
+
+  if (fromEnv) {
+    if (fromEnv.length < MIN_ADMIN_PASSWORD_LENGTH) {
+      throw new Error(
+        `ADMIN_SEED_PASSWORD must be at least ${MIN_ADMIN_PASSWORD_LENGTH} characters long.`
+      );
+    }
+    return { password: fromEnv, generated: false };
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'ADMIN_SEED_PASSWORD environment variable is required in production. ' +
+        'Generate one with `openssl rand -base64 24` and store it server-side only.'
+    );
+  }
+
+  return { password: generateStrongPassword(), generated: true };
+}
+
 async function seed() {
   console.log('Seeding database...');
 
-  // Create super admin user
-  const passwordHash = await hashPassword('admin123');
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@marketingos.com' },
-    update: {},
-    create: {
-      email: 'admin@marketingos.com',
-      passwordHash,
-      name: 'Admin User',
-      isActive: true,
-    },
-  });
+  // ── Super admin user ───────────────────────────────────────────────────────
+  // An existing administrator is never silently re-credentialed. The stored hash
+  // is only rewritten when an operator explicitly supplies ADMIN_SEED_PASSWORD
+  // (the documented rotation path in docs/DEPLOYMENT-RUNBOOK.md).
+  const existingAdmin = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL } });
+  let generatedAdminPassword: string | null = null;
+  let admin;
+
+  if (existingAdmin) {
+    if (process.env.ADMIN_SEED_PASSWORD) {
+      const { password } = resolveAdminSeedPassword();
+      admin = await prisma.user.update({
+        where: { id: existingAdmin.id },
+        data: { passwordHash: await hashPassword(password), isActive: true },
+      });
+      console.log('Existing administrator password hash rotated from ADMIN_SEED_PASSWORD.');
+    } else {
+      admin = existingAdmin;
+      console.log('Existing administrator left untouched (no ADMIN_SEED_PASSWORD supplied).');
+    }
+  } else {
+    const resolved = resolveAdminSeedPassword();
+    if (resolved.generated) generatedAdminPassword = resolved.password;
+    admin = await prisma.user.create({
+      data: {
+        email: ADMIN_EMAIL,
+        passwordHash: await hashPassword(resolved.password),
+        name: 'Admin User',
+        isActive: true,
+      },
+    });
+  }
 
   // Create demo company (idempotent via upsert on slug)
   const company = await prisma.company.upsert({
@@ -78,10 +140,13 @@ async function seed() {
       }
       continue;
     }
+    // Demo team members exist to populate the UI, not to be signed into. Each one
+    // gets a unique, unguessable secret that is never printed, stored in plaintext,
+    // or shared — sign-in requires an explicit password reset by an administrator.
     const user = await prisma.user.create({
       data: {
         email: member.email,
-        passwordHash: await hashPassword('password123'),
+        passwordHash: await hashPassword(generateStrongPassword()),
         name: member.name,
         isActive: true,
       },
@@ -104,7 +169,9 @@ async function seed() {
         platform,
         accountName: `Demo ${platform}`,
         accountHandle: `@demo${platform.toLowerCase()}`,
-        accessToken: `encrypted_token_${platform.toLowerCase()}`,
+        // Inert placeholder for demo data — not a credential. Real tokens are
+        // supplied at runtime through the integrations flow and stored encrypted.
+        accessToken: `placeholder-no-token-${platform.toLowerCase()}`,
         status: 'active',
         companyId: company.id,
         scopes: JSON.stringify(['read', 'write', 'publish']),
@@ -308,8 +375,20 @@ async function seed() {
   });
 
   console.log('Seed completed successfully!');
-  console.log(`Admin email: admin@marketingos.com`);
-  console.log(`Admin password: admin123`);
+  console.log(`Admin email: ${ADMIN_EMAIL}`);
+
+  if (generatedAdminPassword) {
+    console.log('');
+    console.log('  No ADMIN_SEED_PASSWORD was set, so a one-time random password was');
+    console.log('  generated for the new administrator account. Copy it now — it is');
+    console.log('  hashed on save and cannot be recovered:');
+    console.log('');
+    console.log(`      ${generatedAdminPassword}`);
+    console.log('');
+    console.log('  Set ADMIN_SEED_PASSWORD in your server-side .env to control this value.');
+  } else {
+    console.log('Admin credentials unchanged — managed via the ADMIN_SEED_PASSWORD env var.');
+  }
 }
 
 seed()

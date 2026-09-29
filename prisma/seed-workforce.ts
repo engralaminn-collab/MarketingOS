@@ -428,10 +428,10 @@ async function main() {
     // Build weighted department pool
     const weightedDepts: { code: string; id: string; rootCode: string }[] = [];
     for (const d of levelDepts) {
-      const root = getDeptRoot(d.code);
+      const root = getDeptRoot(d.code ?? '');
       const weight = deptWeights[root] || 5;
       for (let i = 0; i < weight; i++) {
-        weightedDepts.push({ code: d.code, id: d.id, rootCode: root });
+        weightedDepts.push({ code: d.code ?? '', id: d.id, rootCode: root });
       }
     }
 
@@ -546,15 +546,19 @@ async function main() {
           )
         );
 
-        const reportsToId = levelEmployeeIds[level === 'worker' ? 'supervisor' :
-          level === 'specialist' ? 'supervisor' :
-          level === 'supervisor' ? 'manager' :
-          level === 'manager' ? 'director' :
-          level === 'director' ? 'executive' : undefined]?.[rand(0, Math.max(0, (levelEmployeeIds[level === 'worker' ? 'supervisor' :
-          level === 'specialist' ? 'supervisor' :
-          level === 'supervisor' ? 'manager' :
-          level === 'manager' ? 'director' :
-          level === 'director' ? 'executive' : 'executive'] || []).length - 1))] || null;
+        // Who this level reports up to. Previously an inlined nested ternary
+        // duplicated twice, which could index with `undefined`.
+        const REPORTS_TO: Record<string, string> = {
+          worker: 'supervisor',
+          specialist: 'supervisor',
+          supervisor: 'manager',
+          manager: 'director',
+          director: 'executive',
+        };
+        const parentLevel = REPORTS_TO[level] ?? 'executive';
+        const parentPool = levelEmployeeIds[parentLevel] || [];
+        const reportsToId =
+          parentPool.length > 0 ? parentPool[rand(0, parentPool.length - 1)] : null;
 
         batch.push({
           employeeId: `EMP-${empNum}`,

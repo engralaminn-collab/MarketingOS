@@ -8,9 +8,17 @@
 name: Deploy to VPS
 
 on:
-  push:
+  # Deploy only AFTER the image for this commit has actually been built and
+  # pushed. Previously this workflow also triggered on `push: main`, so it ran
+  # in parallel with "Docker Build & Push" and tried to pull an image tag that
+  # did not exist yet. A cross-workflow `needs:` is not possible, so the image
+  # workflow completing successfully is the trigger.
+  workflow_run:
+    workflows: ["Docker Build & Push"]
+    types: [completed]
     branches: [main]
-  # Manual trigger for re-deploys without code change
+
+  # Manual re-deploy of an already-published tag.
   workflow_dispatch:
     inputs:
       image_tag:
@@ -19,6 +27,12 @@ on:
         default: "latest"
 
 # Only one deploy at a time — queue if a new push comes mid-deploy
+# `actions: read` is required by the "Require CI to have passed" gate, which
+# queries the workflow runs for the target commit.
+permissions:
+  contents: read
+  actions: read
+
 concurrency:
   group: deploy-production
   cancel-in-progress: false
@@ -39,11 +53,53 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 18
 
+    # Never deploy off a failed image build.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
     environment:
       name: production
       url: ${{ vars.DEPLOY_URL }}
 
     steps:
+      # ── The commit actually being deployed ───────────────────
+      # On workflow_run, github.sha is the default branch tip, NOT the commit
+      # that triggered the build. head_sha is the real one.
+      - name: Resolve target commit
+        id: target
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            SHA="${{ github.event.workflow_run.head_sha }}"
+          else
+            SHA="${{ github.sha }}"
+          fi
+          echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHA:0:7}" >> "$GITHUB_OUTPUT"
+          echo "👉 Target commit: ${SHA}"
+
+      # ── CI must be green for THIS commit before anything ships ──
+      - name: Require CI to have passed for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHA="${{ steps.target.outputs.sha }}"
+          echo "👉 Checking the CI conclusion for ${SHA} ..."
+
+          CONCLUSION=$(gh api \
+            "repos/${{ github.repository }}/actions/runs?head_sha=${SHA}&status=completed" \
+            --jq '[.workflow_runs[] | select(.name == "CI")] | sort_by(.created_at) | last | .conclusion // "missing"')
+
+          echo "CI conclusion for ${SHA}: ${CONCLUSION}"
+          if [ "${CONCLUSION}" != "success" ]; then
+            echo "❌ Refusing to deploy ${SHA}: CI is '${CONCLUSION}', not 'success'."
+            echo "   Lint, typecheck and the production build must pass first."
+            exit 1
+          fi
+          echo "✅ CI passed for ${SHA}"
+
       # ── Fail-fast on missing required secrets ────────────────
       - name: Verify required secrets are configured
         run: |
@@ -68,8 +124,8 @@ jobs:
           if [ -n "${{ github.event.inputs.image_tag }}" ] && [ "${{ github.event.inputs.image_tag }}" != "latest" ]; then
             SHORT_SHA="${{ github.event.inputs.image_tag }}"
           else
-            FULL_SHA="${{ github.sha }}"
-            SHORT_SHA="${FULL_SHA:0:7}"
+            FULL_SHA="${{ steps.target.outputs.sha }}"
+            SHORT_SHA="${{ steps.target.outputs.short_sha }}"
             echo "full_sha=${FULL_SHA}" >> "$GITHUB_OUTPUT"
           fi
           echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
@@ -77,9 +133,10 @@ jobs:
           echo "👉 Full SHA: ${FULL_SHA:-manual-deploy}"
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
-          ref: ${{ github.sha }}
+          # The commit being deployed, so scripts/ matches the running image.
+          ref: ${{ steps.target.outputs.sha }}
           fetch-depth: 1
 
       # ── Configure SSH key ─────────────────────────────────────
@@ -127,19 +184,81 @@ jobs:
             "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
             "docker pull '${IMAGE}'"
 
-      # ── Run database migrations ───────────────────────────────
-      - name: Run Prisma migrations
+      # ── Preflight: prove the database survives container replacement ──
+      # schema.prisma is SQLite, so the database is a plain file. The compose
+      # file that decides whether it lives on a mounted volume is on the server
+      # and not in version control, so it cannot be reviewed in a PR. This gate
+      # verifies persistence for real — write a probe in one container, confirm
+      # it is visible in the next — and halts the deploy if it is not.
+      - name: Preflight — verify database persistence
+        id: preflight
         run: |
           set -euo pipefail
-          # NOTE: removed "|| true" — if migrations fail, the deploy MUST stop
-          # before we swap to the new container with the new schema
-          echo "👉 Running prisma migrate deploy on VPS ..."
+          scp -i ~/.ssh/deploy_key -P "${{ env.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            scripts/preflight-persistence.sh \
+            "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}:/tmp/preflight-persistence.sh"
+
+          OUT=$(ssh -i ~/.ssh/deploy_key \
+            -p "${{ env.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
+            "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
+            'set -euo pipefail; cd /opt/aismh && bash /tmp/preflight-persistence.sh; rm -f /tmp/preflight-persistence.sh')
+
+          echo "${OUT}"
+          echo "existing_db=$(printf '%s' "${OUT}" | grep -oE 'EXISTING_DB=[01]' | cut -d= -f2 | tail -1)" >> "$GITHUB_OUTPUT"
+
+      # ── Verified backup, before anything can change the schema ─────────
+      - name: Back up database
+        id: backup
+        run: |
+          set -euo pipefail
+          OUT=$(ssh -i ~/.ssh/deploy_key \
+            -p "${{ env.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
+            "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
+            'set -euo pipefail
+             cd /opt/aismh
+             docker compose run --rm --no-deps --entrypoint bash app scripts/db-backup.sh')
+
+          echo "${OUT}"
+          BACKUP_PATH=$(printf '%s' "${OUT}" | grep -oE 'BACKUP_PATH=.*' | cut -d= -f2- | tail -1)
+          echo "path=${BACKUP_PATH}" >> "$GITHUB_OUTPUT"
+          if [ -n "${BACKUP_PATH}" ]; then
+            echo "✅ Verified backup: ${BACKUP_PATH}"
+          else
+            echo "ℹ️  No existing database — first-time initialisation."
+          fi
+
+      # ── Schema synchronisation ─────────────────────────────────────────
+      - name: Sync database schema
+        run: |
+          set -euo pipefail
+          # No prisma/migrations directory exists — this project uses `db push`
+          # everywhere (deploy.sh, package.json, the runbook), so the previous
+          # `prisma migrate deploy` could never have succeeded.
+          #
+          # scripts/db-sync-schema.sh requires the verified backup above,
+          # prints the pending diff, refuses destructive statements, and never
+          # passes --accept-data-loss.
+          ALLOW_NO_BACKUP=0
+          if [ "${{ steps.preflight.outputs.existing_db }}" = "0" ]; then
+            ALLOW_NO_BACKUP=1
+          fi
+
           ssh -i ~/.ssh/deploy_key \
             -p "${{ env.DEPLOY_PORT }}" \
             -o StrictHostKeyChecking=no \
             -o ConnectTimeout=10 \
             "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
-            "cd /opt/aismh && docker compose run --rm app bunx prisma migrate deploy"
+            "set -euo pipefail
+             cd /opt/aismh
+             docker compose run --rm --no-deps \
+               -e BACKUP_PATH='${{ steps.backup.outputs.path }}' \
+               -e ALLOW_NO_BACKUP='${ALLOW_NO_BACKUP}' \
+               --entrypoint bash app scripts/db-sync-schema.sh"
 
       # ── Rolling restart ──────────────────────────────────────
       - name: Rolling restart
@@ -167,8 +286,11 @@ jobs:
             cd /opt/aismh
             export AISMH_IMAGE="${FULL_IMAGE}"
 
-            # Rolling restart: start new container, wait for health, stop old
-            docker compose up -d --no-deps --build app
+            # Start the image we just pulled and verified.
+            # NOTE: --build was removed. It rebuilt from whatever source happened
+            # to be on the VPS, so the artefact that actually ran was NOT the
+            # image this workflow pulled and tagged.
+            docker compose up -d --no-deps app
             echo ">>> New container started, waiting for health check ..."
             sleep 5
           DEPLOY_SCRIPT
@@ -178,26 +300,78 @@ jobs:
         id: healthcheck
         env:
           DEPLOY_URL: ${{ vars.DEPLOY_URL || format('http://{0}', env.DEPLOY_HOST) }}
+          EXPECTED_SHA: ${{ steps.target.outputs.sha }}
         run: |
           set -uo pipefail
           HEALTH_URL="${DEPLOY_URL}${HEALTH_PATH}"
           echo "👉 Checking ${HEALTH_URL} ..."
 
+          # An HTTP 200 alone only proves Node is listening. /api/health also
+          # reports the commit it was built from, a real database round-trip
+          # and whether required config is present — so we assert on those.
+          BODY=""
           for i in $(seq 1 12); do
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "${HEALTH_URL}" || echo "000")
-            if [ "${HTTP_CODE}" -ge 200 ] && [ "${HTTP_CODE}" -lt 400 ]; then
-              echo "✅ Health check passed (HTTP ${HTTP_CODE}) on attempt ${i}/12"
-              exit 0
+            BODY=$(curl -fsS --max-time 8 "${HEALTH_URL}" 2>/dev/null || echo "")
+            if [ -n "${BODY}" ]; then
+              STATUS=$(printf '%s' "${BODY}" | jq -r '.status // "unknown"')
+              if [ "${STATUS}" = "ok" ]; then
+                echo "✅ Health endpoint reports ok on attempt ${i}/12"
+                break
+              fi
+              echo "⏳ Attempt ${i}/12 — status '${STATUS}':"
+              printf '%s\n' "${BODY}" | jq -c '.checks // {}' || true
+            else
+              echo "⏳ Attempt ${i}/12 — no response yet, retrying in 5s ..."
             fi
-            echo "⏳ Attempt ${i}/12 — HTTP ${HTTP_CODE}, retrying in 5s ..."
+            BODY=""
             sleep 5
           done
 
-          echo "❌ Health check failed after 60 seconds"
-          echo "👉 Check the container logs on the VPS:"
-          echo "   ssh ${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }} 'docker logs aismh-app --tail 100'"
-          exit 1
-        timeout-minutes: 2
+          if [ -z "${BODY}" ]; then
+            echo "❌ Health check never returned a healthy response within 60s"
+            echo "👉 Container logs:"
+            echo "   ssh ${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }} 'docker logs aismh-app --tail 100'"
+            exit 1
+          fi
+
+          echo "👉 Health payload:"
+          printf '%s\n' "${BODY}" | jq .
+
+          # 1. Database must be genuinely reachable, not merely constructed.
+          DB_OK=$(printf '%s' "${BODY}" | jq -r '.checks.database.ok // false')
+          if [ "${DB_OK}" != "true" ]; then
+            echo "❌ Application is up but the DATABASE is not reachable."
+            echo "   The deploy is not healthy. Investigate before serving traffic."
+            exit 1
+          fi
+          echo "✅ Database round-trip OK ($(printf '%s' "${BODY}" | jq -r '.checks.database.latencyMs')ms)"
+
+          # 2. Required configuration must be present.
+          CFG_OK=$(printf '%s' "${BODY}" | jq -r '.checks.config.ok // false')
+          if [ "${CFG_OK}" != "true" ]; then
+            echo "❌ Required environment variables are missing: $(printf '%s' "${BODY}" | jq -c '.checks.config.missing')"
+            exit 1
+          fi
+          echo "✅ Required configuration present"
+
+          # 3. The running container must be the commit we just deployed.
+          #    This is what catches a container that silently never restarted.
+          RUNNING_SHA=$(printf '%s' "${BODY}" | jq -r '.commit // "unknown"')
+          if [ "${RUNNING_SHA}" = "unknown" ]; then
+            echo "⚠️  Image reports no commit — built without the GIT_COMMIT build-arg."
+            echo "    Cannot confirm the served build matches ${EXPECTED_SHA}."
+          elif [ "${RUNNING_SHA}" != "${EXPECTED_SHA}" ]; then
+            echo "❌ Wrong build is live."
+            echo "   expected: ${EXPECTED_SHA}"
+            echo "   serving:  ${RUNNING_SHA}"
+            echo "   The container did not pick up the new image."
+            exit 1
+          else
+            echo "✅ Serving the expected commit: ${RUNNING_SHA}"
+          fi
+
+          echo "deployed_sha=${RUNNING_SHA}" >> "$GITHUB_OUTPUT"
+        timeout-minutes: 3
 
       # ── Cleanup old images ───────────────────────────────────
       - name: Cleanup dangling images
@@ -232,7 +406,7 @@ jobs:
             set -euo pipefail
             cd /opt/aismh
             export AISMH_IMAGE="${PREV_IMAGE}"
-            docker compose up -d --no-deps --build app
+            docker compose up -d --no-deps app
             echo ">>> Rollback container started"
           ROLLBACK
 

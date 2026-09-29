@@ -550,6 +550,7 @@ export function AiAgentsView() {
     return {
       id: a.id,
       name: a.name,
+      icon: config.icon || a.icon || 'Bot',
       description: a.description || '',
       category: config.category || 'Strategy',
       type: a.type,
