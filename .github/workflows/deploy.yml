@@ -38,11 +38,12 @@ concurrency:
   cancel-in-progress: false
 
 
+# NOTE: only `vars` may be referenced in workflow-level env. The `secrets`
+# context is NOT available here — GitHub rejects the whole workflow file if it
+# is used, which is why this workflow never produced a single job. Anything
+# derived from a secret lives in the job-level env below.
 env:
   IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME || 'alo-labs-aismh' }}
-  DEPLOY_USER: ${{ secrets.DEPLOY_USER || 'deploy' }}
-  DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-  DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
   HEALTH_PATH: ${{ vars.HEALTH_PATH || '/api/health' }}
   HEALTH_TIMEOUT_SECONDS: "60"
 
@@ -60,6 +61,12 @@ jobs:
     environment:
       name: production
       url: ${{ vars.DEPLOY_URL }}
+
+    # `secrets` IS available in job-level env, unlike workflow-level env.
+    env:
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER || 'deploy' }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
 
     steps:
       # ── The commit actually being deployed ───────────────────
