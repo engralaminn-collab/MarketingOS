@@ -17,6 +17,9 @@
 
 ARG NODE_VERSION=22.23.2
 ARG BUN_VERSION=1.4.2
+# Commit this image was built from. Surfaced by /api/health so the deploy
+# workflow can prove the server is serving the commit it just shipped.
+ARG GIT_COMMIT=unknown
 
 # Bun is taken from its official image rather than piped from an install
 # script, so the build is reproducible and needs no network fetch of its own.
@@ -68,16 +71,21 @@ RUN bun run build
 FROM node:${NODE_VERSION}-bookworm-slim AS runner
 WORKDIR /app
 
+# sqlite3 is required by scripts/db-backup.sh — `.backup` uses SQLite's online
+# backup API, which is the only way to copy a live, WAL-mode database
+# consistently. A plain cp can capture a torn page.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      openssl ca-certificates \
+      openssl ca-certificates sqlite3 \
  && rm -rf /var/lib/apt/lists/* \
  && groupadd --system --gid 1001 nodejs \
  && useradd  --system --uid 1001 --gid nodejs nextjs
 
+ARG GIT_COMMIT
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
-    HOSTNAME=0.0.0.0
+    HOSTNAME=0.0.0.0 \
+    GIT_COMMIT=${GIT_COMMIT}
 
 # Bun is kept in the runtime image because deploy.yml runs
 # `docker compose run --rm app bunx prisma migrate deploy` against it.
@@ -95,11 +103,16 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_module
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
-# SQLite lives here and MUST be a mounted volume in production, otherwise the
-# database is destroyed every time the image is replaced. See
-# docker-compose.prod.yml. Created up-front so the non-root user owns it.
-RUN mkdir -p /app/data /app/backups && chown -R nextjs:nodejs /app/data /app/backups
-VOLUME ["/app/data"]
+# Backup / restore / schema-sync, executed by .github/workflows/deploy.yml via
+# `docker compose run`. Shipped in the image so the VPS needs no repo checkout.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+
+# SQLite lives in /app/db and MUST be a mounted volume in production,
+# otherwise the database is destroyed every time the image is replaced.
+# `db/custom.db` is the project convention (deploy.sh, CI, tests/).
+# Created up-front so the non-root user owns it.
+RUN mkdir -p /app/db /app/backups && chown -R nextjs:nodejs /app/db /app/backups
+VOLUME ["/app/db"]
 
 USER nextjs
 EXPOSE 3000

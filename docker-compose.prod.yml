@@ -18,7 +18,7 @@
 # file. If that file lives inside the container's writable layer, it is
 # destroyed every single time the image is replaced — i.e. on every deploy.
 #
-# The `data` bind mount below is what prevents that. DATABASE_URL must point
+# The `db` bind mount below is what prevents that. DATABASE_URL must point
 # inside it. Do not move the database out of the mounted path.
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -34,8 +34,11 @@ services:
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
 
-      # Must resolve inside the mounted volume below.
-      DATABASE_URL: "file:/app/data/custom.db"
+      # Absolute path inside the mounted volume below.
+      # `db/custom.db` is the project convention: deploy.sh uses
+      # file:./db/custom.db and tests/database-runtime-build.sh asserts an
+      # absolute file: URL ending in db/custom.db.
+      DATABASE_URL: "file:/app/db/custom.db"
 
       # ── Secrets ────────────────────────────────────────────────────────────
       # Supplied from the host environment or a .env file that is root-owned
@@ -52,9 +55,9 @@ services:
       TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
 
     volumes:
-      # Database + backups. THIS is what makes the data survive a deploy.
-      - ./data:/app/data
-      # Written by the "Back up database" step in deploy.yml.
+      # Database. THIS is what makes the data survive a deploy.
+      - ./db:/app/db
+      # Written by scripts/db-backup.sh during deployment.
       - ./backups:/app/backups
 
     ports:
