@@ -1,6 +1,9 @@
 # ALO Labs AISMH — Continuous Integration
 # FIXED: branches: [main] (was malformed "branches: [main]" in the previous version)
 # FIXED: removed rg secret-scan that always passes via "|| echo" — now properly fails on real secrets
+# FIXED: pinned first-party actions to the majors that ship the Node 24 runtime
+#        (checkout@v5, cache@v5, upload-artifact@v6) — clears the Node 20 deprecation warning
+# FIXED: the build no longer carries a hardcoded JWT_SECRET literal; one is generated per run
 
 name: CI
 
@@ -30,7 +33,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -38,7 +41,7 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             node_modules
@@ -72,7 +75,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -87,18 +90,26 @@ jobs:
         env:
           DATABASE_URL: "file:./db/ci.db"
 
+      # The production build only requires *a* signing secret to be present.
+      # Generate a throwaway one per run so no secret-shaped literal is committed.
+      - name: Generate ephemeral build-time JWT secret
+        run: |
+          set -euo pipefail
+          SECRET="$(openssl rand -hex 32)"
+          echo "::add-mask::${SECRET}"
+          echo "JWT_SECRET=${SECRET}" >> "$GITHUB_ENV"
+
       - name: Build
         run: bun run build
         env:
           DATABASE_URL: "file:./db/ci.db"
-          JWT_SECRET: "ci-build-secret-not-used-in-production"
           NODE_ENV: "production"
 
       - name: Verify build output
         run: test -f .next/standalone/server.js
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: standalone-build
           path: .next/standalone/
@@ -110,7 +121,13 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      # Needed by the informational `bun audit` step at the end of this job.
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
 
       - name: Check for hardcoded secrets
         run: |

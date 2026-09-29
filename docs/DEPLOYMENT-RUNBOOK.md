@@ -142,24 +142,32 @@ EOF
 
 ## Phase 5 — Remove hardcoded admin password
 
+> **Status: done in `prisma/seed.ts`.** The seed no longer contains any password
+> literal. Use the check below to confirm nothing has regressed.
+
 ```bash
-# Inspect the seed file for hardcoded passwords
-grep -n "admin123\|password.*=.*['\"]" prisma/seed.ts english-aloeducation/prisma/seed.ts 2>/dev/null
+# Inspect the seed files for hardcoded password literals — expect no output
+grep -nE "hashPassword\('" prisma/*.ts
 ```
 
-If you find a hardcoded password (e.g. `await hashPassword('admin123')`), replace it with:
+The seed resolves the administrator password like this:
 
 ```typescript
-const seedPassword = process.env.ADMIN_SEED_PASSWORD;
-if (!seedPassword || seedPassword.length < 8) {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('ADMIN_SEED_PASSWORD env var is required in production');
-  }
-  console.warn('⚠️  Using dev fallback password');
-  // dev fallback only
+const fromEnv = process.env.ADMIN_SEED_PASSWORD;
+if (fromEnv) {
+  if (fromEnv.length < 12) throw new Error('ADMIN_SEED_PASSWORD is too short');
+  return { password: fromEnv, generated: false };
 }
-const passwordHash = await hashPassword(seedPassword);
+if (process.env.NODE_ENV === 'production') {
+  throw new Error('ADMIN_SEED_PASSWORD env var is required in production');
+}
+// Non-production: mint a random one-time password and print it once.
+return { password: randomBytes(24).toString('base64url'), generated: true };
 ```
+
+There is no shared default password in any environment. An administrator that
+already exists is never re-credentialed unless `ADMIN_SEED_PASSWORD` is supplied
+explicitly (see Phase 15).
 
 **If that credential was ever used in a real environment, rotate it now.** Generate a new one:
 
@@ -561,7 +569,7 @@ PRODUCTION VERIFIED
 
 ## Phase 15 — Rotate the exposed admin password (if applicable)
 
-If the old hardcoded password (`admin123` or whatever was in `english-aloeducation/prisma/seed.ts`) was ever used in any real environment — even a staging environment — you must rotate it:
+If the previously hardcoded demo password was ever used in any real environment — even a staging environment — you must rotate it:
 
 1. Generate a new strong password: `openssl rand -base64 24`
 2. Set `ADMIN_SEED_PASSWORD=<new-password>` in your production `.env`

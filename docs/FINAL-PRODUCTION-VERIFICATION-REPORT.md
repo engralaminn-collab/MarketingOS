@@ -264,10 +264,14 @@ MATCH:       N/A
    - `totalFailed Int @default(0)`
 
 7. **Updated `prisma/seed.ts`** — admin password via env var
-   - `getAdminSeedPassword()` reads `ADMIN_SEED_PASSWORD` env var
-   - In production (`NODE_ENV=production`), throws if env var is missing or < 8 chars
-   - In dev, falls back to `admin123` with a console warning
-   - Removed `console.log("Admin password: admin123")` from final output
+   - `resolveAdminSeedPassword()` reads the `ADMIN_SEED_PASSWORD` env var
+   - In production (`NODE_ENV=production`), throws if the env var is missing or < 12 chars
+   - Outside production, mints a random one-time password and prints it once —
+     there is no shared default password in any environment
+   - An administrator that already exists is never re-credentialed unless
+     `ADMIN_SEED_PASSWORD` is supplied explicitly
+   - Demo team members are seeded with unique random secrets that are never printed
+   - The final output no longer logs any password
 
 8. **Updated `.gitignore`** — added patterns for security-relevant files
    - `db/custom.db`, `db/*.db`, `db/*.db-journal`, `*.sqlite`, `*.sqlite3`
