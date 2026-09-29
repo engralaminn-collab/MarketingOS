@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 
 # Copy only manifests first so this layer caches until dependencies change.
 COPY package.json bun.lock ./
@@ -48,7 +49,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       openssl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
+# `bunx` is a separate entry point that dispatches to the same binary.
+# Copying only `bun` left `bunx` missing and `bunx prisma generate` exited 127.
 COPY --from=bun  /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -88,8 +92,9 @@ ENV NODE_ENV=production \
     GIT_COMMIT=${GIT_COMMIT}
 
 # Bun is kept in the runtime image because deploy.yml runs
-# `docker compose run --rm app bunx prisma migrate deploy` against it.
+# the scripts below shell out to `bunx prisma`.
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 
 # Next.js standalone output already contains the traced subset of node_modules.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

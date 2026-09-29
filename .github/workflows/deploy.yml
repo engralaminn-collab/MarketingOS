@@ -293,7 +293,8 @@ jobs:
           set -euo pipefail
           # NOTE: pass variables to remote shell via SSH environment (ssh -o SendEnv)
           # rather than GitHub Actions interpolation inside the heredoc.
-          # This avoids the bug where ${{ }} inside 'DEPLOY_SCRIPT' doesn't expand.
+          # This avoids the bug where an Actions expression inside the quoted
+          # 'DEPLOY_SCRIPT' heredoc is never expanded.
 
           ssh -i ~/.ssh/deploy_key \
             -p "${{ env.DEPLOY_PORT }}" \
