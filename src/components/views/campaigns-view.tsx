@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, type Variants } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAppStore } from "@/stores/app-store";
 import {
   Card,
@@ -46,7 +46,7 @@ import {
   CalendarDays,
   Zap,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 

@@ -81,6 +81,7 @@ model User {
 
   // ── Academic & HRM ───────────────────────────────────────────────────────
   role             String    @default("user")   // user | student | teacher | staff | admin | superadmin
+  isSuperAdmin     Boolean   @default(false)
   roleId           String?
   roleRel          Role?     @relation(fields: [roleId], references: [id])
   institutionId    String?
@@ -106,6 +107,7 @@ model User {
   partners         Partner[]         @relation("PartnerOwner")
   instAnnouncements InstitutionAnnouncement[] @relation("InstAnnouncementCreator")
   departmentsHeaded Department[]     @relation("DepartmentHead")
+  workforceAccounts Employee[]      @relation("EmployeeAccount")
 
   @@index([role])
   @@index([institutionId])
@@ -392,6 +394,8 @@ model AuditLog {
   resource   String
   resourceId String?
   details    String?
+  ipAddress  String?
+  userAgent  String?
   userId     String?
   user       User?    @relation(fields: [userId], references: [id])
   companyId  String?
@@ -481,7 +485,7 @@ model Activity {
 model Department {
   id            String   @id @default(cuid())
   name          String
-  code          String   @unique  // e.g. "MKT", "ENG", "FIN"
+  code          String?  @unique  // e.g. "MKT", "ENG", "FIN"
   description   String?
   parentId      String?               // For sub-departments
   parent        Department?  @relation("DeptHierarchy", fields: [parentId], references: [id])
@@ -574,6 +578,9 @@ model Employee {
   company         Company  @relation(fields: [companyId], references: [id])
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  userId          String?
+  user            User?    @relation("EmployeeAccount", fields: [userId], references: [id])
 
   executions      TaskExecution[]
   memories        EmployeeMemory[]
@@ -1017,6 +1024,8 @@ model KeywordTracker {
   company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@unique([companyId, keyword])
 }
 
 model EnrichmentCache {
@@ -1103,7 +1112,7 @@ model InstitutionAnnouncement {
 model Program {
   id            String   @id @default(cuid())
   name          String
-  code          String
+  code          String?
   description   String?
   duration      Int      @default(1)
   durationUnit  String   @default("year")     // year | semester | month
@@ -1166,7 +1175,7 @@ model Semester {
 model Subject {
   id            String   @id @default(cuid())
   name          String
-  code          String
+  code          String?
   description   String?
   creditHours   Int      @default(3)
   subjectType   String   @default("theory")   // theory | lab | project
@@ -1355,7 +1364,7 @@ model Payment {
 model Expense {
   id            String   @id @default(cuid())
   amount        Float
-  category      String                            // salary | utility | rent | supplies | marketing | other
+  category      String?                           // salary | utility | rent | supplies | marketing | other
   description   String?
   expenseDate   DateTime @default(now())
   receiptUrl    String?
@@ -1418,6 +1427,7 @@ model EmployeeProfile {
   address       String?
   city          String?
   emergencyContact String?
+  employmentType String?  // full_time | part_time | contract | intern
   contractEnd   DateTime?
   userId        String   @unique
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1466,7 +1476,7 @@ model Salary {
 model LeaveType {
   id            String   @id @default(cuid())
   name          String
-  code          String
+  code          String?
   daysPerYear   Int      @default(0)
   isPaid        Boolean  @default(true)
   isActive      Boolean  @default(true)

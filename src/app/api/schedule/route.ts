@@ -53,7 +53,7 @@ export const POST = withAuth(async (request, { user }) => {
 
     const schedule = await db.classSchedule.create({
       data: {
-        dayOfWeek,
+        dayOfWeek: Number(dayOfWeek),
         startTime,
         endTime,
         room,

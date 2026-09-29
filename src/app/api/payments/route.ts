@@ -63,7 +63,7 @@ export const POST = withAuth(async (request, { user }) => {
         remarks,
         receiptNo,
         status: "completed",
-        receivedBy: user.userId,
+        receivedById: user.userId,
       },
       include: {
         user: { select: { id: true, name: true, email: true } },

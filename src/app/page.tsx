@@ -347,7 +347,7 @@ function AppContent() {
 }
 
 function AppShell() {
-  const { isAuthenticated, isLoading, setUser } = useAppStore();
+  const { isAuthenticated, isLoading, setUser, setInstitution } = useAppStore();
 
   useEffect(() => {
     const token = localStorage.getItem('mos_token');
@@ -372,6 +372,40 @@ function AppShell() {
       setUser(null);
     }
   }, [setUser]);
+
+  // Load the active institution once authenticated. The Academic & HRM views
+  // read institution.id when creating records, so without this they cannot
+  // submit. A 404 simply means no institution has been set up yet, which the
+  // views already handle by prompting the user.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const token = localStorage.getItem('mos_token');
+    if (!token) return;
+
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const res = await fetch('/api/institution', {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (controller.signal.aborted) return;
+        const inst = json?.data;
+        if (inst?.id) {
+          setInstitution({
+            id: inst.id,
+            name: inst.name ?? '',
+            shortName: inst.shortName ?? inst.name ?? '',
+          });
+        }
+      } catch {
+        // Offline or not configured — the views handle a null institution.
+      }
+    })();
+    return () => controller.abort();
+  }, [isAuthenticated, setInstitution]);
 
   if (isLoading) {
     return (

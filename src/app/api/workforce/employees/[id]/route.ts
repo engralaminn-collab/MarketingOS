@@ -49,6 +49,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
       employee = direct as typeof employee;
     }
 
+    if (!employee) {
+      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+    }
+
     // Get recent task executions (last 10)
     const recentExecutions = await db.taskExecution.findMany({
       where: { assignedEmployeeId: employee.id, companyId },

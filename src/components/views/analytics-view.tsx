@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, type Variants } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAppStore } from "@/stores/app-store";
 import {
   Card,
@@ -49,7 +49,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 

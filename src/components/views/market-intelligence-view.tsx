@@ -148,7 +148,7 @@ export default function MarketIntelligenceView() {
     );
   }
 
-  const intel = data?.data || data as any;
+  const intel = (data as unknown as { data?: MarketIntelData })?.data ?? data;
   const summary = intel?.summary || {
     totalCompetitors: 0, highThreatCompetitors: 0, mediumThreatCompetitors: 0, lowThreatCompetitors: 0,
     totalKeywords: 0, totalSearchVolume: 0, avgDifficulty: 0,

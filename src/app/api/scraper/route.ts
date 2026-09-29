@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     const textBody = maxChars > 0 ? text.slice(0, maxChars) : '';
 
     // Try enrichment if we have a domain
-    let enrichment = null;
+    let enrichment: Awaited<ReturnType<typeof enrichByDomain>> | null = null;
     if (mode !== 'metadata') {
       try {
         enrichment = await enrichByDomain(domain);

@@ -34,8 +34,9 @@ export const POST = withAuth(async (request, { user }) => {
   try {
     const body = await request.json();
     const userId = body.userId;
-    const month = sanitizeInput(body.month);
-    const year = body.year;
+    // month/year arrive as JSON strings or numbers; the column is Int.
+    const month = Number(sanitizeInput(String(body.month ?? "")));
+    const year = Number(body.year);
     const basicSalary = body.basicSalary ?? 0;
     const houseRent = body.houseRent ?? 0;
     const medicalAllowance = body.medicalAllowance ?? 0;
@@ -44,8 +45,8 @@ export const POST = withAuth(async (request, { user }) => {
     const deduction = body.deduction ?? 0;
     const tax = body.tax ?? 0;
 
-    if (!userId || !month || !year) {
-      return NextResponse.json({ error: "userId, month, and year are required" }, { status: 400 });
+    if (!userId || !Number.isFinite(month) || !Number.isFinite(year) || month < 1 || month > 12) {
+      return NextResponse.json({ error: "userId, a numeric month (1-12), and year are required" }, { status: 400 });
     }
 
     // Check if salary already exists for this user/month/year

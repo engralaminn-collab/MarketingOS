@@ -2,6 +2,24 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAuth } from "@/lib/api-middleware";
 import { sanitizeInput, createAuditLog, ipFromRequest } from "@/lib/security";
+import type { Prisma } from "@prisma/client";
+
+/**
+ * Builds the nested StudentProfile write for a User.update.
+ * `profileData` is assembled field-by-field above from validated request body
+ * values, so it is narrowed to the Prisma input type at this single boundary
+ * rather than being spread untyped into the update.
+ */
+function buildProfileWrite(
+  hasProfile: boolean,
+  profileData: Record<string, unknown>
+): Pick<Prisma.UserUpdateInput, "studentProfile"> {
+  if (Object.keys(profileData).length === 0) return {};
+  return hasProfile
+    ? { studentProfile: { update: profileData as Prisma.StudentProfileUpdateWithoutUserInput } }
+    : { studentProfile: { create: profileData as Prisma.StudentProfileCreateWithoutUserInput } };
+}
+
 
 export const GET = withAuth(async (request, { params }) => {
   try {
@@ -76,11 +94,7 @@ export const PUT = withAuth(async (request, { params, user }) => {
       where: { id },
       data: {
         ...userData,
-        ...(existing.studentProfile && Object.keys(profileData).length > 0
-          ? { studentProfile: { update: profileData } }
-          : !existing.studentProfile && Object.keys(profileData).length > 0
-            ? { studentProfile: { create: profileData } }
-            : {}),
+        ...buildProfileWrite(Boolean(existing.studentProfile), profileData),
       },
       include: {
         studentProfile: true,

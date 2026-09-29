@@ -111,7 +111,7 @@ function ImageStudio() {
   const [selectedSize, setSelectedSize] = useState<ImageSizeId>("square");
   const [images, setImages] = useState<{ url: string; prompt: string }[]>([]);
 
-  const generateMutation = useApiMutation<{ url: string }>({
+  const generateMutation = useApiMutation<{ prompt: string; size: string }, { url: string }>({
     method: "POST",
     path: "/api/ai/generate-image",
     onSuccess: (data) => {
@@ -328,7 +328,7 @@ function TextStudio() {
 
   const activeContentType = CONTENT_TYPES.find((c) => c.id === activeType)!;
 
-  const generateMutation = useApiMutation<{ content: string }>({
+  const generateMutation = useApiMutation<{ message: string }, { content: string }>({
     method: "POST",
     path: "/api/ai/chat",
     onSuccess: (data) => {

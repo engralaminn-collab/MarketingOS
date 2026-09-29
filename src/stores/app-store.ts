@@ -48,6 +48,13 @@ export interface AuthUser {
   token: string;
 }
 
+/** Active institution for the Academic & HRM modules. */
+export interface ActiveInstitution {
+  id: string;
+  name: string;
+  shortName: string;
+}
+
 interface AppState {
   // Auth
   user: AuthUser | null;
@@ -55,11 +62,16 @@ interface AppState {
   isLoading: boolean;
   isSidebarOpen: boolean;
 
+  // Academic & HRM scope. Loaded from /api/institution once the user is
+  // authenticated; the academic views read institution.id when creating records.
+  institution: ActiveInstitution | null;
+
   // Navigation
   activeView: ViewId;
 
   // Actions
   setUser: (user: AuthUser | null) => void;
+  setInstitution: (institution: ActiveInstitution | null) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
   setActiveView: (view: ViewId) => void;
@@ -72,14 +84,22 @@ export const useAppStore = create<AppState>((set) => ({
   isAuthenticated: false,
   isLoading: true,
   isSidebarOpen: true,
+  institution: null,
   activeView: 'dashboard',
 
   setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
+  setInstitution: (institution) => set({ institution }),
   logout: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('mos_token');
     }
-    set({ user: null, isAuthenticated: false, isLoading: false, activeView: 'dashboard' });
+    set({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      institution: null,
+      activeView: 'dashboard',
+    });
   },
   setLoading: (isLoading) => set({ isLoading }),
   setActiveView: (activeView) => set({ activeView }),
