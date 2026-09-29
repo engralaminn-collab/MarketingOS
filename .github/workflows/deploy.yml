@@ -127,19 +127,54 @@ jobs:
             "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
             "docker pull '${IMAGE}'"
 
-      # ── Run database migrations ───────────────────────────────
-      - name: Run Prisma migrations
+      # ── Back up the database before touching the schema ───────
+      - name: Back up database
         run: |
           set -euo pipefail
-          # NOTE: removed "|| true" — if migrations fail, the deploy MUST stop
-          # before we swap to the new container with the new schema
-          echo "👉 Running prisma migrate deploy on VPS ..."
+          echo "👉 Backing up the database before any schema change ..."
           ssh -i ~/.ssh/deploy_key \
             -p "${{ env.DEPLOY_PORT }}" \
             -o StrictHostKeyChecking=no \
             -o ConnectTimeout=10 \
             "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
-            "cd /opt/aismh && docker compose run --rm app bunx prisma migrate deploy"
+            'set -euo pipefail
+             cd /opt/aismh
+             STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+             mkdir -p backups
+             # SQLite: .backup takes a consistent copy even while the app is running.
+             if [ -f data/custom.db ]; then
+               if command -v sqlite3 >/dev/null 2>&1; then
+                 sqlite3 data/custom.db ".backup backups/custom-${STAMP}.db"
+               else
+                 cp -p data/custom.db "backups/custom-${STAMP}.db"
+               fi
+               echo "✅ Backup written: backups/custom-${STAMP}.db"
+               ls -1t backups/ | tail -n +15 | xargs -r -I{} rm -f "backups/{}"
+             else
+               echo "⚠️  data/custom.db not found — skipping backup."
+               echo "    If the database lives elsewhere, update this step and the"
+               echo "    compose volume so it is NOT inside the container filesystem."
+             fi'
+
+      # ── Synchronise the database schema ───────────────────────
+      - name: Sync database schema
+        run: |
+          set -euo pipefail
+          # This project has no prisma/migrations directory — it uses `db push`
+          # everywhere (deploy.sh, docs, package.json db:push). `migrate deploy`
+          # was therefore guaranteed to fail here.
+          #
+          # `db push` is run WITHOUT --accept-data-loss on purpose: if the new
+          # schema would drop a column or table, Prisma refuses and the deploy
+          # stops instead of silently destroying production data. Resolve such a
+          # change deliberately, with a reviewed migration, never from CI.
+          echo "👉 Applying schema with prisma db push (non-destructive) ..."
+          ssh -i ~/.ssh/deploy_key \
+            -p "${{ env.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
+            "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
+            "cd /opt/aismh && docker compose run --rm app bunx prisma db push --skip-generate"
 
       # ── Rolling restart ──────────────────────────────────────
       - name: Rolling restart
@@ -167,8 +202,11 @@ jobs:
             cd /opt/aismh
             export AISMH_IMAGE="${FULL_IMAGE}"
 
-            # Rolling restart: start new container, wait for health, stop old
-            docker compose up -d --no-deps --build app
+            # Start the image we just pulled and verified.
+            # NOTE: --build was removed. It rebuilt from whatever source happened
+            # to be on the VPS, so the artefact that actually ran was NOT the
+            # image this workflow pulled and tagged.
+            docker compose up -d --no-deps app
             echo ">>> New container started, waiting for health check ..."
             sleep 5
           DEPLOY_SCRIPT
@@ -232,7 +270,7 @@ jobs:
             set -euo pipefail
             cd /opt/aismh
             export AISMH_IMAGE="${PREV_IMAGE}"
-            docker compose up -d --no-deps --build app
+            docker compose up -d --no-deps app
             echo ">>> Rollback container started"
           ROLLBACK
 

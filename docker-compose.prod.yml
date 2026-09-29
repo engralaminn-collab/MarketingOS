@@ -1,0 +1,82 @@
+# MarketingOS — reference production compose file
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# WHY THIS FILE EXISTS
+# ─────────────────────────────────────────────────────────────────────────────
+# .github/workflows/deploy.yml SSHes to the VPS and runs `docker compose` in
+# /opt/aismh, against a compose file that lives only on that server and is not
+# in version control. That makes the single most important production setting —
+# whether the database survives a deployment — invisible to code review.
+#
+# This file is the reviewed reference. Reconcile /opt/aismh/docker-compose.yml
+# with it. It is NOT applied automatically by any workflow.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# THE CRITICAL PART: SQLITE PERSISTENCE
+# ─────────────────────────────────────────────────────────────────────────────
+# prisma/schema.prisma uses `provider = "sqlite"`. A SQLite database is a plain
+# file. If that file lives inside the container's writable layer, it is
+# destroyed every single time the image is replaced — i.e. on every deploy.
+#
+# The `data` bind mount below is what prevents that. DATABASE_URL must point
+# inside it. Do not move the database out of the mounted path.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  app:
+    # Set by deploy.yml: export AISMH_IMAGE="<user>/<image>:<sha>"
+    image: ${AISMH_IMAGE:-alo-labs-aismh:latest}
+    container_name: aismh-app
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+
+      # Must resolve inside the mounted volume below.
+      DATABASE_URL: "file:/app/data/custom.db"
+
+      # ── Secrets ────────────────────────────────────────────────────────────
+      # Supplied from the host environment or a .env file that is root-owned
+      # and chmod 600. Never commit real values, and never bake them into the
+      # image. `${VAR:?message}` makes compose refuse to start if one is unset,
+      # which is far safer than booting with an empty signing key.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set on the host}
+      CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:-}
+
+      # Optional provider credentials. Absent means the relevant feature
+      # reports itself as unconfigured — it must never fake success.
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+
+    volumes:
+      # Database + backups. THIS is what makes the data survive a deploy.
+      - ./data:/app/data
+      # Written by the "Back up database" step in deploy.yml.
+      - ./backups:/app/backups
+
+    ports:
+      # Bound to loopback only; the reverse proxy terminates TLS for
+      # marketing.alolabs.net and forwards to this port.
+      - "127.0.0.1:3000:3000"
+
+    healthcheck:
+      # Mirrors the HEALTHCHECK in the Dockerfile so compose and the deploy
+      # workflow agree on what "healthy" means.
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

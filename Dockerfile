@@ -95,6 +95,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_module
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
+# SQLite lives here and MUST be a mounted volume in production, otherwise the
+# database is destroyed every time the image is replaced. See
+# docker-compose.prod.yml. Created up-front so the non-root user owns it.
+RUN mkdir -p /app/data /app/backups && chown -R nextjs:nodejs /app/data /app/backups
+VOLUME ["/app/data"]
+
 USER nextjs
 EXPOSE 3000
 
