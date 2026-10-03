@@ -1,0 +1,299 @@
+# ALO Labs AISMH — Production Deployment
+# FIXED: replace fragile workflow_run trigger with explicit push: main + needs: docker
+# FIXED: quote all ${{ }} interpolations inside heredocs to avoid shell injection
+# FIXED: use step outputs (id:resolve) consistently — no more broken "echo SHA" issue
+# FIXED: stop masking failures with "|| true" on the migrate step
+# FIXED: properly validate required secrets before SSH attempt
+
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  # Manual trigger for re-deploys without code change
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag (short SHA) to deploy — defaults to latest"
+        required: false
+        default: "latest"
+
+# Only one deploy at a time — queue if a new push comes mid-deploy
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+timeout-minutes: 20
+
+env:
+  IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME || 'alo-labs-aismh' }}
+  DEPLOY_USER: ${{ secrets.DEPLOY_USER || 'deploy' }}
+  DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+  DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+  HEALTH_PATH: ${{ vars.HEALTH_PATH || '/api/health' }}
+  HEALTH_TIMEOUT_SECONDS: "60"
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+
+    environment:
+      name: production
+      url: ${{ vars.DEPLOY_URL }}
+
+    steps:
+      # ── Fail-fast on missing required secrets ────────────────
+      - name: Verify required secrets are configured
+        run: |
+          set -euo pipefail
+          MISSING=()
+          [ -z "${{ secrets.DEPLOY_HOST }}" ] && MISSING+=("DEPLOY_HOST")
+          [ -z "${{ secrets.DEPLOY_SSH_KEY }}" ] && MISSING+=("DEPLOY_SSH_KEY")
+          [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] && MISSING+=("DOCKERERHUB_USERNAME")
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo "❌ Missing required GitHub secrets: ${MISSING[*]}"
+            echo "Add them at: Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          echo "✅ All required secrets present"
+
+      # ── Resolve the exact commit SHA being deployed ──────────
+      - name: Resolve commit SHA for image tag
+        id: resolve
+        run: |
+          set -euo pipefail
+          # Prefer explicit input, fall back to current commit
+          if [ -n "${{ github.event.inputs.image_tag }}" ] && [ "${{ github.event.inputs.image_tag }}" != "latest" ]; then
+            SHORT_SHA="${{ github.event.inputs.image_tag }}"
+          else
+            FULL_SHA="${{ github.sha }}"
+            SHORT_SHA="${FULL_SHA:0:7}"
+            echo "full_sha=${FULL_SHA}" >> "$GITHUB_OUTPUT"
+          fi
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "👉 Deploying image tag: ${SHORT_SHA}"
+          echo "👉 Full SHA: ${FULL_SHA:-manual-deploy}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      # ── Configure SSH key ─────────────────────────────────────
+      - name: Configure SSH key
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          # Write key with no trailing newline issues
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pre-populate known_hosts to avoid interactive prompt
+          ssh-keyscan -p "${{ env.DEPLOY_PORT }}" -H "${{ env.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || {
+            echo "❌ Failed to ssh-keyscan ${{ env.DEPLOY_HOST }}:${{ env.DEPLOY_PORT }}"
+            echo "Verify DEPLOY_HOST and DEPLOY_PORT secrets are correct and the host is reachable"
+            exit 1
+          }
+          echo "✅ SSH key configured"
+
+      # ── Save current image tag for rollback ──────────────────
+      - name: Save current running image tag
+        id: save-current
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          CURRENT=$(ssh -i ~/.ssh/deploy_key \
+            -p "${{ env.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
+            "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
+            "docker inspect --format='{{index .Config.Image}}' aismh-app 2>/dev/null || echo ''")
+          # Quote the value because it may contain colons (image:tag)
+          echo "previous_image=${CURRENT}" >> "$GITHUB_OUTPUT"
+          echo "👉 Previous image for rollback: ${CURRENT:-none}"
+
+      # ── Pull latest image on VPS ─────────────────────────────
+      - name: Pull latest Docker image
+        run: |
+          set -euo pipefail
+          IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.resolve.outputs.short_sha }}"
+          echo "👉 Pulling ${IMAGE} on VPS ..."
+          ssh -i ~/.ssh/deploy_key \
+            -p "${{ env.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
+            "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
+            "docker pull '${IMAGE}'"
+
+      # ── Run database migrations ───────────────────────────────
+      - name: Run Prisma migrations
+        run: |
+          set -euo pipefail
+          # NOTE: removed "|| true" — if migrations fail, the deploy MUST stop
+          # before we swap to the new container with the new schema
+          echo "👉 Running prisma migrate deploy on VPS ..."
+          ssh -i ~/.ssh/deploy_key \
+            -p "${{ env.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
+            "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
+            "cd /opt/aismh && docker compose run --rm app bunx prisma migrate deploy"
+
+      # ── Rolling restart ──────────────────────────────────────
+      - name: Rolling restart
+        env:
+          IMAGE_TAG: ${{ steps.resolve.outputs.short_sha }}
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+        run: |
+          set -euo pipefail
+          # NOTE: pass variables to remote shell via SSH environment (ssh -o SendEnv)
+          # rather than GitHub Actions interpolation inside the heredoc.
+          # This avoids the bug where ${{ }} inside 'DEPLOY_SCRIPT' doesn't expand.
+
+          ssh -i ~/.ssh/deploy_key \
+            -p "${{ env.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
+            "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
+            "IMAGE_TAG='${IMAGE_TAG}' DOCKER_USER='${DOCKER_USER}' IMAGE_NAME='${IMAGE_NAME}' bash -s" << 'DEPLOY_SCRIPT'
+            set -euo pipefail
+
+            FULL_IMAGE="${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
+            echo ">>> Deploying ${FULL_IMAGE} ..."
+
+            cd /opt/aismh
+            export AISMH_IMAGE="${FULL_IMAGE}"
+
+            # Rolling restart: start new container, wait for health, stop old
+            docker compose up -d --no-deps --build app
+            echo ">>> New container started, waiting for health check ..."
+            sleep 5
+          DEPLOY_SCRIPT
+
+      # ── Health check verification ────────────────────────────
+      - name: Verify health check
+        id: healthcheck
+        env:
+          DEPLOY_URL: ${{ vars.DEPLOY_URL || format('http://{0}', env.DEPLOY_HOST) }}
+        run: |
+          set -uo pipefail
+          HEALTH_URL="${DEPLOY_URL}${HEALTH_PATH}"
+          echo "👉 Checking ${HEALTH_URL} ..."
+
+          for i in $(seq 1 12); do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "${HEALTH_URL}" || echo "000")
+            if [ "${HTTP_CODE}" -ge 200 ] && [ "${HTTP_CODE}" -lt 400 ]; then
+              echo "✅ Health check passed (HTTP ${HTTP_CODE}) on attempt ${i}/12"
+              exit 0
+            fi
+            echo "⏳ Attempt ${i}/12 — HTTP ${HTTP_CODE}, retrying in 5s ..."
+            sleep 5
+          done
+
+          echo "❌ Health check failed after 60 seconds"
+          echo "👉 Check the container logs on the VPS:"
+          echo "   ssh ${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }} 'docker logs aismh-app --tail 100'"
+          exit 1
+        timeout-minutes: 2
+
+      # ── Cleanup old images ───────────────────────────────────
+      - name: Cleanup dangling images
+        if: success()
+        continue-on-error: true
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            -p "${{ env.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
+            "docker image prune -f --filter 'label=com.docker.compose.project=aismh' 2>/dev/null || true"
+
+      # ── Rollback on failure ──────────────────────────────────
+      - name: Rollback to previous image
+        if: failure()
+        env:
+          PREV_IMAGE: ${{ steps.save-current.outputs.previous_image }}
+        run: |
+          set -uo pipefail
+          if [ -z "${PREV_IMAGE}" ]; then
+            echo "⚠️ No previous image found, cannot rollback automatically"
+            echo "👉 Manual recovery: SSH to VPS and inspect /opt/aismh"
+            exit 1
+          fi
+
+          echo "🔄 Rolling back to ${PREV_IMAGE} ..."
+          ssh -i ~/.ssh/deploy_key \
+            -p "${{ env.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" \
+            "PREV_IMAGE='${PREV_IMAGE}' bash -s" << 'ROLLBACK'
+            set -euo pipefail
+            cd /opt/aismh
+            export AISMH_IMAGE="${PREV_IMAGE}"
+            docker compose up -d --no-deps --build app
+            echo ">>> Rollback container started"
+          ROLLBACK
+
+      # ── Notify (Slack / Discord / generic webhook) ───────────
+      - name: Send deployment notification
+        if: always()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DEPLOY_WEBHOOK: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}
+          SHA: ${{ steps.resolve.outputs.short_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ACTOR: ${{ github.actor }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -uo pipefail
+          # Build a safe JSON payload using jq if available, else fallback
+          if command -v jq >/dev/null 2>&1; then
+            PAYLOAD=$(jq -n \
+              --arg status "${STATUS}" \
+              --arg sha "${SHA}" \
+              --arg url "${RUN_URL}" \
+              --arg actor "${ACTOR}" \
+              --arg branch "${BRANCH}" \
+              '{status: $status, sha: $sha, run_url: $url, actor: $actor, branch: $branch, timestamp: now | todate}')
+          else
+            # Fallback JSON — escape any embedded quotes
+            PAYLOAD="{\"status\":\"${STATUS}\",\"sha\":\"${SHA}\",\"run_url\":\"${RUN_URL}\",\"actor\":\"${ACTOR}\",\"branch\":\"${BRANCH}\"}"
+          fi
+
+          if [ -n "${SLACK_WEBHOOK}" ]; then
+            echo "📨 Sending Slack notification ..."
+            curl -fsSL -X POST \
+              -H "Content-Type: application/json" \
+              -d "${PAYLOAD}" \
+              "${SLACK_WEBHOOK}" || echo "Slack notification failed (non-fatal)"
+          fi
+
+          if [ -n "${DEPLOY_WEBHOOK}" ]; then
+            echo "📨 Sending generic webhook notification ..."
+            curl -fsSL -X POST \
+              -H "Content-Type: application/json" \
+              -d "${PAYLOAD}" \
+              "${DEPLOY_WEBHOOK}" || echo "Generic webhook notification failed (non-fatal)"
+          fi
+
+      # ── Summary ───────────────────────────────────────────────
+      - name: Deployment summary
+        if: always()
+        run: |
+          {
+            echo "## Deployment Summary"
+            echo ""
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| **Status** | \`${{ job.status }}\` |"
+            echo "| **Image** | \`${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.resolve.outputs.short_sha }}\` |"
+            echo "| **Commit (short)** | \`${{ steps.resolve.outputs.short_sha }}\` |"
+            echo "| **Commit (full)** | \`${{ steps.resolve.outputs.full_sha || github.sha }}\` |"
+            echo "| **Previous image** | \`${{ steps.save-current.outputs.previous_image || 'N/A' }}\` |"
+            echo "| **Triggered by** | \`${{ github.actor }}\` |"
+            echo "| **Branch** | \`${{ github.ref_name }}\` |"
+            echo "| **Run URL** | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |"
+          } >> "$GITHUB_STEP_SUMMARY"

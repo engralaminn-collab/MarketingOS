@@ -1,0 +1,16 @@
+export type ViewId =
+  | 'dashboard'
+  | 'workforce'
+  | 'integrations'
+  | 'social-accounts'
+  | 'ai-command'
+  | 'media-studio'
+  | 'crm'
+  | 'seo'
+  | 'campaigns'
+  | 'content'
+  | 'analytics'
+  | 'team'
+  | 'ai-agents'
+  | 'subscriptions'
+  | 'settings';
