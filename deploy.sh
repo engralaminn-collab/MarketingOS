@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# ALO Labs MarketingOS — One-Click Deploy Script
+# Kexsio MarketingOS — One-Click Deploy Script
 # Usage:  bash deploy.sh
 #
 # What it does:
@@ -27,7 +27,7 @@ bold()   { printf "\033[1m%s\033[0m\n" "$*"; }
 
 echo ""
 bold "=================================================="
-bold "  ALO Labs MarketingOS — One-Click Deploy"
+bold "  Kexsio MarketingOS — One-Click Deploy"
 bold "=================================================="
 echo ""
 
@@ -235,7 +235,7 @@ if [ -n "$SECRETS_FOUND" ]; then
 fi
 
 # Commit
-COMMIT_MSG="feat: ALO Labs MarketingOS — complete CRM with autonomous AI agents
+COMMIT_MSG="feat: Kexsio MarketingOS — complete CRM with autonomous AI agents
 
 - Kexsio branding (logo, manifest, metadata)
 - AI agent runtime (calls z-ai-web-dev-sdk LLM for real work)
@@ -296,7 +296,7 @@ echo "     https://github.com/alaminiubateee969-cmd/ALO-LEARNING-JOURNEY-PRODUCT
 echo ""
 echo "  2. After CI passes, your VPS auto-deploys via the deploy.yml workflow."
 echo ""
-echo "  3. Verify production at https://marketing.alolabs.net"
+echo "  3. Verify production at https://www.kexsio.com"
 echo ""
 echo "  4. Login with admin@marketingos.com + the password shown above"
 echo ""

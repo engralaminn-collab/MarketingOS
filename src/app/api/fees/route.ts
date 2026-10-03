@@ -27,7 +27,7 @@ export const GET = withAuth(async (request) => {
             },
           },
           feeStructure: { select: { id: true, name: true, frequency: true } },
-          payments: { select: { id: true, amount, method, paidAt, status } },
+          payments: { select: { id: true, amount: true, method: true, paidAt: true, status: true } },
           _count: { select: { payments: true } },
         },
         orderBy: { createdAt: "desc" },

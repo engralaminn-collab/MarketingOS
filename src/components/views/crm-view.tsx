@@ -1328,16 +1328,17 @@ export function CrmView() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const loadAllData = useCallback(async () => {
-    setIsLoading(true);
-    setLoadError(null);
+  // Every state update below happens after an `await`, so this can be called
+  // straight from an effect without writing state synchronously during render.
+  // Results from an aborted request (unmount) are dropped.
+  const loadAllData = useCallback(async (signal?: AbortSignal) => {
     try {
       const headers = authHeaders();
       const [leadsRes, dealsRes, contactsRes, ticketsRes] = await Promise.all([
-        fetch("/api/crm/leads", { headers }),
-        fetch("/api/crm/deals", { headers }),
-        fetch("/api/crm/contacts", { headers }),
-        fetch("/api/crm/tickets", { headers }),
+        fetch("/api/crm/leads", { headers, signal }),
+        fetch("/api/crm/deals", { headers, signal }),
+        fetch("/api/crm/contacts", { headers, signal }),
+        fetch("/api/crm/tickets", { headers, signal }),
       ]);
       if (!leadsRes.ok || !dealsRes.ok || !contactsRes.ok || !ticketsRes.ok) {
         throw new Error(`Failed to load CRM data (leads=${leadsRes.status}, deals=${dealsRes.status}, contacts=${contactsRes.status}, tickets=${ticketsRes.status})`);
@@ -1345,20 +1346,39 @@ export function CrmView() {
       const [leadsJson, dealsJson, contactsJson, ticketsJson] = await Promise.all([
         leadsRes.json(), dealsRes.json(), contactsRes.json(), ticketsRes.json(),
       ]);
+      if (signal?.aborted) return;
       setLeads(leadsJson.leads || []);
       setDeals(dealsJson.deals || []);
       setContacts(contactsJson.contacts || []);
       setTickets(ticketsJson.tickets || []);
+      setLoadError(null);
     } catch (err) {
+      if (signal?.aborted) return;
       const msg = err instanceof Error ? err.message : "Failed to load CRM data";
       setLoadError(msg);
       setLeads([]); setDeals([]); setContacts([]); setTickets([]);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadAllData(); }, [loadAllData]);
+  // Retry / refresh-after-mutation. Runs from event handlers and child `reload`
+  // props, so flipping the loading flag immediately is safe here.
+  const reloadAllData = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    await loadAllData();
+  }, [loadAllData]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    // Dispatched inside an async scope so the effect body itself performs no
+    // state update; every setState in the loader runs after the response awaits.
+    void (async () => {
+      await loadAllData(controller.signal);
+    })();
+    return () => controller.abort();
+  }, [loadAllData]);
 
   const leadStats = useMemo(() => {
     const total = leads.length;
@@ -1461,7 +1481,7 @@ export function CrmView() {
               <p className="text-sm font-medium text-red-700 dark:text-red-300">Failed to load CRM data</p>
               <p className="text-xs text-muted-foreground mt-0.5">{loadError}</p>
             </div>
-            <Button size="sm" variant="outline" onClick={loadAllData}>Retry</Button>
+            <Button size="sm" variant="outline" onClick={reloadAllData}>Retry</Button>
           </div>
         </GlassCard>
       )}
@@ -1482,10 +1502,10 @@ export function CrmView() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="leads"><LeadsTab leads={leads} isLoading={isLoading} reload={loadAllData} /></TabsContent>
-        <TabsContent value="deals"><DealsTab deals={deals} isLoading={isLoading} reload={loadAllData} /></TabsContent>
-        <TabsContent value="contacts"><ContactsTab contacts={contacts} isLoading={isLoading} reload={loadAllData} /></TabsContent>
-        <TabsContent value="tickets"><TicketsTab tickets={tickets} isLoading={isLoading} reload={loadAllData} /></TabsContent>
+        <TabsContent value="leads"><LeadsTab leads={leads} isLoading={isLoading} reload={reloadAllData} /></TabsContent>
+        <TabsContent value="deals"><DealsTab deals={deals} isLoading={isLoading} reload={reloadAllData} /></TabsContent>
+        <TabsContent value="contacts"><ContactsTab contacts={contacts} isLoading={isLoading} reload={reloadAllData} /></TabsContent>
+        <TabsContent value="tickets"><TicketsTab tickets={tickets} isLoading={isLoading} reload={reloadAllData} /></TabsContent>
       </Tabs>
     </div>
   );

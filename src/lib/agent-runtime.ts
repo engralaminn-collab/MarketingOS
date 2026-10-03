@@ -37,7 +37,13 @@ export interface AgentRunResult {
   promptTokens?: number;
   completionTokens?: number;
   taskExecutionId: string;
+  /** Authoritative outcome. Prefer this over the booleans below. */
+  status: AgentExecutionStatus;
+  /** True only when the model provider actually answered. */
   success: boolean;
+  /** True when a rule-based template was returned instead of model output. */
+  degraded: boolean;
+  /** The real provider error, present for both degraded and failed runs. */
   error?: string;
 }
 
@@ -216,16 +222,18 @@ export async function runAgent(
         await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
-      // If all retries failed OR it's a non-429 error, try deterministic fallback
+      // All retries exhausted, or a non-retryable error. We may still be able
+      // to return a rule-based approximation, but that is a DEGRADED result,
+      // not a success: the real error is preserved either way so that callers,
+      // the execution log and the UI all report what actually happened.
+      errorMsg = msg;
       const fallback = generateDeterministicFallback(agent.type, input);
       if (fallback) {
-        output = fallback;
         modelUsed = 'rule-based-fallback';
         usedFallback = true;
-        errorMsg = undefined; // fallback succeeded — not a failure
+        output = `${DEGRADED_BANNER(msg)}\n\n${fallback}`;
       } else {
-        errorMsg = msg;
-        output = `Agent failed after ${maxRetries} attempts: ${msg}`;
+        output = `Agent failed after ${maxRetries} attempt(s): ${msg}`;
       }
       break;
     }
@@ -233,11 +241,21 @@ export async function runAgent(
 
   const durationMs = Date.now() - startedAt;
 
+  // Three distinct outcomes, never collapsed into one:
+  //   completed — the LLM answered
+  //   degraded  — the LLM failed but a rule-based approximation was returned
+  //   failed    — the LLM failed and nothing usable could be produced
+  const status: AgentExecutionStatus = !errorMsg
+    ? 'completed'
+    : usedFallback
+      ? 'degraded'
+      : 'failed';
+
   // 5. Update the TaskExecution row with the result
   await db.taskExecution.update({
     where: { id: execution.id },
     data: {
-      status: errorMsg ? 'failed' : 'completed',
+      status,
       output,
       modelUsed,
       modelTier: 'balanced',
@@ -245,11 +263,15 @@ export async function runAgent(
       completionTokens: completionTokens || 0,
       latencyMs: durationMs,
       completedAt: new Date(),
-      validationStatus: errorMsg ? 'failed' : 'passed',
-      validationScore: errorMsg ? 0 : (usedFallback ? 0.7 : 1),
-      qualityNotes: usedFallback
-        ? 'LLM rate-limited — used rule-based fallback'
-        : errorMsg || 'LLM call succeeded',
+      // A degraded run is explicitly NOT 'passed'.
+      validationStatus: status === 'completed' ? 'passed' : status,
+      validationScore: status === 'completed' ? 1 : status === 'degraded' ? 0.5 : 0,
+      qualityNotes:
+        status === 'completed'
+          ? 'LLM call succeeded'
+          : status === 'degraded'
+            ? `LLM unavailable (${classifyProviderError(errorMsg ?? '')}); returned rule-based approximation. Provider error: ${errorMsg}`
+            : `LLM call failed: ${errorMsg}`,
     },
   });
 
@@ -259,9 +281,16 @@ export async function runAgent(
     data: {
       config: JSON.stringify({
         ...parseConfig(agent.config),
-        tasksCompleted: (parseConfig(agent.config).tasksCompleted || 0) + 1,
+        // Only a genuine LLM success increments the completed counter.
+        tasksCompleted:
+          (parseConfig(agent.config).tasksCompleted || 0) + (status === 'completed' ? 1 : 0),
+        tasksDegraded:
+          (parseConfig(agent.config).tasksDegraded || 0) + (status === 'degraded' ? 1 : 0),
+        tasksFailed:
+          (parseConfig(agent.config).tasksFailed || 0) + (status === 'failed' ? 1 : 0),
         lastRunAt: new Date().toISOString(),
-        lastRunStatus: errorMsg ? 'failed' : 'success',
+        lastRunStatus: status,
+        lastRunError: errorMsg ?? null,
       }),
     },
   });
@@ -270,9 +299,23 @@ export async function runAgent(
   await emitEvent({
     companyId,
     userId,
-    type: errorMsg ? 'agent.run_failed' : 'agent.run_completed',
-    title: errorMsg ? `Agent "${agent.name}" failed` : `Agent "${agent.name}" completed a task`,
-    description: `Task: ${input.task.slice(0, 80)}${input.task.length > 80 ? '...' : ''} → ${errorMsg ? 'FAILED: ' + errorMsg : output.slice(0, 80) + (output.length > 80 ? '...' : '')}`,
+    type:
+      status === 'completed'
+        ? 'agent.run_completed'
+        : status === 'degraded'
+          ? 'agent.run_degraded'
+          : 'agent.run_failed',
+    title:
+      status === 'completed'
+        ? `Agent "${agent.name}" completed a task`
+        : status === 'degraded'
+          ? `Agent "${agent.name}" returned a degraded result`
+          : `Agent "${agent.name}" failed`,
+    description: `Task: ${input.task.slice(0, 80)}${input.task.length > 80 ? '...' : ''} → ${
+      status === 'completed'
+        ? output.slice(0, 80) + (output.length > 80 ? '...' : '')
+        : `${status.toUpperCase()}: ${errorMsg}`
+    }`,
     resourceType: 'agent_execution',
     resourceId: execution.id,
     link: '/ai-agents',
@@ -286,7 +329,10 @@ export async function runAgent(
       completionTokens,
       resourceType: input.resourceType,
       resourceId: input.resourceId,
-      success: !errorMsg,
+      status,
+      success: status === 'completed',
+      degraded: status === 'degraded',
+      error: errorMsg ?? null,
     },
   });
 
@@ -300,7 +346,11 @@ export async function runAgent(
     promptTokens,
     completionTokens,
     taskExecutionId: execution.id,
-    success: !errorMsg,
+    status,
+    // Only a real model response counts as success. A degraded (rule-based)
+    // result reports success:false with degraded:true and the provider error.
+    success: status === 'completed',
+    degraded: status === 'degraded',
     error: errorMsg,
   };
 }
@@ -395,12 +445,58 @@ ${params.keyPoints && params.keyPoints.length > 0 ? `Key points to cover: ${para
 
 // ─── Deterministic Fallback ──────────────────────────────────────────────────
 /**
- * When the LLM is unavailable (rate-limited, API key missing, network error),
- * these rule-based fallbacks produce real, useful output so agents ALWAYS
- * produce results — not just error messages.
+ * Rule-based templates returned when the model provider cannot be reached.
  *
- * This is the key fix: agents work in "real mode" even when the LLM is down.
+ * IMPORTANT: these are NOT AI output and NOT an analysis of the caller's data.
+ * Any figures inside them are illustrative placeholders. A run that uses one of
+ * these is recorded as `degraded`, never `completed`, it does not increment the
+ * agent's completed-task counter, and the output is prefixed with
+ * DEGRADED_BANNER so the distinction is visible to the end user.
  */
+/**
+ * Execution outcomes. `degraded` exists specifically so a rule-based
+ * approximation is never recorded or displayed as a genuine AI success.
+ */
+export type AgentExecutionStatus =
+  | 'pending'
+  | 'running'
+  | 'completed'
+  | 'degraded'
+  | 'failed'
+  | 'cancelled';
+
+/**
+ * Classifies a provider error without leaking keys, tokens or URLs into logs
+ * and user-facing output.
+ */
+function classifyProviderError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes('429') || m.includes('rate limit')) return 'rate limited';
+  if (m.includes('401') || m.includes('403') || m.includes('unauthor') || m.includes('api key')) {
+    return 'authentication rejected';
+  }
+  if (m.includes('timeout') || m.includes('etimedout') || m.includes('abort')) return 'timed out';
+  if (m.includes('enotfound') || m.includes('econnrefused') || m.includes('network')) {
+    return 'network unreachable';
+  }
+  if (m.includes('500') || m.includes('502') || m.includes('503')) return 'provider server error';
+  return 'provider error';
+}
+
+/**
+ * Prepended to every rule-based result so the reader can never mistake it for
+ * model output. States the actual failure class rather than always claiming a
+ * rate limit.
+ */
+const DEGRADED_BANNER = (message: string): string =>
+  [
+    '> ⚠️ **DEGRADED RESULT — NOT AI-GENERATED**',
+    `> The language model could not be reached (${classifyProviderError(message)}).`,
+    '> What follows is a deterministic, rule-based template. Any figures in it',
+    '> are illustrative placeholders, **not** an analysis of your data.',
+    '> Re-run this task once the provider is reachable.',
+  ].join('\n');
+
 function generateDeterministicFallback(agentType: string, input: AgentRunInput): string | null {
   const ctx = input.context || {};
   const task = input.task || '';
@@ -432,7 +528,7 @@ function generateDeterministicFallback(agentType: string, input: AgentRunInput):
 
     default:
       // Generic fallback — acknowledge the task and return a structured response
-      return `[Rule-based fallback — LLM was rate-limited]\n\nTask: ${task.slice(0, 200)}\n\nThe AI agent processed this task using deterministic rules. When the LLM becomes available, this task will use full AI reasoning. The result below is a rule-based approximation:\n\n✓ Task acknowledged and processed\n✓ Execution logged in TaskExecution table\n✓ Activity feed updated\n✓ Webhook fired (if configured)\n\nTo enable full AI reasoning, ensure the Z.ai API is not rate-limited.`;
+      return `Task: ${task.slice(0, 200)}\n\nThe AI agent processed this task using deterministic rules. When the LLM becomes available, this task will use full AI reasoning. The result below is a rule-based approximation:\n\n✓ Task acknowledged and processed\n✓ Execution logged in TaskExecution table\n✓ Activity feed updated\n✓ Webhook fired (if configured)\n\nRe-run once the model provider is reachable.`;
   }
 }
 
@@ -468,7 +564,7 @@ function generateLeadScoreFallback(ctx: any, task: string): string {
     reasoning,
     recommendedAction,
     estimatedValue,
-    _note: 'Generated by rule-based fallback (LLM was rate-limited). Full AI scoring will resume when the API is available.',
+    _note: 'Rule-based template — see the degraded-result notice above.',
   }, null, 2);
 }
 
@@ -499,7 +595,7 @@ Success requires both strategy and execution. By focusing on ${keyPoints.length 
 
 ---
 
-*Note: This content was generated using a rule-based fallback because the AI LLM was rate-limited. Full AI content generation will resume when the API is available.*`;
+*Rule-based template — see the degraded-result notice above.*`;
   }
 
   if (platform === 'LinkedIn') {
@@ -513,10 +609,10 @@ What's your experience with this? Share your thoughts below.
 
 #marketing #AI #growth #strategy
 
-*Note: Rule-based fallback — LLM was rate-limited.*`;
+*Rule-based template — see the degraded-result notice above.*`;
   }
 
-  return `# ${title}\n\n${keyPoints.map((p, i) => `## Point ${i + 1}: ${p}\n\nDetailed content about ${p.toLowerCase()} goes here. This section should provide actionable insights for ${audience}.\n`).join('\n')}\n\n---\n\n*Generated by rule-based fallback (LLM rate-limited).*`;
+  return `# ${title}\n\n${keyPoints.map((p, i) => `## Point ${i + 1}: ${p}\n\nDetailed content about ${p.toLowerCase()} goes here. This section should provide actionable insights for ${audience}.\n`).join('\n')}\n\n---\n\n*Rule-based template — see the degraded-result notice above.*`;
 }
 
 function generateSeoFallback(ctx: any, task: string): string {
@@ -527,7 +623,7 @@ function generateSeoFallback(ctx: any, task: string): string {
     keywordOpportunities: [keyword, `${keyword} best practices`, `${keyword} tools`, `how to ${keyword}`, `${keyword} 2026`],
     onPageIssues: ['Missing H1 tag on homepage', 'Meta description too short (under 120 chars)', 'No structured data (schema.org) found', 'Page load time > 3 seconds'],
     priorityAction: 'Add a compelling H1 tag with the target keyword and write a 150-160 char meta description',
-    _note: 'Generated by rule-based fallback (LLM was rate-limited).',
+    _note: 'Rule-based template — see the degraded-result notice above.',
   }, null, 2);
 }
 
@@ -549,7 +645,7 @@ function generateSupportFallback(ctx: any, task: string): string {
     suggestedReply: `Thank you for reaching out about "${subject.slice(0, 60)}". I've reviewed your request and our team is looking into this. We'll get back to you with a detailed response within 24 hours. If this is urgent, please call our priority support line.`,
     shouldEscalate: priority === 'critical',
     escalationReason: priority === 'critical' ? 'Marked as critical/urgent — requires immediate attention' : '',
-    _note: 'Generated by rule-based fallback (LLM was rate-limited).',
+    _note: 'Rule-based template — see the degraded-result notice above.',
   }, null, 2);
 }
 
@@ -573,7 +669,7 @@ function generateStrategyFallback(ctx: any, task: string): string {
 
 ---
 
-*Generated by rule-based fallback (LLM was rate-limited). Full AI strategy analysis will resume when the API is available.*`;
+*Rule-based template — see the degraded-result notice above.*`;
 }
 
 function generateAnalyticsFallback(ctx: any, task: string): string {
@@ -595,7 +691,7 @@ Lead→Contacted conversion rate (target: 85%+ for Variant B vs 68% for Variant 
 
 ---
 
-*Generated by rule-based fallback (LLM was rate-limited).*`;
+*Rule-based template — see the degraded-result notice above.*`;
 }
 
 function generateEmailFallback(ctx: any, task: string): string {
@@ -629,7 +725,7 @@ function generateEmailFallback(ctx: any, task: string): string {
 
 ---
 
-*Generated by rule-based fallback (LLM was rate-limited).*`;
+*Rule-based template — see the degraded-result notice above.*`;
 }
 
 function generateSocialFallback(ctx: any, task: string): string {
@@ -662,7 +758,7 @@ function generateSocialFallback(ctx: any, task: string): string {
 
 ---
 
-*Generated by rule-based fallback (LLM was rate-limited).*`;
+*Rule-based template — see the degraded-result notice above.*`;
 }
 
 function extractFromTask(task: string, regex: RegExp): string | null {

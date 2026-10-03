@@ -125,7 +125,7 @@ export async function GET(req: NextRequest) {
       } else {
         deptMap.set(key, {
           department: emp.department.name,
-          code: emp.department.code,
+          code: emp.department.code ?? '',
           count: 1,
           color: emp.department.color,
           icon: emp.department.icon,

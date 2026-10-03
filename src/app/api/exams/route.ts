@@ -56,7 +56,7 @@ export const POST = withAuth(async (request, { user }) => {
         endDate,
         status,
         subjectId,
-        createdBy: user.userId,
+        createdById: user.userId,
       },
       include: {
         subject: { select: { id: true, name: true, code: true } },

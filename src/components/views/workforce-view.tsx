@@ -1057,7 +1057,7 @@ export function WorkforceView() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-1.5 mt-3">
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-mono" style={{ borderColor: (selectedEmployee.department?.color || '#94a3b8') + '60', color: selectedEmployee.department?.color }}>
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-mono" style={{ borderColor: (selectedEmployee.department?.color || '#94a3b8') + '60', color: selectedEmployee.department?.color ?? undefined }}>
                   {selectedEmployee.department?.code} — {selectedEmployee.department?.name}
                 </Badge>
                 <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 font-medium ${levelBadgeColors[selectedEmployee.level] || ''}`}>
@@ -1585,8 +1585,8 @@ export function WorkforceView() {
                           </div>
                         )}
                         <div className="grid grid-cols-2 gap-2 text-[10px] text-muted-foreground">
-                          {exec.modelUsed && <span>Model: {exec.modelUsed as string}</span>}
-                          {exec.latencyMs && <span>Latency: {((exec.latencyMs as number) / 1000).toFixed(1)}s</span>}
+                          {Boolean(exec.modelUsed) && <span>Model: {String(exec.modelUsed)}</span>}
+                          {Boolean(exec.latencyMs) && <span>Latency: {(Number(exec.latencyMs) / 1000).toFixed(1)}s</span>}
                         </div>
                       </div>
                     )}

@@ -1,0 +1,48 @@
+# Keep the build context small and prevent local state / secrets from being
+# baked into the image layers.
+
+# Dependencies & build output (regenerated inside the image)
+node_modules
+.next
+out
+dist
+build
+
+# Local databases and their journals
+db
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+
+# Version control and CI
+.git
+.gitignore
+.github
+
+# Logs produced by the dev/start scripts
+*.log
+dev.log
+server.log
+npm-debug.log*
+yarn-error.log*
+
+# Editor / OS noise
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Docs and local tooling that do not affect the build
+docs
+tests
+*.md
+!README.md

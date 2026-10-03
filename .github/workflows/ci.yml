@@ -1,6 +1,36 @@
 # ALO Labs AISMH — Continuous Integration
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# FOUR DISTINCT RUNTIMES — do not conflate them
+# ─────────────────────────────────────────────────────────────────────────────
+#   1. GitHub Actions runner runtime .... Node 24 (INTERNAL to each action)
+#      Every `uses:` action declares its own `runs.using:` in its action.yml.
+#      GitHub executes that JS with ITS OWN bundled Node — currently Node 24,
+#      because Node 20 is deprecated on the runners. This is invisible to the
+#      application and is NOT controlled by setup-node. Pinning checkout@v5 /
+#      cache@v5 / upload-artifact@v6 / setup-bun@v2 is what silences the
+#      "Node.js 20 is deprecated" warning. It has ZERO effect on the app.
+#
+#   2. Application runtime in CI ........ Node 22 (via actions/setup-node below)
+#      This is the `node` on PATH for our own scripts, and what Next.js and
+#      Prisma resolve against. Pinned to 22.x to match production.
+#
+#   3. Build environment runtime ........ Node 22 + Bun 1.x
+#      Bun is the package manager and script runner (bun install / bun run).
+#      It is a separate engine from Node and is intentionally preserved.
+#
+#   4. Production server runtime ........ Node 22.23.2 (see Dockerfile / deploy.sh)
+#
+# The application target is Node 22. It is deliberately NOT Node 24.
+# ─────────────────────────────────────────────────────────────────────────────
+#
 # FIXED: branches: [main] (was malformed "branches: [main]" in the previous version)
 # FIXED: removed rg secret-scan that always passes via "|| echo" — now properly fails on real secrets
+# FIXED: pinned first-party actions to the majors that ship the Node 24 runtime
+#        (checkout@v5, cache@v5, upload-artifact@v6) — clears the Node 20 deprecation warning
+# FIXED: the build no longer carries a hardcoded JWT_SECRET literal; one is generated per run
+# FIXED: the application Node runtime is now pinned to 22 via .nvmrc + setup-node,
+#        instead of silently inheriting whatever the runner image ships
 
 name: CI
 
@@ -21,6 +51,9 @@ permissions:
   contents: read
 
 env:
+  # Application runtime. Kept in lockstep with .nvmrc / .node-version /
+  # package.json engines.node and the Dockerfile base image.
+  NODE_VERSION: "22.23.2"
   BUN_VERSION: "1"
 
 jobs:
@@ -30,15 +63,32 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      # Pins the APPLICATION Node runtime to 22. Unrelated to the Node 24
+      # runtime that GitHub uses internally to execute the actions themselves.
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
+      - name: Report toolchain versions
+        run: |
+          set -euo pipefail
+          echo "node    $(node --version)   <- application runtime (target: v22.x)"
+          echo "bun     $(bun --version)    <- package manager / script runner"
+          echo "npm     $(npm --version)"
+          node -e 'const v=process.versions.node.split(".")[0];
+            if (v !== "22") { console.error(`::error::Expected Node 22, got ${process.version}`); process.exit(1); }
+            console.log(`OK: application runtime is Node ${process.version}`);'
+
       - name: Cache Bun dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             node_modules
@@ -72,12 +122,29 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      # Pins the APPLICATION Node runtime to 22. Unrelated to the Node 24
+      # runtime that GitHub uses internally to execute the actions themselves.
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Report toolchain versions
+        run: |
+          set -euo pipefail
+          echo "node    $(node --version)   <- application runtime (target: v22.x)"
+          echo "bun     $(bun --version)    <- package manager / script runner"
+          echo "npm     $(npm --version)"
+          node -e 'const v=process.versions.node.split(".")[0];
+            if (v !== "22") { console.error(`::error::Expected Node 22, got ${process.version}`); process.exit(1); }
+            console.log(`OK: application runtime is Node ${process.version}`);'
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -87,18 +154,26 @@ jobs:
         env:
           DATABASE_URL: "file:./db/ci.db"
 
+      # The production build only requires *a* signing secret to be present.
+      # Generate a throwaway one per run so no secret-shaped literal is committed.
+      - name: Generate ephemeral build-time JWT secret
+        run: |
+          set -euo pipefail
+          SECRET="$(openssl rand -hex 32)"
+          echo "::add-mask::${SECRET}"
+          echo "JWT_SECRET=${SECRET}" >> "$GITHUB_ENV"
+
       - name: Build
         run: bun run build
         env:
           DATABASE_URL: "file:./db/ci.db"
-          JWT_SECRET: "ci-build-secret-not-used-in-production"
           NODE_ENV: "production"
 
       - name: Verify build output
         run: test -f .next/standalone/server.js
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: standalone-build
           path: .next/standalone/
@@ -110,7 +185,20 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      # Pins the APPLICATION Node runtime to 22. Unrelated to the Node 24
+      # runtime that GitHub uses internally to execute the actions themselves.
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Needed by the informational `bun audit` step at the end of this job.
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
 
       - name: Check for hardcoded secrets
         run: |

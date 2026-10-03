@@ -51,8 +51,6 @@ model Company {
   smsMessages     SmsMessage[]
   competitors     Competitor[]
   keywordTrackers KeywordTracker[]
-  workflows       Workflow[]
-  workflowRuns    WorkflowRun[]
 }
 
 // ==================== USER & ROLES ====================
@@ -80,7 +78,39 @@ model User {
   announcements  Announcement[] @relation("AnnouncementCreator")
   activities     Activity[] @relation("ActivityActor")
   sentSms        SmsMessage[] @relation("SmsSender")
-  createdWorkflows Workflow[] @relation("WorkflowCreator")
+
+  // ── Academic & HRM ───────────────────────────────────────────────────────
+  role             String    @default("user")   // user | student | teacher | staff | admin | superadmin
+  isSuperAdmin     Boolean   @default(false)
+  roleId           String?
+  roleRel          Role?     @relation(fields: [roleId], references: [id])
+  institutionId    String?
+  institution      Institution? @relation(fields: [institutionId], references: [id])
+
+  studentProfile   StudentProfile?
+  employeeProfile  EmployeeProfile?
+  enrollments      Enrollment[]      @relation("EnrollmentStudent")
+  submissions      Submission[]      @relation("SubmissionStudent")
+  examResults      ExamResult[]      @relation("ExamResultStudent")
+  fees             Fee[]             @relation("FeeStudent")
+  payments         Payment[]         @relation("PaymentStudent")
+  paymentsReceived Payment[]         @relation("PaymentReceiver")
+  salaries         Salary[]          @relation("SalaryEmployee")
+  leaveRequests    LeaveRequest[]    @relation("LeaveRequester")
+  leavesReviewed   LeaveRequest[]    @relation("LeaveReviewer")
+  attendance       AttendanceRecord[] @relation("AttendanceSubject")
+  attendanceMarked AttendanceRecord[] @relation("AttendanceMarker")
+  assignmentsAuthored Assignment[]   @relation("AssignmentAuthor")
+  examsAuthored    Exam[]            @relation("ExamAuthor")
+  schedulesTaught  ClassSchedule[]   @relation("ScheduleTeacher")
+  expensesApproved Expense[]         @relation("ExpenseApprover")
+  partners         Partner[]         @relation("PartnerOwner")
+  instAnnouncements InstitutionAnnouncement[] @relation("InstAnnouncementCreator")
+  departmentsHeaded Department[]     @relation("DepartmentHead")
+  workforceAccounts Employee[]      @relation("EmployeeAccount")
+
+  @@index([role])
+  @@index([institutionId])
 }
 
 model CompanyUser {
@@ -364,6 +394,8 @@ model AuditLog {
   resource   String
   resourceId String?
   details    String?
+  ipAddress  String?
+  userAgent  String?
   userId     String?
   user       User?    @relation(fields: [userId], references: [id])
   companyId  String?
@@ -453,7 +485,7 @@ model Activity {
 model Department {
   id            String   @id @default(cuid())
   name          String
-  code          String   @unique  // e.g. "MKT", "ENG", "FIN"
+  code          String?  @unique  // e.g. "MKT", "ENG", "FIN"
   description   String?
   parentId      String?               // For sub-departments
   parent        Department?  @relation("DeptHierarchy", fields: [parentId], references: [id])
@@ -462,14 +494,27 @@ model Department {
   sortOrder     Int      @default(0)
   icon          String?
   color         String?
-  companyId     String
-  company       Company  @relation(fields: [companyId], references: [id])
+  // Optional because academic departments belong to an Institution, not a Company.
+  companyId     String?
+  company       Company? @relation(fields: [companyId], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   employees     Employee[]
   sops          Sop[]
   knowledgeNodes KnowledgeNode[]
+
+  // ── Academic side (src/app/api/departments) ──────────────────────────────
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  headId        String?
+  head          User?    @relation("DepartmentHead", fields: [headId], references: [id])
+  programs      Program[]
+  subjects      Subject[]
+  staff         EmployeeProfile[]
+  salaries      Salary[]
+
+  @@index([institutionId])
 }
 
 // ==================== EMPLOYEE (AI EMPLOYEE) ====================
@@ -533,6 +578,9 @@ model Employee {
   company         Company  @relation(fields: [companyId], references: [id])
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  userId          String?
+  user            User?    @relation("EmployeeAccount", fields: [userId], references: [id])
 
   executions      TaskExecution[]
   memories        EmployeeMemory[]
@@ -976,6 +1024,8 @@ model KeywordTracker {
   company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@unique([companyId, keyword])
 }
 
 model EnrichmentCache {
@@ -993,37 +1043,552 @@ model EnrichmentCache {
   fetchedAt    DateTime @default(now())
 }
 
-model Workflow {
-  id           String   @id @default(cuid())
-  name         String
-  description  String?
-  trigger      String   @default("manual")
-  triggerConfig String  @default("{}")
-  steps        String   @default("[]")
-  isActive     Boolean  @default(false)
-  lastRunAt    DateTime?
-  runCount     Int      @default(0)
-  companyId    String
-  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  createdBy    String?
-  creator      User?    @relation("WorkflowCreator", fields: [createdBy], references: [id])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  runs         WorkflowRun[]
+// ═══════════════════════════════════════════════════════════════════════════
+// ACADEMIC & HRM
+//
+// These models back ~50 API routes under src/app/api that already existed
+// (students, programs, batches, subjects, schedule, assignments, exams, fees,
+// payments, expenses, partners, salary, leave, attendance, designations,
+// employees) plus their UI views. The routes and screens were merged without
+// the schema, which is why `db.student`, `db.exam`, `db.fee` etc. did not
+// type-check. Field names and relation names below are derived from what
+// those routes actually read and write — not invented.
+//
+// SQLite does not support Prisma enums, so status/category style columns are
+// Strings with their accepted values documented inline, matching the
+// convention already used by the marketing models above.
+// ═══════════════════════════════════════════════════════════════════════════
+
+model Institution {
+  id            String   @id @default(cuid())
+  name          String
+  shortName     String?
+  code          String   @unique
+  description   String?
+  address       String?
+  city          String?
+  country       String   @default("Bangladesh")
+  phone         String?
+  email         String?
+  website       String?
+  logo          String?
+  timezone      String   @default("Asia/Dhaka")
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  users         User[]
+  departments   Department[]
+  programs      Program[]
+  batches       Batch[]
+  subjects      Subject[]
+  announcements InstitutionAnnouncement[]
+  feeStructures FeeStructure[]
+  expenses      Expense[]
+  leaveTypes    LeaveType[]
+  schedules     ClassSchedule[]
+
+  @@index([code])
 }
 
-model WorkflowRun {
-  id           String   @id @default(cuid())
-  workflowId   String
-  workflow     Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  status       String   @default("pending")
-  trigger      String   @default("manual")
-  input        String   @default("{}")
-  output       String?
-  error        String?
-  startedAt    DateTime?
-  completedAt  DateTime?
-  companyId    String
-  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
+model InstitutionAnnouncement {
+  id            String   @id @default(cuid())
+  title         String
+  content       String
+  priority      String   @default("normal")   // low | normal | high
+  targetRoles   String   @default("all")      // JSON array of role keys, or "all"
+  isActive      Boolean  @default(true)
+  expiresAt     DateTime?
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  createdById   String?
+  createdBy     User?    @relation("InstAnnouncementCreator", fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([institutionId])
+}
+
+model Program {
+  id            String   @id @default(cuid())
+  name          String
+  code          String?
+  description   String?
+  duration      Int      @default(1)
+  durationUnit  String   @default("year")     // year | semester | month
+  totalCredits  Int      @default(0)
+  isActive      Boolean  @default(true)
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  batches       Batch[]
+  feeStructures FeeStructure[]
+  enrollments   Enrollment[]
+
+  @@unique([institutionId, code])
+  @@index([institutionId])
+}
+
+model Batch {
+  id            String   @id @default(cuid())
+  name          String
+  academicYear  String
+  startDate     DateTime?
+  endDate       DateTime?
+  isActive      Boolean  @default(true)
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  programId     String
+  program       Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  enrollments   Enrollment[]
+  schedules     ClassSchedule[]
+  attendance    AttendanceRecord[]
+  semesters     Semester[]
+
+  @@index([institutionId])
+  @@index([programId])
+}
+
+model Semester {
+  id            String   @id @default(cuid())
+  name          String
+  number        Int      @default(1)
+  code          String?
+  batchId       String?
+  batch         Batch?   @relation(fields: [batchId], references: [id])
+  startDate     DateTime?
+  endDate       DateTime?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  enrollments   Enrollment[]
+}
+
+model Subject {
+  id            String   @id @default(cuid())
+  name          String
+  code          String?
+  description   String?
+  creditHours   Int      @default(3)
+  subjectType   String   @default("theory")   // theory | lab | project
+  isActive      Boolean  @default(true)
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  assignments   Assignment[]
+  exams         Exam[]
+  schedules     ClassSchedule[]
+  attendanceRecords AttendanceRecord[]
+
+  @@unique([institutionId, code])
+  @@index([institutionId])
+}
+
+model ClassSchedule {
+  id            String   @id @default(cuid())
+  dayOfWeek     Int                              // 0 = Sunday .. 6 = Saturday
+  startTime     String                           // "09:00"
+  endTime       String                           // "10:30"
+  room          String?
+  isActive      Boolean  @default(true)
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  batchId       String
+  batch         Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  subjectId     String
+  subject       Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacherId     String?
+  teacher       User?    @relation("ScheduleTeacher", fields: [teacherId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([batchId])
+  @@index([subjectId])
+}
+
+model Assignment {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  content       String?
+  fileUrl       String?
+  fileName      String?
+  dueDate       DateTime?
+  totalMarks    Int      @default(100)
+  status        String   @default("draft")     // draft | published | closed
+  subjectId     String
+  subject       Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  assignedById  String?
+  assignedBy    User?    @relation("AssignmentAuthor", fields: [assignedById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  submissions   Submission[]
+
+  @@index([subjectId])
+}
+
+model Submission {
+  id            String   @id @default(cuid())
+  content       String?
+  fileUrl       String?
+  fileName      String?
+  status        String   @default("submitted") // submitted | graded | late | returned
+  marks         Float?
+  feedback      String?
+  submittedAt   DateTime @default(now())
+  gradedAt      DateTime?
+  assignmentId  String
+  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation("SubmissionStudent", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([assignmentId, userId])
+  @@index([userId])
+}
+
+model Exam {
+  id            String   @id @default(cuid())
+  name          String
+  examType      String   @default("midterm")   // quiz | midterm | final | practical
+  startDate     DateTime?
+  endDate       DateTime?
+  totalMarks    Int      @default(100)
+  passMarks     Int      @default(40)
+  status        String   @default("scheduled") // scheduled | ongoing | completed | cancelled
+  subjectId     String
+  subject       Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdById   String?
+  createdBy     User?    @relation("ExamAuthor", fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  results       ExamResult[]
+
+  @@index([subjectId])
+}
+
+model ExamResult {
+  id            String   @id @default(cuid())
+  marksObtained Float
+  grade         String?
+  remarks       String?
+  examId        String
+  exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation("ExamResultStudent", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([examId, userId])
+  @@index([userId])
+}
+
+model FeeStructure {
+  id            String   @id @default(cuid())
+  name          String
+  amount        Float
+  frequency     String   @default("semester")  // once | monthly | semester | yearly
+  isActive      Boolean  @default(true)
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  programId     String?
+  program       Program? @relation(fields: [programId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  fees          Fee[]
+
+  @@index([institutionId])
+}
+
+model Fee {
+  id              String   @id @default(cuid())
+  amount          Float
+  discount        Float    @default(0)
+  fine            Float    @default(0)
+  paidAmount      Float    @default(0)
+  status          String   @default("pending")  // pending | partial | paid | overdue | waived
+  dueDate         DateTime?
+  feeStructureId  String?
+  feeStructure    FeeStructure? @relation(fields: [feeStructureId], references: [id])
+  userId          String
+  user            User     @relation("FeeStudent", fields: [userId], references: [id], onDelete: Cascade)
+  studentProfileId String?
+  studentProfile  StudentProfile? @relation(fields: [studentProfileId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  payments        Payment[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  amount        Float
+  method        String   @default("cash")      // cash | bkash | nagad | bank | card
+  transactionId String?
+  receiptNo     String?  @unique
+  remarks       String?
+  status        String   @default("completed") // pending | completed | failed | refunded
+  paidAt        DateTime @default(now())
+  feeId         String
+  fee           Fee      @relation(fields: [feeId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation("PaymentStudent", fields: [userId], references: [id], onDelete: Cascade)
+  receivedById  String?
+  receivedBy    User?    @relation("PaymentReceiver", fields: [receivedById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([feeId])
+  @@index([userId])
+}
+
+model Expense {
+  id            String   @id @default(cuid())
+  amount        Float
+  category      String?                           // salary | utility | rent | supplies | marketing | other
+  description   String?
+  expenseDate   DateTime @default(now())
+  receiptUrl    String?
+  status        String   @default("pending")      // pending | approved | rejected | paid
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  approvedById  String?
+  approvedBy    User?    @relation("ExpenseApprover", fields: [approvedById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([institutionId])
+  @@index([category])
+}
+
+model Partner {
+  id             String   @id @default(cuid())
+  company        String
+  contactPerson  String?
+  email          String?
+  phone          String?
+  address        String?
+  agreementType  String   @default("referral")   // referral | reseller | affiliate | strategic
+  commissionRate Float    @default(0)
+  startDate      DateTime?
+  endDate        DateTime?
+  status         String   @default("active")     // active | inactive | terminated
+  notes          String?
+  userId         String?
+  user           User?    @relation("PartnerOwner", fields: [userId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+}
+
+model Designation {
+  id            String   @id @default(cuid())
+  title         String   @unique
+  level         String   @default("staff")       // executive | manager | senior | staff | intern
+  baseSalary    Float    @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  employees     EmployeeProfile[]
+  salaries      Salary[]
+}
+
+/// HR record attached to a User whose role is staff/teacher/admin. Distinct
+/// from the `Employee` model above, which represents an AI workforce agent.
+model EmployeeProfile {
+  id            String   @id @default(cuid())
+  employeeId    String   @unique                 // e.g. "EMP-0001"
+  joinDate      DateTime @default(now())
+  status        String   @default("active")      // active | on_leave | suspended | resigned | terminated
+  bloodGroup    String?
+  dateOfBirth   DateTime?
+  gender        String?
+  address       String?
+  city          String?
+  emergencyContact String?
+  employmentType String?  // full_time | part_time | contract | intern
+  contractEnd   DateTime?
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  designationId String?
+  designation   Designation? @relation(fields: [designationId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  salaries      Salary[]
+
+  @@index([departmentId])
+  @@index([designationId])
+}
+
+model Salary {
+  id                 String   @id @default(cuid())
+  month              Int
+  year               Int
+  basicSalary        Float    @default(0)
+  houseRent          Float    @default(0)
+  medicalAllowance   Float    @default(0)
+  transportAllowance Float    @default(0)
+  bonus              Float    @default(0)
+  deduction          Float    @default(0)
+  tax                Float    @default(0)
+  netSalary          Float    @default(0)
+  payDate            DateTime?
+  status             String   @default("pending") // pending | processing | paid | cancelled
+  userId             String
+  user               User     @relation("SalaryEmployee", fields: [userId], references: [id], onDelete: Cascade)
+  employeeProfileId  String?
+  employeeProfile    EmployeeProfile? @relation(fields: [employeeProfileId], references: [id])
+  departmentId       String?
+  department         Department? @relation(fields: [departmentId], references: [id])
+  designationId      String?
+  designation        Designation? @relation(fields: [designationId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([userId, month, year])
+  @@index([status])
+}
+
+model LeaveType {
+  id            String   @id @default(cuid())
+  name          String
+  code          String?
+  daysPerYear   Int      @default(0)
+  isPaid        Boolean  @default(true)
+  isActive      Boolean  @default(true)
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  requests      LeaveRequest[]
+}
+
+model LeaveRequest {
+  id            String   @id @default(cuid())
+  startDate     DateTime
+  endDate       DateTime
+  totalDays     Int      @default(1)
+  reason        String?
+  status        String   @default("pending")    // pending | approved | rejected | cancelled
+  rejectionNote String?
+  reviewedAt    DateTime?
+  leaveTypeId   String
+  leaveType     LeaveType @relation(fields: [leaveTypeId], references: [id])
+  userId        String
+  user          User     @relation("LeaveRequester", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedById  String?
+  reviewedBy    User?    @relation("LeaveReviewer", fields: [reviewedById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model AttendanceRecord {
+  id            String   @id @default(cuid())
+  date          DateTime
+  status        String   @default("present")    // present | absent | late | excused
+  remarks       String?
+  userId        String
+  user          User     @relation("AttendanceSubject", fields: [userId], references: [id], onDelete: Cascade)
+  subjectId     String?
+  subject       Subject? @relation(fields: [subjectId], references: [id])
+  batchId       String?
+  batch         Batch?   @relation(fields: [batchId], references: [id])
+  markedById    String?
+  markedBy      User?    @relation("AttendanceMarker", fields: [markedById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([date])
+}
+
+model StudentProfile {
+  id               String   @id @default(cuid())
+  studentId        String   @unique                // e.g. "STU-0001"
+  dateOfBirth      DateTime?
+  gender           String?
+  bloodGroup       String?
+  religion         String?
+  nationality      String?  @default("Bangladeshi")
+  address          String?
+  city             String?
+  guardianName     String?
+  guardianPhone    String?
+  guardianRelation String?
+  emergencyContact String?
+  admissionDate    DateTime @default(now())
+  admissionStatus  String   @default("active")
+  status           String   @default("active")     // active | graduated | suspended | withdrawn
+  cgpa             Float    @default(0)
+  totalCredits     Int      @default(0)
+  currentSemester  Int      @default(1)
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  fees             Fee[]
+}
+
+model Enrollment {
+  id            String   @id @default(cuid())
+  status        String   @default("active")       // active | completed | dropped | transferred
+  enrolledAt    DateTime @default(now())
+  userId        String
+  user          User     @relation("EnrollmentStudent", fields: [userId], references: [id], onDelete: Cascade)
+  programId     String
+  program       Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  batchId       String?
+  batch         Batch?   @relation(fields: [batchId], references: [id])
+  semesterId    String?
+  semester      Semester? @relation(fields: [semesterId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, programId])
+  @@index([batchId])
+}
+
+/// Named RBAC role. Complements the `role` string column on User for
+/// deployments that need custom permission sets.
+model Role {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  displayName   String?
+  level         Int      @default(0)
+  description   String?
+  permissions   String   @default("[]")           // JSON array of permission keys
+  isSystem      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  users         User[]
 }

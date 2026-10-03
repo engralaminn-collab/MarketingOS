@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const token = req.headers.get('Authorization')?.replace('Bearer ', '');
     if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
     const payload = await verifyToken(token);
-    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
+    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
     const agents = await db.aiAgent.findMany({
       where: { companyId: payload.companyId },
@@ -15,7 +15,9 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ agents });
-  } catch { return NextResponse.json({ error: 'Failed' }, { status: 500 }); }
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: NextRequest) {
@@ -23,7 +25,7 @@ export async function PATCH(req: NextRequest) {
     const token = req.headers.get('Authorization')?.replace('Bearer ', '');
     if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
     const payload = await verifyToken(token);
-    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
+    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
     const { id, isEnabled } = await req.json();
     const agent = await db.aiAgent.update({
@@ -32,5 +34,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     return NextResponse.json({ agent });
-  } catch { return NextResponse.json({ error: 'Failed' }, { status: 500 }); }
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

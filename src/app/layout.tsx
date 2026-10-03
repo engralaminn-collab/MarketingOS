@@ -13,16 +13,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = "https://marketing.alolabs.net";
-const SITE_NAME = "ALO Labs MarketingOS";
+const SITE_URL = "https://www.kexsio.com";
+const SITE_NAME = "Kexsio MarketingOS";
 const SITE_DESCRIPTION =
-  "ALO Labs MarketingOS — Enterprise AI Workforce Platform with 2,000 specialized AI employees, 120+ integrations, autonomous CRM, SEO, content, and campaign automation. Built by Kexsio.";
+  "Kexsio MarketingOS — Enterprise AI Workforce Platform with 2,000 specialized AI employees, 120+ integrations, autonomous CRM, SEO, content, and campaign automation. Built by Kexsio.";
 const OG_IMAGE = `${SITE_URL}/kexsio-logo.png`;
 
 export const metadata: Metadata = {
   // --- Basic ---
   title: {
-    default: "ALO Labs MarketingOS — Enterprise AI Workforce Platform",
+    default: "Kexsio MarketingOS — Enterprise AI Workforce Platform",
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -81,14 +81,14 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: "ALO Labs MarketingOS — Enterprise AI Workforce Platform",
+    title: "Kexsio MarketingOS — Enterprise AI Workforce Platform",
     description: SITE_DESCRIPTION,
     images: [
       {
         url: OG_IMAGE,
         width: 512,
         height: 512,
-        alt: "ALO Labs MarketingOS — Enterprise AI Workforce Platform",
+        alt: "Kexsio MarketingOS — Enterprise AI Workforce Platform",
       },
     ],
   },
@@ -96,7 +96,7 @@ export const metadata: Metadata = {
   // --- Twitter Card ---
   twitter: {
     card: "summary_large_image",
-    title: "ALO Labs MarketingOS — Enterprise AI Workforce Platform",
+    title: "Kexsio MarketingOS — Enterprise AI Workforce Platform",
     description: SITE_DESCRIPTION,
     images: [OG_IMAGE],
   },

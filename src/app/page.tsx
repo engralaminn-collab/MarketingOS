@@ -55,6 +55,20 @@ const IntegrationsView = lazy(() => import('@/components/views/integrations-view
 const MessagesView = lazy(() => import('@/components/views/messages-view'));
 const AnnouncementsView = lazy(() => import('@/components/views/announcements-view'));
 const AuditLogsView = lazy(() => import('@/components/views/audit-logs-view'));
+const StudentsView = lazy(() => import('@/components/views/students-view'));
+const EmployeesView = lazy(() => import('@/components/views/employees-view'));
+const DepartmentsView = lazy(() => import('@/components/views/departments-view'));
+const ProgramsView = lazy(() => import('@/components/views/programs-view'));
+const AttendanceView = lazy(() => import('@/components/views/attendance-view'));
+const AssignmentsView = lazy(() => import('@/components/views/assignments-view'));
+const ExamsView = lazy(() => import('@/components/views/exams-view'));
+const ScheduleView = lazy(() => import('@/components/views/schedule-view'));
+const FinanceView = lazy(() => import('@/components/views/finance-view'));
+const FeesView = lazy(() => import('@/components/views/fees-view'));
+const SalaryView = lazy(() => import('@/components/views/salary-view'));
+const HrmView = lazy(() => import('@/components/views/hrm-view'));
+const LeaveView = lazy(() => import('@/components/views/leave-view'));
+const PartnersView = lazy(() => import('@/components/views/partners-view'));
 
 const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   dashboard: DashboardView,
@@ -75,6 +89,20 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   integrations: IntegrationsView,
   subscriptions: SettingsView,
   settings: SettingsView,
+  students: StudentsView,
+  employees: EmployeesView,
+  departments: DepartmentsView,
+  programs: ProgramsView,
+  attendance: AttendanceView,
+  assignments: AssignmentsView,
+  exams: ExamsView,
+  schedule: ScheduleView,
+  finance: FinanceView,
+  fees: FeesView,
+  salary: SalaryView,
+  hrm: HrmView,
+  leave: LeaveView,
+  partners: PartnersView,
 };
 
 interface NavItem {
@@ -145,7 +173,7 @@ function Sidebar() {
         <div className="flex items-center gap-3 px-4 h-16 border-b border-border/50 shrink-0">
           <Image
             src="/kexsio-logo.png"
-            alt="ALO Labs MarketingOS"
+            alt="Kexsio MarketingOS"
             width={36}
             height={36}
             className="rounded-lg shrink-0"
@@ -153,7 +181,7 @@ function Sidebar() {
           />
           {isSidebarOpen && (
             <span className="font-bold text-lg bg-gradient-to-r from-primary to-chart-2 bg-clip-text text-transparent whitespace-nowrap">
-              ALO Labs MarketingOS
+              Kexsio MarketingOS
             </span>
           )}
           <Button variant="ghost" size="icon" className="ml-auto md:hidden h-8 w-8" onClick={() => setSidebarOpen(false)}>
@@ -311,7 +339,7 @@ function AppContent() {
           </main>
         </ScrollArea>
         <footer className="mt-auto shrink-0 border-t px-4 py-2 text-center text-[10px] text-muted-foreground bg-card/50">
-          ALO Labs MarketingOS — AI-Powered Marketing Operating System
+          Kexsio MarketingOS — AI-Powered Marketing Operating System
         </footer>
       </div>
     </div>
@@ -319,7 +347,7 @@ function AppContent() {
 }
 
 function AppShell() {
-  const { isAuthenticated, isLoading, setUser } = useAppStore();
+  const { isAuthenticated, isLoading, setUser, setInstitution } = useAppStore();
 
   useEffect(() => {
     const token = localStorage.getItem('mos_token');
@@ -345,19 +373,53 @@ function AppShell() {
     }
   }, [setUser]);
 
+  // Load the active institution once authenticated. The Academic & HRM views
+  // read institution.id when creating records, so without this they cannot
+  // submit. A 404 simply means no institution has been set up yet, which the
+  // views already handle by prompting the user.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const token = localStorage.getItem('mos_token');
+    if (!token) return;
+
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const res = await fetch('/api/institution', {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (controller.signal.aborted) return;
+        const inst = json?.data;
+        if (inst?.id) {
+          setInstitution({
+            id: inst.id,
+            name: inst.name ?? '',
+            shortName: inst.shortName ?? inst.name ?? '',
+          });
+        }
+      } catch {
+        // Offline or not configured — the views handle a null institution.
+      }
+    })();
+    return () => controller.abort();
+  }, [isAuthenticated, setInstitution]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Image
             src="/kexsio-logo.png"
-            alt="ALO Labs MarketingOS"
+            alt="Kexsio MarketingOS"
             width={64}
             height={64}
             className="rounded-xl animate-pulse"
             priority
           />
-          <p className="text-sm text-muted-foreground">Loading ALO Labs MarketingOS...</p>
+          <p className="text-sm text-muted-foreground">Loading Kexsio MarketingOS...</p>
         </div>
       </div>
     );

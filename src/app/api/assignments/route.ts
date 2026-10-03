@@ -74,7 +74,7 @@ export const POST = withAuth(async (request, { user }) => {
         totalMarks,
         status,
         subjectId,
-        assignedBy: user.userId,
+        assignedById: user.userId,
       },
       include: {
         subject: { select: { id: true, name: true, code: true } },

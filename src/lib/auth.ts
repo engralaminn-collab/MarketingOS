@@ -161,7 +161,7 @@ export async function getSessionUser(request: Request): Promise<SessionUser | nu
     if (!token) {
       const cookieHeader = request.headers.get('cookie') || '';
       const match = cookieHeader.match(/mos_token=([^;]+)/);
-      token = match ? match[1] : null;
+      token = match ? match[1] : undefined;
     }
 
     if (!token) return null;

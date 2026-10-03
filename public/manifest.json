@@ -1,6 +1,6 @@
 {
-  "name": "ALO Labs MarketingOS",
-  "short_name": "ALO Labs MarketingOS",
+  "name": "Kexsio MarketingOS",
+  "short_name": "Kexsio MarketingOS",
   "description": "Enterprise AI Workforce Platform with 2,000 specialized AI employees, 120+ integrations, autonomous CRM, SEO, content, and campaign automation.",
   "start_url": "/",
   "display": "standalone",
@@ -26,11 +26,7 @@
       "type": "image/x-icon"
     }
   ],
-  "categories": [
-    "business",
-    "productivity",
-    "marketing"
-  ],
+  "categories": ["business", "productivity", "marketing"],
   "lang": "en-US",
   "dir": "ltr"
 }

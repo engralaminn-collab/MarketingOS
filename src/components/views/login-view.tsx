@@ -16,7 +16,7 @@ export function LoginView() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [loginForm, setLoginForm] = useState({ email: 'admin@marketingos.com', password: 'admin123' });
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({ email: '', password: '', name: '', companyName: '', industry: '', country: '' });
 
   const handleLogin = async () => {
@@ -75,14 +75,14 @@ export function LoginView() {
           <div className="inline-flex items-center gap-3 mb-4">
             <Image
               src="/kexsio-logo.png"
-              alt="ALO Labs MarketingOS"
+              alt="Kexsio MarketingOS"
               width={48}
               height={48}
               className="rounded-xl"
               priority
             />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-chart-2 bg-clip-text text-transparent">
-              ALO Labs MarketingOS
+              Kexsio MarketingOS
             </h1>
           </div>
           <p className="text-muted-foreground">AI-Powered Marketing Operating System</p>
@@ -107,8 +107,9 @@ export function LoginView() {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       type="email"
-                      placeholder="admin@marketingos.com"
+                      placeholder="you@company.com"
                       value={loginForm.email}
+                      autoComplete="email"
                       onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                       className="pl-10"
                       onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
@@ -123,6 +124,7 @@ export function LoginView() {
                       type="password"
                       placeholder="Enter password"
                       value={loginForm.password}
+                      autoComplete="current-password"
                       onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                       className="pl-10"
                       onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
@@ -133,9 +135,6 @@ export function LoginView() {
                 <Button className="w-full bg-gradient-to-r from-primary to-chart-2 hover:opacity-90" onClick={handleLogin} disabled={loading}>
                   {loading ? 'Signing in...' : 'Sign In'}
                 </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  Demo: admin@marketingos.com / admin123
-                </p>
               </CardContent>
             </TabsContent>
 

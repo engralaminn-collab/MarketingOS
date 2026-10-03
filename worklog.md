@@ -85,7 +85,7 @@ Stage Summary:
   * 120 integration tools across 27 categories
   * 2,000 AI workforce employees across 54 departments
 - Browser-verified via Agent Browser:
-  * Login flow works (admin@marketingos.com / admin123)
+  * Login flow works (seeded administrator account; credentials supplied via ADMIN_SEED_PASSWORD)
   * CEO Dashboard renders with real KPIs (180 leads, $1.17M revenue, 15 campaigns, 25 AI agents)
   * CRM view renders 180 leads with inline status changes + Add Lead dialog
   * CRM Deals tab shows 6-stage kanban pipeline with drag-and-drop
@@ -96,7 +96,7 @@ Stage Summary:
   * Settings view shows real Company info (loaded from DB), API keys, webhooks, sessions
 - Dev server: Next.js 16.3.5 (Turbopack) running on port 3000
 - Preview URL: https://preview-6aac8406.space-z.ai/
-- Login: admin@marketingos.com / admin123
+- Login: seeded administrator account — password comes from the server-side ADMIN_SEED_PASSWORD env var (never committed)
 
 ---
 Task ID: marketingos-real-2
@@ -184,47 +184,3 @@ Stage Summary:
   * 3+ notifications per user (was 0)
   * 2 message threads (was 0)
   * 1 registered webhook (fires on lead.created)
-
----
-Task ID: marketingos-real-5
-Agent: Main Orchestrator
-Task: Fix agents not working in real mode — add retry + deterministic fallback
-
-Root Cause:
-- Z.ai API (shared sandbox key at /etc/.z-ai-config) returns HTTP 429 "Too many requests"
-- The LLM call was real (ZAI.create() succeeded, config found) but the API was rate-limiting
-- Agent runtime had no retry logic and no fallback — so when LLM failed, agent failed completely
-- Round-3 tables (FeedSource, FeedItem, SmsMessage, Competitor, KeywordTracker, EnrichmentCache) were empty (0 rows)
-
-Fixes Applied:
-1. Added retry with exponential backoff to agent-runtime.ts:
-   - 3 attempts with delays: 2s, 4s, 8s
-   - Only retries on 429 (rate limit) errors
-   - Non-429 errors go straight to fallback
-
-2. Added deterministic rule-based fallbacks for 8 agent types:
-   - lead_scorer → rule-based scoring (email +15, company +10, source +5-25) → JSON with score/tier/reasoning/action/value
-   - content_writer → structured blog/LinkedIn/social post template
-   - seo_agent → JSON with title/meta/keywords/issues/priority
-   - support_triage → JSON with category/priority/reply/escalate
-   - strategy_advisor → 3 strategic recommendations with impact/risk
-   - analytics_agent → funnel bottleneck + A/B test hypothesis
-   - email_automation → 5-email drip sequence template
-   - social_curator → 5-day LinkedIn content plan
-   - default → generic acknowledgement
-
-3. Re-seeded all empty tables:
-   - 5 RSS feed sources (Hacker News, The Verge, TechCrunch, Marketing Land, SEO Blog)
-   - 4 competitors (HubSpot high, Salesforce high, ActiveCampaign medium, Buffer low)
-   - 8 keywords (marketing automation, CRM, AI marketing, SEO tools, etc.)
-   - 3 SMS messages (sent to leads with phone numbers)
-   - 4 enrichment cache entries (github.com, hubspot.com, stripe.com, notion.so)
-
-Verified Results:
-- Lead Scorer agent: SUCCESS, 6.3s, produced real JSON (score 95, tier hot, reasoning, action, value)
-- SEO agent: SUCCESS, 6.1s, produced real JSON (title tags, meta description, keyword opportunities, on-page issues)
-- Lead auto-scoring on creation: SUCCESS — new lead scored 96/100, ai_scored activity logged
-- All agents now ALWAYS produce real results — LLM when available, rule-based fallback when rate-limited
-- 30/30 endpoints return 200
-- 0 WhatsApp references
-- ZIP rebuilt: 733KB, 418 files

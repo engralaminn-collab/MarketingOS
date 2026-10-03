@@ -34,23 +34,42 @@ export function CommandPalette({ onNavigate, onQuickAction }: CommandPaletteProp
   const listRef = useRef<HTMLDivElement>(null);
   const { setActiveView } = useAppStore();
 
+  // Opening/closing owns the query + selection reset. Doing it here, at the
+  // user interaction, keeps the palette state in one place and removes the
+  // need for an effect that writes state while rendering.
+  const openPalette = useCallback(() => {
+    setOpen(true);
+    setQuery("");
+    setActiveIndex(0);
+  }, []);
+
+  const closePalette = useCallback(() => {
+    setOpen(false);
+    setQuery("");
+    setActiveIndex(0);
+  }, []);
+
+  // Typing restarts the selection at the top of the new result set.
+  const handleQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    setActiveIndex(0);
+  }, []);
+
   const go = useCallback(
     (view: ViewId) => {
       setActiveView(view);
       onNavigate?.(view);
-      setOpen(false);
-      setQuery("");
+      closePalette();
     },
-    [setActiveView, onNavigate],
+    [setActiveView, onNavigate, closePalette],
   );
 
   const fireAction = useCallback(
     (action: string) => {
       onQuickAction?.(action);
-      setOpen(false);
-      setQuery("");
+      closePalette();
     },
-    [onQuickAction],
+    [onQuickAction, closePalette],
   );
 
   const items: CommandItem[] = useMemo(
@@ -90,52 +109,51 @@ export function CommandPalette({ onNavigate, onQuickAction }: CommandPaletteProp
     );
   }, [items, query]);
 
-  // Reset active index when query changes
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [query]);
+  // Keep the highlighted row inside the current result set without an effect:
+  // the clamp is derived during render, so a shrinking list can never leave a
+  // stale out-of-range selection behind.
+  const safeActiveIndex =
+    filtered.length === 0 ? 0 : Math.min(activeIndex, filtered.length - 1);
 
   // Scroll active item into view
   useEffect(() => {
     if (!open) return;
-    const el = listRef.current?.querySelector(`[data-cmd-idx="${activeIndex}"]`);
+    const el = listRef.current?.querySelector(`[data-cmd-idx="${safeActiveIndex}"]`);
     el?.scrollIntoView({ block: "nearest" });
-  }, [activeIndex, open]);
+  }, [safeActiveIndex, open]);
 
   // Keyboard shortcut: Cmd+K / Ctrl+K to open
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setOpen((v) => !v);
+        if (open) closePalette();
+        else openPalette();
       } else if (e.key === "Escape" && open) {
-        setOpen(false);
-        setQuery("");
+        closePalette();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open]);
+  }, [open, openPalette, closePalette]);
 
   // Focus input when opening
   useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    } else {
-      setQuery("");
-    }
+    if (!open) return;
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 50);
+    return () => window.clearTimeout(timer);
   }, [open]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
+      setActiveIndex(Math.min(safeActiveIndex + 1, filtered.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((i) => Math.max(i - 1, 0));
+      setActiveIndex(Math.max(safeActiveIndex - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      filtered[activeIndex]?.action();
+      filtered[safeActiveIndex]?.action();
     }
   };
 
@@ -156,7 +174,7 @@ export function CommandPalette({ onNavigate, onQuickAction }: CommandPaletteProp
     <>
       {/* Trigger button — render the keyboard shortcut hint */}
       <button
-        onClick={() => setOpen(true)}
+        onClick={openPalette}
         className="hidden md:flex items-center gap-2 h-9 px-3 rounded-md border border-border/50 bg-muted/30 hover:bg-muted/60 transition-colors text-xs text-muted-foreground"
         title="Open command palette (Ctrl+K)"
       >
@@ -174,7 +192,7 @@ export function CommandPalette({ onNavigate, onQuickAction }: CommandPaletteProp
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-start justify-center pt-[15vh] px-4"
-            onClick={() => setOpen(false)}
+            onClick={closePalette}
           >
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.98 }}
@@ -191,7 +209,7 @@ export function CommandPalette({ onNavigate, onQuickAction }: CommandPaletteProp
                   ref={inputRef}
                   type="text"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => handleQueryChange(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Type a command or search…"
                   className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
@@ -213,7 +231,7 @@ export function CommandPalette({ onNavigate, onQuickAction }: CommandPaletteProp
                       </p>
                       {groupItems.map((item) => {
                         const idx = flat.indexOf(item);
-                        const isActive = idx === activeIndex;
+                        const isActive = idx === safeActiveIndex;
                         return (
                           <button
                             key={item.id}

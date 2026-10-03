@@ -13,7 +13,6 @@ concurrency:
   group: docker-${{ github.ref }}
   cancel-in-progress: true
 
-timeout-minutes: 30
 
 env:
   BUN_VERSION: "1"
@@ -29,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # ── Resolve image tag (short SHA + branch name) ─────────
       - name: Resolve image tag
@@ -41,13 +40,46 @@ jobs:
           echo "full_sha=${FULL_SHA}" >> "$GITHUB_OUTPUT"
           echo "👉 Building image tag: ${SHORT_SHA}"
 
+      # Docker Hub is optional. When DOCKERHUB_USERNAME is unset the
+      # interpolation collapsed to "/alo-labs-aismh", which buildx rejects as
+      # an invalid reference and the whole build failed. GHCR always works via
+      # the built-in GITHUB_TOKEN, so it is the baseline and Docker Hub is
+      # added only when configured.
+      - name: Check Docker Hub credentials
+        id: dockerhub
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          set -euo pipefail
+          if [ -n "${DOCKERHUB_USERNAME}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "✅ Docker Hub configured — publishing to Docker Hub and GHCR."
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️  DOCKERHUB_USERNAME is not set — publishing to GHCR only."
+          fi
+
+      - name: Compose image list
+        id: images
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME || 'alo-labs-aismh' }}
+        run: |
+          set -euo pipefail
+          {
+            echo "list<<EOF"
+            echo "ghcr.io/${{ github.repository }}"
+            if [ -n "${DOCKERHUB_USERNAME}" ]; then
+              echo "${DOCKERHUB_USERNAME}/${IMAGE_NAME}"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
-          images: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.DOCKER_IMAGE_NAME || 'alo-labs-aismh' }}
-            ghcr.io/${{ github.repository }}
+          images: ${{ steps.images.outputs.list }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=sha,prefix=,format=short
@@ -55,10 +87,10 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Docker Buildx cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -66,25 +98,27 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Login to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
-        uses: docker/login-action@v3
+        if: steps.dockerhub.outputs.configured == 'true'
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
           push: true
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache

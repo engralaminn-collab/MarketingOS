@@ -75,7 +75,7 @@ export const POST = withAuth(async (request, { user }) => {
         category,
         expenseDate,
         institutionId,
-        approvedBy: user.userId,
+        approvedById: user.userId,
         receiptUrl,
       },
       include: {

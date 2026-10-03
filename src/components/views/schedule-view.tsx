@@ -187,10 +187,10 @@ export default function ScheduleView() {
       dayOfWeek: string;
       startTime: string;
       endTime: string;
-      room: string;
-      batchId: string;
-      subjectId: string;
-      teacherId: string;
+      room?: string;
+      batchId?: string;
+      subjectId?: string;
+      teacherId?: string;
     },
     ScheduleRecord
   >({
@@ -563,7 +563,7 @@ export default function ScheduleView() {
                     {activeTimeSlots.map((slot) => {
                       // Only show rows that have at least one class in any day
                       const hasClassesInRow = DAYS_OF_WEEK.some(
-                        (day) => gridData.get(day)?.get(slot)?.length > 0
+                        (day) => (gridData.get(day)?.get(slot)?.length ?? 0) > 0
                       );
 
                       if (!hasClassesInRow) return null;
