@@ -70,15 +70,19 @@ Return JSON with:
     }
 
     // Step 2: Initiate video generation
-    let videoTaskId = null;
+    // The SDK returns { id, task_status }. The actual video URL must be polled
+    // later via zai.async.result.query(taskId).
+    let videoTaskId: string | null = null;
     let videoStatus = 'pending';
     try {
       const zai = await ZAI.create();
       const videoResult = await zai.video.generations.create({
         prompt: `${style} video: ${topic}. ${script.slice(0, 500)}`,
       });
-      videoTaskId = videoResult.id || videoResult.taskId || `vid_${Date.now()}`;
-      videoStatus = videoResult.status || 'processing';
+      videoTaskId = videoResult.id;
+      videoStatus = videoResult.task_status === 'SUCCESS' ? 'completed'
+        : videoResult.task_status === 'FAIL' ? 'failed'
+        : 'processing';
     } catch {
       videoStatus = 'rate_limited';
     }

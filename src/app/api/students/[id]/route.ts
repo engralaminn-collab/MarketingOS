@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAuth } from "@/lib/api-middleware";
 import { sanitizeInput, createAuditLog, ipFromRequest } from "@/lib/security";
-import type { Prisma } from "@prisma/client";
 
 /**
  * Builds the nested StudentProfile write for a User.update.
@@ -13,11 +12,11 @@ import type { Prisma } from "@prisma/client";
 function buildProfileWrite(
   hasProfile: boolean,
   profileData: Record<string, unknown>
-): Pick<Prisma.UserUpdateInput, "studentProfile"> {
+): Record<string, unknown> {
   if (Object.keys(profileData).length === 0) return {};
   return hasProfile
-    ? { studentProfile: { update: profileData as Prisma.StudentProfileUpdateWithoutUserInput } }
-    : { studentProfile: { create: profileData as Prisma.StudentProfileCreateWithoutUserInput } };
+    ? { studentProfile: { update: profileData } }
+    : { studentProfile: { create: profileData } };
 }
 
 

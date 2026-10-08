@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    if (!otpMessage) {
+    if (!otpMessage || !otpMessage.providerMessageId) {
       return NextResponse.json({ data: { verified: false, reason: 'OTP expired or not found' } }, { status: 200 });
     }
 

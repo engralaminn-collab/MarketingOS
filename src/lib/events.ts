@@ -59,8 +59,8 @@ export async function emitEvent(payload: EventPayload): Promise<void> {
     } = payload;
 
     // Determine recipients if not specified: all users in the company
-    let recipients = recipientIds;
-    if (!recipients || recipients.length === 0) {
+    let recipients: string[] = recipientIds || [];
+    if (recipients.length === 0) {
       const members = await db.companyUser.findMany({
         where: { companyId },
         select: { userId: true },
