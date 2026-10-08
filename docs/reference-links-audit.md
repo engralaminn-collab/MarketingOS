@@ -163,3 +163,24 @@ These are product sites, not code. They were not ported. Only linked references 
 - YouTube description links were treated as duplicates of the repositories they point to.
 - Repeated entries were deduplicated.
 - Design "buttons": no single button design source was identified in the submitted links. Candidates such as `wacrm` (shadcn button) and `openreel-video` (`Button.tsx`) are not yet compared against the app's button component. Confirm which one you mean.
+
+
+## Latest submission additions
+
+These repos appeared in the most recent submission and have not been cloned or reviewed yet.
+
+| Repository | Status | Notes |
+|---|---|---|
+| [mohamed11sk/Email-markting](https://github.com/mohamed11sk/Email-markting) | Queued: not yet reviewed | Added in the latest submission. Needs a clone and file review before any port decision. |
+| [knsoftic/Email_Markting](https://github.com/knsoftic/Email_Markting) | Queued: not yet reviewed | Added in the latest submission. Needs a clone and file review before any port decision. |
+| [FoundationAgents/MetaGPT](https://github.com/FoundationAgents/MetaGPT) | Queued: not yet reviewed | Added in the latest submission. Needs a clone and file review before any port decision. |
+| [songguoxs/gpt4o-image-prompts](https://github.com/songguoxs/gpt4o-image-prompts) | Queued: not yet reviewed | Added in the latest submission. Needs a clone and file review before any port decision. |
+| [ramon-victor/freegpt-webui](https://github.com/ramon-victor/freegpt-webui) | Queued: not yet reviewed | Added in the latest submission. Needs a clone and file review before any port decision. |
+| [Lin-jun-xiang/docGPT-langchain](https://github.com/Lin-jun-xiang/docGPT-langchain) | Queued: not yet reviewed | Added in the latest submission. Needs a clone and file review before any port decision. |
+| [teremterem/claude-code-gpt-5-codex](https://github.com/teremterem/claude-code-gpt-5-codex) | Queued: not yet reviewed | Added in the latest submission. Needs a clone and file review before any port decision. |
+| [GetGoAPI/Free-GPT-Grok-Gemini-Claude-API](https://github.com/GetGoAPI/Free-GPT-Grok-Gemini-Claude-API) | Queued: not yet reviewed | Added in the latest submission. Needs a clone and file review before any port decision. |
+| [zai-org/GLM-5](https://github.com/zai-org/GLM-5) | Queued: not yet reviewed | Added in the latest submission. Needs a clone and file review before any port decision. |
+| [GAIR-NLP/LiveTalk](https://github.com/GAIR-NLP/LiveTalk) | Queued: not yet reviewed | Added in the latest submission. Needs a clone and file review before any port decision. |
+| [tinystruct/smalltalk](https://github.com/tinystruct/smalltalk) | Queued: not yet reviewed | Added in the latest submission. Needs a clone and file review before any port decision. |
+
+Also re-listed in the latest submission: `nwuzmedoutlook/university`, `bugcrowd/bugcrowd_university`, `meta-models/meta-model-cookbook`, `cline/cline`, `ArnasDon/wacrm`. These keep their statuses in the table above.
