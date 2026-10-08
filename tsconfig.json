@@ -38,6 +38,10 @@
   ],
   "exclude": [
     "examples",
-    "node_modules"
+    "node_modules",
+    "backups",
+    "scripts/repair",
+    "prisma/seed*.ts",
+    "prisma/complete-workforce-repair.ts"
   ]
 }

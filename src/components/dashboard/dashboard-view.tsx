@@ -152,8 +152,8 @@ function SecondaryKpiCard({
 }
 
 export default function DashboardView() {
-  const { currentCompany } = useAppStore();
-  const companyId = currentCompany?.id;
+  const { user } = useAppStore();
+  const companyId = user?.companyId;
   const { data: stats, isLoading, error, refetch } = useApiQuery<DashboardStats>(
     companyId ? `/api/dashboard?companyId=${companyId}` : null
   );
@@ -298,11 +298,11 @@ export default function DashboardView() {
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
-              <Button variant="outline" size="sm" onClick={() => useAppStore.getState().setActiveView("connections")}>
+              <Button variant="outline" size="sm" onClick={() => useAppStore.getState().setActiveView("integrations")}>
                 <Plug className="h-4 w-4 mr-1.5" />
                 Connect Accounts
               </Button>
-              <Button size="sm" onClick={() => useAppStore.getState().setActiveView("content-studio")}>
+              <Button size="sm" onClick={() => useAppStore.getState().setActiveView("content")}>
                 <Sparkles className="h-4 w-4 mr-1.5" />
                 Create Post
               </Button>
@@ -565,7 +565,7 @@ export default function DashboardView() {
               <Button
                 variant="outline"
                 className="h-auto flex-col gap-2 py-4 px-3 hover:bg-amber-500/10 hover:text-amber-600 hover:border-amber-500/50"
-                onClick={() => useAppStore.getState().setActiveView("content-studio")}
+                onClick={() => useAppStore.getState().setActiveView("content")}
               >
                 <Megaphone className="h-5 w-5 text-amber-500" />
                 <span className="text-xs font-medium">Create Post</span>
@@ -573,7 +573,7 @@ export default function DashboardView() {
               <Button
                 variant="outline"
                 className="h-auto flex-col gap-2 py-4 px-3 hover:bg-emerald-500/10 hover:text-emerald-600 hover:border-emerald-500/50"
-                onClick={() => useAppStore.getState().setActiveView("inbox")}
+                onClick={() => useAppStore.getState().setActiveView("messages")}
               >
                 <MessageSquare className="h-5 w-5 text-emerald-500" />
                 <span className="text-xs font-medium">View Inbox</span>
@@ -581,7 +581,7 @@ export default function DashboardView() {
               <Button
                 variant="outline"
                 className="h-auto flex-col gap-2 py-4 px-3 hover:bg-pink-500/10 hover:text-pink-600 hover:border-pink-500/50"
-                onClick={() => useAppStore.getState().setActiveView("leads")}
+                onClick={() => useAppStore.getState().setActiveView("crm")}
               >
                 <Target className="h-5 w-5 text-pink-500" />
                 <span className="text-xs font-medium">Check Leads</span>

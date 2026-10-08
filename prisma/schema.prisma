@@ -51,6 +51,8 @@ model Company {
   smsMessages     SmsMessage[]
   competitors     Competitor[]
   keywordTrackers KeywordTracker[]
+  workflows       Workflow[]
+  workflowRuns    WorkflowRun[]
 }
 
 // ==================== USER & ROLES ====================
@@ -1591,4 +1593,48 @@ model Role {
   updatedAt     DateTime @updatedAt
 
   users         User[]
+}
+
+// ==================== WORKFLOWS ====================
+
+model Workflow {
+  id             String    @id @default(cuid())
+  name           String
+  description    String?
+  trigger        String    @default("manual")    // manual | schedule | event | webhook
+  triggerConfig  String    @default("{}")        // JSON config for trigger
+  steps          String    @default("[]")        // JSON array of step definitions
+  isActive       Boolean   @default(false)
+  runCount       Int       @default(0)
+  lastRunAt      DateTime?
+  companyId      String
+  company        Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  runs           WorkflowRun[]
+
+  @@index([companyId])
+  @@index([isActive])
+}
+
+model WorkflowRun {
+  id             String    @id @default(cuid())
+  workflowId     String
+  workflow       Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  companyId      String
+  company        Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  status         String    @default("running")   // running | completed | failed | cancelled
+  trigger        String    @default("manual")
+  input          String?                         // JSON input data
+  output         String?                         // JSON output data
+  error          String?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([workflowId])
+  @@index([companyId])
+  @@index([status])
 }

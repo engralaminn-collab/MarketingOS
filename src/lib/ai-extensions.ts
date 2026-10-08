@@ -58,22 +58,48 @@ function humanizeFallback(text: string, tone: string): string {
 }
 
 // ─── AI Image Generation (heygen/hyperframes) ───────────────────
+// The SDK returns { created, data: [{ base64 }] }. Images are delivered as
+// base64 data URIs, not remote URLs. We convert to a data URL so the UI can
+// render them without a separate hosting step.
 export async function generateImage(prompt: string, size: string = '1024x1024'): Promise<{ url: string; prompt: string } | null> {
   try {
     const zai = await ZAI.create();
-    const result = await zai.images.generations.create({ prompt, size: size as any });
-    const url = result.data?.[0]?.url || result.url || null;
-    return url ? { url, prompt } : null;
+    const result = await zai.images.generations.create({ prompt, size: size as '1024x1024' });
+    const base64 = result.data?.[0]?.base64;
+    if (!base64) return null;
+    const url = `data:image/png;base64,${base64}`;
+    return { url, prompt };
   } catch { return null; }
 }
 
 // ─── AI Video Generation (MoneyPrinterTurbo) ────────────────────
+// The SDK returns { id, task_status: 'PROCESSING' | 'SUCCESS' | 'FAIL' }.
+// The actual video URL is retrieved later via zai.async.result.query(taskId).
+// This function initiates the generation and returns the task ID for polling.
 export async function generateVideo(prompt: string): Promise<{ videoUrl: string; taskId: string; status: string } | null> {
   try {
     const zai = await ZAI.create();
     const result = await zai.video.generations.create({ prompt });
-    const taskId = result.id || result.taskId || `vid_${Date.now()}`;
-    return { videoUrl: result.videoUrl || '', taskId, status: result.status || 'processing' };
+    const taskId = result.id;
+    const status = result.task_status === 'SUCCESS' ? 'completed'
+      : result.task_status === 'FAIL' ? 'failed'
+      : 'processing';
+    // Video URL is not available immediately — must poll zai.async.result.query(taskId)
+    return { videoUrl: '', taskId, status };
+  } catch { return null; }
+}
+
+// ─── AI Video Status Polling ────────────────────────────────────
+// Poll the async result endpoint to get the final video URL.
+export async function getVideoStatus(taskId: string): Promise<{ status: string; videoUrl: string } | null> {
+  try {
+    const zai = await ZAI.create();
+    const result = await zai.async.result.query(taskId);
+    const status = result.task_status === 'SUCCESS' ? 'completed'
+      : result.task_status === 'FAIL' ? 'failed'
+      : 'processing';
+    const videoUrl = result.video_url || result.url || result.video_result?.[0]?.url || '';
+    return { status, videoUrl };
   } catch { return null; }
 }
 
@@ -81,7 +107,8 @@ export async function generateVideo(prompt: string): Promise<{ videoUrl: string;
 export async function generateSpeech(text: string, voice: string = 'default'): Promise<{ audioUrl: string } | null> {
   try {
     const zai = await ZAI.create();
-    const result = await zai.audio.tts.create({ input: text, voice });
-    return result.url ? { audioUrl: result.url } : null;
+    const result = await zai.audio.tts.create({ input: text, voice }) as Record<string, unknown>;
+    const url = (result.url as string) || (result.audio_url as string) || null;
+    return url ? { audioUrl: url } : null;
   } catch { return null; }
 }
