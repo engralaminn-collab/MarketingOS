@@ -35,6 +35,7 @@ import {
   Bell,
   Network,
   Plug,
+  BookOpen,
 } from 'lucide-react';
 
 // Lazy load views
@@ -42,6 +43,8 @@ const DashboardView = lazy(() => import('@/components/views/dashboard-view').the
 const SocialAccountsView = lazy(() => import('@/components/views/social-accounts-view').then(m => ({ default: m.SocialAccountsView })));
 const AiCommandView = lazy(() => import('@/components/views/ai-command-view').then(m => ({ default: m.AiCommandView })));
 const MediaStudioView = lazy(() => import('@/components/views/media-studio-view').then(m => ({ default: m.MediaStudioView })));
+const DiagramStudioView = lazy(() => import('@/components/views/diagram-studio-view').then(m => ({ default: m.DiagramStudioView })));
+const MarketingKitView = lazy(() => import('@/components/views/marketing-kit-view').then(m => ({ default: m.MarketingKitView })));
 const CrmView = lazy(() => import('@/components/views/crm-view').then(m => ({ default: m.CrmView })));
 const SeoView = lazy(() => import('@/components/views/seo-view').then(m => ({ default: m.SeoView })));
 const CampaignsView = lazy(() => import('@/components/views/campaigns-view').then(m => ({ default: m.CampaignsView })));
@@ -76,6 +79,8 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   'social-accounts': SocialAccountsView,
   'ai-command': AiCommandView,
   'media-studio': MediaStudioView,
+  'diagram-studio': DiagramStudioView,
+  'marketing-kit': MarketingKitView,
   crm: CrmView,
   seo: SeoView,
   campaigns: CampaignsView,
@@ -120,6 +125,8 @@ const navItems: NavItem[] = [
   { id: 'social-accounts', label: 'Social Accounts', icon: <Link2 className="w-4 h-4" />, badge: 'OAuth', section: 'Connect' },
   { id: 'ai-command', label: 'AI Command', icon: <Bot className="w-4 h-4" />, section: 'AI' },
   { id: 'media-studio', label: 'Media Studio', icon: <Palette className="w-4 h-4" />, section: 'AI' },
+  { id: 'diagram-studio', label: 'Diagram Studio', icon: <Network className="w-4 h-4" />, section: 'AI' },
+  { id: 'marketing-kit', label: 'Marketing Kit', icon: <BookOpen className="w-4 h-4" />, badge: '50', section: 'AI' },
   { id: 'ai-agents', label: 'AI Agents', icon: <Cpu className="w-4 h-4" />, section: 'AI' },
   { id: 'crm', label: 'CRM', icon: <Users className="w-4 h-4" />, section: 'Marketing' },
   { id: 'seo', label: 'SEO Engine', icon: <Search className="w-4 h-4" />, section: 'Marketing' },
