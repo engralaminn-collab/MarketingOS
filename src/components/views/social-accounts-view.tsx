@@ -333,7 +333,7 @@ export function SocialAccountsView() {
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/60 dark:bg-blue-950/30 backdrop-blur-sm p-4 flex items-start gap-3"
+        className="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/60 dark:bg-blue-950/30 -sm p-4 flex items-start gap-3"
       >
         <Lock className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
         <p className="text-sm text-blue-800 dark:text-blue-200">

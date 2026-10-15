@@ -142,7 +142,7 @@ function GlassCard({
   return (
     <Card
       className={
-        "border-white/10 bg-card/60 backdrop-blur-xl shadow-lg dark:border-white/5 " +
+        "border-border bg-card/60  shadow-lg dark:border-white/5 " +
         className
       }
       {...props}
@@ -181,7 +181,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-white/10 bg-card/90 px-3 py-2 text-sm shadow-xl backdrop-blur-md">
+    <div className="rounded-lg border border-border bg-card/90 px-3 py-2 text-sm shadow-xl -md">
       <p className="mb-1 font-medium text-foreground">{label}</p>
       {payload.map((entry, i) => (
         <p key={i} className="text-muted-foreground">
@@ -325,7 +325,7 @@ function PeriodButton({
       className={
         active
           ? "bg-gradient-to-r from-orange-600 to-blue-600 hover:from-orange-700 hover:to-blue-700 border-0 text-white shadow-md"
-          : "border-white/10 bg-background/50 hover:bg-accent/50"
+          : "border-border bg-background/50 hover:bg-accent/50"
       }
     >
       {labels[period]}
@@ -773,7 +773,7 @@ function AnalyticsViewInner() {
             <div className="max-h-96 overflow-y-auto custom-scrollbar">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10 hover:bg-transparent">
+                  <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="text-xs">#</TableHead>
                     <TableHead className="text-xs">Title</TableHead>
                     <TableHead className="text-xs">Type</TableHead>

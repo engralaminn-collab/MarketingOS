@@ -107,7 +107,7 @@ function GlassCard({
   return (
     <Card
       className={
-        "border-white/10 bg-card/60 backdrop-blur-xl shadow-lg dark:border-white/5 " +
+        "border-border bg-card/60  shadow-lg dark:border-white/5 " +
         className
       }
       {...props}
@@ -272,7 +272,7 @@ function NewCampaignDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] border-white/10 bg-card/80 backdrop-blur-xl">
+      <DialogContent className="sm:max-w-[520px] border-border bg-card/80 ">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Rocket className="h-5 w-5 text-orange-500" />

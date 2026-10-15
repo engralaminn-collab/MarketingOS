@@ -274,7 +274,7 @@ function ImageStudio() {
                     <Button
                       size="icon"
                       variant="secondary"
-                      className="h-8 w-8 rounded-lg bg-black/40 backdrop-blur-sm border-0 text-white hover:bg-black/60"
+                      className="h-8 w-8 rounded-lg bg-black/40 -sm border-0 text-white hover:bg-black/60"
                       onClick={() => {
                         const a = document.createElement("a");
                         a.href = img.url;
@@ -525,7 +525,7 @@ function TextStudio() {
             exit="exit"
             className="rounded-xl border border-border/50 bg-background/40 overflow-hidden"
           >
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50 bg-card/60 backdrop-blur-md">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50 bg-card/60 -md">
               <div className="flex items-center gap-2">
                 <Badge
                   variant="outline"
@@ -736,7 +736,7 @@ export function MediaStudioView() {
         transition={{ duration: 0.3, delay: 0.1 }}
       >
         <Tabs defaultValue="image" className="w-full">
-          <TabsList className="bg-background/60 backdrop-blur-md border border-border/50 h-auto p-1">
+          <TabsList className="bg-background/60 -md border border-border/50 h-auto p-1">
             <TabsTrigger
               value="image"
               className="gap-1.5 px-4 py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white"

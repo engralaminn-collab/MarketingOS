@@ -57,7 +57,7 @@ export function AppHeader() {
   };
 
   return (
-    <header className="flex h-14 items-center gap-3 border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="flex h-14 items-center gap-3 border-b border-border px-4 bg-white">
       <SidebarTrigger className="-ml-1" />
       <div className="flex-1">
         <h1 className="text-sm font-semibold">{viewLabels[activeView] || "Dashboard"}</h1>
@@ -87,7 +87,7 @@ export function AppHeader() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="gap-2 h-8 px-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white text-[10px] font-bold">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0057B8] text-white text-[10px] font-bold">
                 {user?.name?.charAt(0).toUpperCase()}
               </div>
               <span className="hidden sm:inline text-xs">{user?.name}</span>

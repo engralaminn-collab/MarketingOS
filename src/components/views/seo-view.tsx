@@ -224,7 +224,7 @@ function StatCard({
   trendLabel?: string;
 }) {
   return (
-    <Card className="border-0 shadow-md bg-gradient-to-br from-white/80 to-white/40 dark:from-white/5 dark:to-white/[0.02] backdrop-blur-sm">
+    <Card className="border-0 shadow-md bg-gradient-to-br from-white/80 to-white/40 dark:from-white/5 dark:to-white/[0.02] -sm">
       <CardContent className="p-4">
         <p className="text-xs text-muted-foreground font-medium">{label}</p>
         <div className="flex items-end gap-2 mt-1">

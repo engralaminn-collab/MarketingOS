@@ -89,7 +89,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-3">
         <div className="flex items-center gap-2 px-2 py-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-sm">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0057B8] text-white font-bold text-sm">
             ALO
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
@@ -133,7 +133,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-3 border-t">
         {user && (
           <div className="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:justify-center">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#EAF3FF] text-[#0057B8] text-xs font-bold">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">

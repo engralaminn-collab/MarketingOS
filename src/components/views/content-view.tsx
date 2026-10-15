@@ -102,7 +102,7 @@ function GlassCard({
   return (
     <Card
       className={
-        "border-white/10 bg-card/60 backdrop-blur-xl shadow-lg dark:border-white/5 " +
+        "border-border bg-card/60  shadow-lg dark:border-white/5 " +
         className
       }
       {...props}
@@ -219,7 +219,7 @@ function CreateContentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] border-white/10 bg-card/80 backdrop-blur-xl">
+      <DialogContent className="sm:max-w-[520px] border-border bg-card/80 ">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-orange-500" />
@@ -462,7 +462,7 @@ function CalendarView({ items }: { items: ContentItem[] }) {
           ))}
         </div>
         {/* Day Grid */}
-        <div className="grid grid-cols-7 gap-px rounded-lg overflow-hidden border border-white/10">
+        <div className="grid grid-cols-7 gap-px rounded-lg overflow-hidden border border-border">
           {days.map(({ date, isCurrentMonth }, idx) => {
             const dayItems = isCurrentMonth ? getItemsForDay(date) : [];
             const isToday = isSameDay(date, new Date());
@@ -652,14 +652,14 @@ function ContentViewInner() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search content..."
-                className="pl-9 border-white/10 bg-background/50"
+                className="pl-9 border-border bg-background/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             {/* Type Filter */}
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[160px] border-white/10 bg-background/50">
+              <SelectTrigger className="w-[160px] border-border bg-background/50">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
@@ -675,7 +675,7 @@ function ContentViewInner() {
             </Select>
             {/* Status Filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px] border-white/10 bg-background/50">
+              <SelectTrigger className="w-[150px] border-border bg-background/50">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -687,7 +687,7 @@ function ContentViewInner() {
               </SelectContent>
             </Select>
             {/* View Toggle */}
-            <div className="flex rounded-lg border border-white/10 bg-background/50 p-0.5">
+            <div className="flex rounded-lg border border-border bg-background/50 p-0.5">
               <Button
                 variant={viewMode === "grid" ? "default" : "ghost"}
                 size="sm"

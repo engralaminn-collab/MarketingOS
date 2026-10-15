@@ -625,7 +625,7 @@ export function WorkforceView() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {statCards.map((card) => (
             <motion.div key={card.label} {...fadeIn}>
-              <Card className={`border ${card.border} bg-gradient-to-br ${card.gradient} backdrop-blur-sm`}>
+              <Card className={`border ${card.border} bg-gradient-to-br ${card.gradient} -sm`}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className={card.iconColor}>{card.icon}</span>
@@ -642,7 +642,7 @@ export function WorkforceView() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Department Distribution */}
           <motion.div {...fadeIn}>
-            <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+            <Card className="border-border/50 bg-card/80 -sm">
               <CardHeader className="pb-3 px-5 pt-5">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-violet-400" />
@@ -670,7 +670,7 @@ export function WorkforceView() {
 
           {/* Level Distribution */}
           <motion.div {...fadeIn}>
-            <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+            <Card className="border-border/50 bg-card/80 -sm">
               <CardHeader className="pb-3 px-5 pt-5">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Award className="w-4 h-4 text-amber-400" />
@@ -712,7 +712,7 @@ export function WorkforceView() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Performers */}
           <motion.div {...fadeIn}>
-            <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+            <Card className="border-border/50 bg-card/80 -sm">
               <CardHeader className="pb-3 px-5 pt-5">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Star className="w-4 h-4 text-amber-400" />
@@ -753,7 +753,7 @@ export function WorkforceView() {
 
           {/* Recent Activity */}
           <motion.div {...fadeIn}>
-            <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+            <Card className="border-border/50 bg-card/80 -sm">
               <CardHeader className="pb-3 px-5 pt-5">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Activity className="w-4 h-4 text-cyan-400" />
@@ -798,7 +798,7 @@ export function WorkforceView() {
             { label: 'Conversations', value: stats.conversations.total, icon: <MessageSquare className="w-4 h-4" />, color: 'text-amber-400', bg: 'bg-amber-500/10' },
           ].map((item) => (
             <motion.div key={item.label} {...fadeIn}>
-              <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+              <Card className="border-border/50 bg-card/80 -sm">
                 <CardContent className="p-4 flex items-center gap-3">
                   <div className={`${item.bg} p-2 rounded-lg`}>{<span className={item.color}>{item.icon}</span>}</div>
                   <div>
@@ -819,7 +819,7 @@ export function WorkforceView() {
   const renderEmployees = () => (
     <motion.div {...fadeIn} className="space-y-4">
       {/* Filters */}
-      <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+      <Card className="border-border/50 bg-card/80 -sm">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-3">
             <div className="relative flex-1 min-w-[200px]">
@@ -900,7 +900,7 @@ export function WorkforceView() {
           ))}
         </div>
       ) : employees.length === 0 ? (
-        <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+        <Card className="border-border/50 bg-card/80 -sm">
           <CardContent className="p-12 text-center">
             <Users className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">No employees match your filters</p>
@@ -917,7 +917,7 @@ export function WorkforceView() {
             return (
               <motion.div key={emp.id} {...fadeIn}>
                 <Card
-                  className="border-border/50 bg-card/80 backdrop-blur-sm cursor-pointer hover:border-border transition-colors group"
+                  className="border-border/50 bg-card/80 -sm cursor-pointer hover:border-border transition-colors group"
                   onClick={() => openEmployeeDetail(emp)}
                 >
                   <CardContent className="p-4">
@@ -1412,7 +1412,7 @@ export function WorkforceView() {
       <motion.div {...fadeIn} className="space-y-6">
         {/* Level Hierarchy Summary */}
         {stats && (
-          <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+          <Card className="border-border/50 bg-card/80 -sm">
             <CardHeader className="pb-3 px-5 pt-5">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-400" />
@@ -1443,7 +1443,7 @@ export function WorkforceView() {
         )}
 
         {/* Department Tree */}
-        <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+        <Card className="border-border/50 bg-card/80 -sm">
           <CardHeader className="pb-3 px-5 pt-5">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -1471,7 +1471,7 @@ export function WorkforceView() {
     <motion.div {...fadeIn} className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Task Form */}
-        <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+        <Card className="border-border/50 bg-card/80 -sm">
           <CardHeader className="pb-3 px-5 pt-5">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Zap className="w-4 h-4 text-amber-400" />
@@ -1533,7 +1533,7 @@ export function WorkforceView() {
         </Card>
 
         {/* Task Result */}
-        <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+        <Card className="border-border/50 bg-card/80 -sm">
           <CardHeader className="pb-3 px-5 pt-5">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-violet-400" />
@@ -1649,7 +1649,7 @@ export function WorkforceView() {
     <TooltipProvider>
       <div className="space-y-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-card/80 backdrop-blur-sm border border-border/50">
+          <TabsList className="bg-card/80 -sm border border-border/50">
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
               <BarChart3 className="w-3.5 h-3.5 mr-1.5" />Overview
             </TabsTrigger>
