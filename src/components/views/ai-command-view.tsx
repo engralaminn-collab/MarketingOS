@@ -222,7 +222,7 @@ export function AiCommandView() {
                     ].join(" ")}
                   >
                     <div className="flex items-start gap-2.5">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background/80 backdrop-blur-sm border border-border/50 shrink-0">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background/80 -sm border border-border/50 shrink-0">
                         <Icon className="h-4 w-4 text-orange-500" />
                       </div>
                       <div className="min-w-0">
@@ -240,9 +240,9 @@ export function AiCommandView() {
       </div>
 
       {/* ─── Main Chat Area ──────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 rounded-2xl border border-border/50 bg-gradient-to-b from-card/80 to-card/40 backdrop-blur-xl shadow-xl overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 rounded-2xl border border-border/50 bg-gradient-to-b from-card/80 to-card/40  shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-card/60 backdrop-blur-md">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-card/60 -md">
           <div className="flex items-center gap-3">
             {!isSidebarOpen && (
               <Button
@@ -327,7 +327,7 @@ export function AiCommandView() {
                         "max-w-[75%] rounded-2xl px-4 py-3",
                         isUser
                           ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-br-sm shadow-lg shadow-orange-500/20"
-                          : "bg-background/60 backdrop-blur-md border border-border/50 rounded-bl-sm",
+                          : "bg-background/60 -md border border-border/50 rounded-bl-sm",
                       ].join(" ")}
                     >
                       {isUser ? (
@@ -393,7 +393,7 @@ export function AiCommandView() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-sky-500/20 to-blue-500/20 border border-sky-500/30 shrink-0 mt-1">
                   <Bot className="h-4 w-4 text-sky-400" />
                 </div>
-                <div className="bg-background/60 backdrop-blur-md border border-border/50 rounded-2xl rounded-bl-sm px-5 py-3.5">
+                <div className="bg-background/60 -md border border-border/50 rounded-2xl rounded-bl-sm px-5 py-3.5">
                   <div className="flex items-center gap-2">
                     {[0, 1, 2].map((i) => (
                       <motion.div
@@ -439,7 +439,7 @@ export function AiCommandView() {
         )}
 
         {/* Input Area */}
-        <div className="border-t border-border/50 bg-card/60 backdrop-blur-md p-4">
+        <div className="border-t border-border/50 bg-card/60 -md p-4">
           <div className="flex items-end gap-2">
             <Textarea
               ref={textareaRef}

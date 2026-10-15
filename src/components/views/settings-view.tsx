@@ -98,7 +98,7 @@ function GlassCard({
   return (
     <Card
       className={
-        "border-white/10 bg-card/60 backdrop-blur-xl shadow-lg dark:border-white/5 " +
+        "border-border bg-card/60  shadow-lg dark:border-white/5 " +
         className
       }
       {...props}
@@ -492,7 +492,7 @@ function CompanyTab() {
                         type="color"
                         value={color.value}
                         onChange={(e) => color.onChange(e.target.value)}
-                        className="h-10 w-10 cursor-pointer rounded-lg border border-white/10 dark:border-white/5 overflow-hidden"
+                        className="h-10 w-10 cursor-pointer rounded-lg border border-border dark:border-white/5 overflow-hidden"
                       />
                     </div>
                     <Input
@@ -593,7 +593,7 @@ function SubscriptionTab() {
                 <p className="text-2xl font-bold">Professional</p>
                 <p className="text-sm opacity-70 mt-1">$99/month · Renews on Feb 15, 2025</p>
               </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 -sm">
                 <Star className="h-6 w-6 text-white" />
               </div>
             </div>
@@ -933,7 +933,7 @@ function SecurityTab() {
               ) : sessions.map((session: any) => (
                 <div
                   key={session.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-white/10 dark:border-white/5 p-3"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border dark:border-white/5 p-3"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${
@@ -1127,7 +1127,7 @@ function ApiTab() {
               ) : apiKeys.map((apiKey: any) => (
                 <div
                   key={apiKey.id}
-                  className="rounded-lg border border-white/10 dark:border-white/5 p-3 space-y-2"
+                  className="rounded-lg border border-border dark:border-white/5 p-3 space-y-2"
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">{apiKey.name}</p>
@@ -1239,7 +1239,7 @@ function ApiTab() {
               ) : webhooks.map((webhook: any) => (
                 <div
                   key={webhook.id}
-                  className="rounded-lg border border-white/10 dark:border-white/5 p-3"
+                  className="rounded-lg border border-border dark:border-white/5 p-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -1291,7 +1291,7 @@ function ApiTab() {
               ].map((integration) => (
                 <div
                   key={integration.name}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-white/10 dark:border-white/5 p-3"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border dark:border-white/5 p-3"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium">{integration.name}</p>

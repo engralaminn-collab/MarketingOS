@@ -165,7 +165,7 @@ function Sidebar() {
 
       <aside className={`
         fixed top-0 left-0 z-50 h-full flex flex-col
-        bg-card/80 backdrop-blur-xl border-r border-border/50
+        bg-card border-r border-border/50
         transition-all duration-300 ease-in-out
         ${isSidebarOpen ? 'w-64' : 'w-[70px]'}
       `}>
@@ -270,7 +270,7 @@ function AppHeader() {
   const currentNav = navItems.find(n => n.id === activeView);
 
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-3 h-14 px-4 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 flex items-center gap-3 h-14 px-4 border-b border-border/50 bg-background ">
       <Button variant="ghost" size="icon" className="md:hidden h-9 w-9" onClick={() => setSidebarOpen(true)}>
         <Menu className="w-5 h-5" />
       </Button>
@@ -338,7 +338,7 @@ function AppContent() {
             </Suspense>
           </main>
         </ScrollArea>
-        <footer className="mt-auto shrink-0 border-t px-4 py-2 text-center text-[10px] text-muted-foreground bg-card/50">
+        <footer className="mt-auto shrink-0 border-t px-4 py-2 text-center text-[10px] text-muted-foreground bg-card">
           Kexsio MarketingOS — AI-Powered Marketing Operating System
         </footer>
       </div>

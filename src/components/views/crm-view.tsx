@@ -183,7 +183,7 @@ function ScoreBar({ score }: { score: number }) {
 
 function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <Card className={`border-white/20 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl shadow-lg ${className}`}>
+    <Card className={`border-border bg-white shadow-lg ${className}`}>
       {children}
     </Card>
   );
@@ -362,7 +362,7 @@ function LeadsTab({ leads, isLoading, reload }: { leads: Lead[]; isLoading: bool
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-full max-w-sm" />
-        <div className="rounded-xl border border-white/20 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl overflow-hidden">
+        <div className="rounded-xl border border-border bg-white overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-4 p-4 border-b last:border-0">
               <Skeleton className="h-4 w-32" />
@@ -387,11 +387,11 @@ function LeadsTab({ leads, isLoading, reload }: { leads: Lead[]; isLoading: bool
               placeholder="Search leads..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 bg-white/80 dark:bg-slate-800/80 backdrop-blur border-white/20 dark:border-white/10"
+              className="pl-9 h-9 bg-white  border-border"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[160px] h-9 bg-white/80 dark:bg-slate-800/80 backdrop-blur border-white/20 dark:border-white/10">
+            <SelectTrigger className="w-full sm:w-[160px] h-9 bg-white  border-border">
               <Filter className="h-3.5 w-3.5 mr-1" />
               <SelectValue placeholder="Filter status" />
             </SelectTrigger>
@@ -446,12 +446,12 @@ function LeadsTab({ leads, isLoading, reload }: { leads: Lead[]; isLoading: bool
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="rounded-xl border border-white/20 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl overflow-hidden shadow-lg"
+          className="rounded-xl border border-border bg-white overflow-hidden shadow-lg"
         >
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10 hover:bg-transparent bg-white/40 dark:bg-slate-800/40">
+                <TableRow className="border-border hover:bg-transparent bg-white">
                   <TableHead className="font-semibold text-xs uppercase tracking-wider">Name</TableHead>
                   <TableHead className="font-semibold text-xs uppercase tracking-wider">Email</TableHead>
                   <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Company</TableHead>
@@ -470,7 +470,7 @@ function LeadsTab({ leads, isLoading, reload }: { leads: Lead[]; isLoading: bool
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0 }}
                       transition={{ delay: idx * 0.02, duration: 0.2 }}
-                      className="border-b border-white/10 last:border-0 hover:bg-white/40 dark:hover:bg-slate-800/40 transition-colors"
+                      className="border-b border-border last:border-0 hover:bg-white/40 dark:hover:bg-slate-800/40 transition-colors"
                     >
                       <TableCell className="font-medium text-sm">{lead.name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{lead.email || "—"}</TableCell>
@@ -512,7 +512,7 @@ function LeadsTab({ leads, isLoading, reload }: { leads: Lead[]; isLoading: bool
               </TableBody>
             </Table>
           </div>
-          <div className="px-4 py-3 border-t border-white/10 bg-white/30 dark:bg-slate-800/30 flex items-center justify-between">
+          <div className="px-4 py-3 border-t border-border bg-white flex items-center justify-between">
             <p className="text-xs text-muted-foreground">Showing {filtered.length} of {leads.length} leads</p>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
@@ -527,7 +527,7 @@ function LeadsTab({ leads, isLoading, reload }: { leads: Lead[]; isLoading: bool
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-white/20 dark:border-white/10">
+        <DialogContent className="sm:max-w-md bg-white border-border">
           <DialogHeader>
             <DialogTitle className="bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
               {editLead ? "Edit Lead" : "Create New Lead"}
@@ -536,27 +536,27 @@ function LeadsTab({ leads, isLoading, reload }: { leads: Lead[]; isLoading: bool
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="lead-name">Full Name *</Label>
-              <Input id="lead-name" placeholder="John Smith" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+              <Input id="lead-name" placeholder="John Smith" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required disabled={submitting} className="bg-white" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="lead-email">Email</Label>
-                <Input id="lead-email" type="email" placeholder="john@company.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+                <Input id="lead-email" type="email" placeholder="john@company.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} disabled={submitting} className="bg-white" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lead-phone">Phone</Label>
-                <Input id="lead-phone" placeholder="+1-555-0000" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+                <Input id="lead-phone" placeholder="+1-555-0000" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} disabled={submitting} className="bg-white" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="lead-company">Company</Label>
-                <Input id="lead-company" placeholder="Acme Inc" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+                <Input id="lead-company" placeholder="Acme Inc" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} disabled={submitting} className="bg-white" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lead-source">Source</Label>
                 <Select value={formData.source} onValueChange={(v) => setFormData({ ...formData, source: v })} disabled={submitting}>
-                  <SelectTrigger className="bg-white/80 dark:bg-slate-800/80"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
@@ -566,7 +566,7 @@ function LeadsTab({ leads, isLoading, reload }: { leads: Lead[]; isLoading: bool
             <div className="space-y-2">
               <Label htmlFor="lead-status">Status</Label>
               <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })} disabled={submitting}>
-                <SelectTrigger className="bg-white/80 dark:bg-slate-800/80"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {LEAD_STATUSES.map((s) => <SelectItem key={s} value={s}>{titleCase(s)}</SelectItem>)}
                 </SelectContent>
@@ -574,7 +574,7 @@ function LeadsTab({ leads, isLoading, reload }: { leads: Lead[]; isLoading: bool
             </div>
             <div className="space-y-2">
               <Label htmlFor="lead-notes">Notes</Label>
-              <Textarea id="lead-notes" placeholder="Initial context, requirements, etc." value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80 min-h-[60px]" />
+              <Textarea id="lead-notes" placeholder="Initial context, requirements, etc." value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} disabled={submitting} className="bg-white min-h-[60px]" />
             </div>
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)} disabled={submitting}>Cancel</Button>
@@ -606,7 +606,7 @@ function KanbanDealCard({ deal, onClick }: { deal: Deal; onClick?: () => void })
       onClick={onClick}
       {...attributes}
       {...listeners}
-      className="rounded-lg border border-white/20 dark:border-white/10 bg-white/80 dark:bg-slate-800/80 p-3 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md backdrop-blur"
+      className="rounded-lg border border-border bg-white p-3 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md "
       style={{ borderLeft: `3px solid ${stageInfo.color}` }}
     >
       <h4 className="text-sm font-semibold leading-tight mb-2">{deal.name}</h4>
@@ -637,9 +637,9 @@ function KanbanColumn({ stage, deals, onAddDeal }: {
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col rounded-xl border bg-white/40 dark:bg-slate-900/40 backdrop-blur transition-colors ${isOver ? "border-orange-500/60 bg-orange-500/5" : "border-white/20 dark:border-white/10"}`}
+      className={`flex flex-col rounded-xl border bg-white transition-colors ${isOver ? "border-orange-500/60 bg-orange-500/5" : "border-border"}`}
     >
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stage.color }} />
           <h3 className="text-xs font-semibold uppercase tracking-wider">{stage.label}</h3>
@@ -660,7 +660,7 @@ function KanbanColumn({ stage, deals, onAddDeal }: {
         )}
       </div>
       {total > 0 && (
-        <div className="px-3 py-2 border-t border-white/10 text-[11px] text-muted-foreground flex justify-between">
+        <div className="px-3 py-2 border-t border-border text-[11px] text-muted-foreground flex justify-between">
           <span>Total</span>
           <span className="font-semibold text-foreground">{formatCurrency(total)}</span>
         </div>
@@ -817,7 +817,7 @@ function DealsTab({ deals, isLoading, reload }: { deals: Deal[]; isLoading: bool
       </DndContext>
 
       {/* Deals table with delete buttons (so users can also see them as a list) */}
-      <details className="rounded-xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-slate-900/40 backdrop-blur p-4">
+      <details className="rounded-xl border border-border bg-white p-4">
         <summary className="text-sm font-semibold cursor-pointer">All deals ({deals.length}) — list view</summary>
         <div className="mt-3 overflow-x-auto">
           <Table>
@@ -860,30 +860,30 @@ function DealsTab({ deals, isLoading, reload }: { deals: Deal[]; isLoading: bool
 
       {/* Create Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-white/20 dark:border-white/10">
+        <DialogContent className="sm:max-w-md bg-white border-border">
           <DialogHeader>
             <DialogTitle className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">Create New Deal</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="deal-name">Deal Title *</Label>
-              <Input id="deal-name" placeholder="Enterprise SaaS License — Acme" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+              <Input id="deal-name" placeholder="Enterprise SaaS License — Acme" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required disabled={submitting} className="bg-white" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="deal-value">Value (USD)</Label>
-                <Input id="deal-value" type="number" min="0" value={formData.value} onChange={(e) => setFormData({ ...formData, value: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+                <Input id="deal-value" type="number" min="0" value={formData.value} onChange={(e) => setFormData({ ...formData, value: e.target.value })} disabled={submitting} className="bg-white" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="deal-probability">Probability (%)</Label>
-                <Input id="deal-probability" type="number" min="0" max="100" value={formData.probability} onChange={(e) => setFormData({ ...formData, probability: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+                <Input id="deal-probability" type="number" min="0" max="100" value={formData.probability} onChange={(e) => setFormData({ ...formData, probability: e.target.value })} disabled={submitting} className="bg-white" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="deal-stage">Stage</Label>
                 <Select value={formData.stage} onValueChange={(v) => setFormData({ ...formData, stage: v })} disabled={submitting}>
-                  <SelectTrigger className="bg-white/80 dark:bg-slate-800/80"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {PIPELINE_STAGES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
                   </SelectContent>
@@ -891,12 +891,12 @@ function DealsTab({ deals, isLoading, reload }: { deals: Deal[]; isLoading: bool
               </div>
               <div className="space-y-2">
                 <Label htmlFor="deal-close">Close Date</Label>
-                <Input id="deal-close" type="date" value={formData.closeDate} onChange={(e) => setFormData({ ...formData, closeDate: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+                <Input id="deal-close" type="date" value={formData.closeDate} onChange={(e) => setFormData({ ...formData, closeDate: e.target.value })} disabled={submitting} className="bg-white" />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="deal-notes">Notes</Label>
-              <Textarea id="deal-notes" placeholder="Champion, next step, blockers..." value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80 min-h-[60px]" />
+              <Textarea id="deal-notes" placeholder="Champion, next step, blockers..." value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} disabled={submitting} className="bg-white min-h-[60px]" />
             </div>
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)} disabled={submitting}>Cancel</Button>
@@ -1003,7 +1003,7 @@ function ContactsTab({ contacts, isLoading, reload }: { contacts: Contact[]; isL
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search contacts..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 bg-white/80 dark:bg-slate-800/80 backdrop-blur border-white/20 dark:border-white/10" />
+          <Input placeholder="Search contacts..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 bg-white  border-border" />
         </div>
         <Button size="sm" onClick={openCreate} className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white">
           <Plus className="h-4 w-4 mr-1.5" /> Add Contact
@@ -1068,7 +1068,7 @@ function ContactsTab({ contacts, isLoading, reload }: { contacts: Contact[]; isL
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-white/20 dark:border-white/10">
+        <DialogContent className="sm:max-w-md bg-white border-border">
           <DialogHeader>
             <DialogTitle className="bg-gradient-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">
               {editContact ? "Edit Contact" : "Create New Contact"}
@@ -1077,26 +1077,26 @@ function ContactsTab({ contacts, isLoading, reload }: { contacts: Contact[]; isL
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="contact-name">Name *</Label>
-              <Input id="contact-name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+              <Input id="contact-name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required disabled={submitting} className="bg-white" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="contact-email">Email</Label>
-                <Input id="contact-email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+                <Input id="contact-email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} disabled={submitting} className="bg-white" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contact-phone">Phone</Label>
-                <Input id="contact-phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+                <Input id="contact-phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} disabled={submitting} className="bg-white" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="contact-company">Company</Label>
-                <Input id="contact-company" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+                <Input id="contact-company" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} disabled={submitting} className="bg-white" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contact-position">Position</Label>
-                <Input id="contact-position" placeholder="CTO, VP Sales..." value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+                <Input id="contact-position" placeholder="CTO, VP Sales..." value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })} disabled={submitting} className="bg-white" />
               </div>
             </div>
             <DialogFooter>
@@ -1193,10 +1193,10 @@ function TicketsTab({ tickets, isLoading, reload }: { tickets: Ticket[]; isLoadi
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-1">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search tickets..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 bg-white/80 dark:bg-slate-800/80 backdrop-blur border-white/20 dark:border-white/10" />
+            <Input placeholder="Search tickets..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 bg-white  border-border" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[160px] h-9 bg-white/80 dark:bg-slate-800/80 backdrop-blur border-white/20 dark:border-white/10">
+            <SelectTrigger className="w-full sm:w-[160px] h-9 bg-white  border-border">
               <Filter className="h-3.5 w-3.5 mr-1" />
               <SelectValue />
             </SelectTrigger>
@@ -1269,24 +1269,24 @@ function TicketsTab({ tickets, isLoading, reload }: { tickets: Ticket[]; isLoadi
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-white/20 dark:border-white/10">
+        <DialogContent className="sm:max-w-md bg-white border-border">
           <DialogHeader>
             <DialogTitle className="bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">New Support Ticket</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="ticket-subject">Subject *</Label>
-              <Input id="ticket-subject" placeholder="Brief summary of the issue" value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })} required disabled={submitting} className="bg-white/80 dark:bg-slate-800/80" />
+              <Input id="ticket-subject" placeholder="Brief summary of the issue" value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })} required disabled={submitting} className="bg-white" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="ticket-desc">Description</Label>
-              <Textarea id="ticket-desc" placeholder="Full details..." value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} disabled={submitting} className="bg-white/80 dark:bg-slate-800/80 min-h-[80px]" />
+              <Textarea id="ticket-desc" placeholder="Full details..." value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} disabled={submitting} className="bg-white min-h-[80px]" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="ticket-priority">Priority</Label>
                 <Select value={formData.priority} onValueChange={(v) => setFormData({ ...formData, priority: v })} disabled={submitting}>
-                  <SelectTrigger className="bg-white/80 dark:bg-slate-800/80"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {TICKET_PRIORITIES.map((p) => <SelectItem key={p} value={p}>{titleCase(p)}</SelectItem>)}
                   </SelectContent>
@@ -1295,7 +1295,7 @@ function TicketsTab({ tickets, isLoading, reload }: { tickets: Ticket[]; isLoadi
               <div className="space-y-2">
                 <Label htmlFor="ticket-status">Status</Label>
                 <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })} disabled={submitting}>
-                  <SelectTrigger className="bg-white/80 dark:bg-slate-800/80"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {TICKET_STATUSES.map((s) => <SelectItem key={s} value={s}>{titleCase(s)}</SelectItem>)}
                   </SelectContent>
@@ -1487,7 +1487,7 @@ export function CrmView() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-white/10 p-1 h-auto">
+        <TabsList className="bg-white/60 dark:bg-slate-800/60  border border-border p-1 h-auto">
           <TabsTrigger value="leads" className="gap-1.5 rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-orange-500/20 px-4 py-2 text-sm font-medium transition-all">
             <Users className="h-4 w-4" /><span className="hidden sm:inline">Leads</span>
           </TabsTrigger>

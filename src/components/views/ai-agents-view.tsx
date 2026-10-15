@@ -294,7 +294,7 @@ function GlassCard({
   return (
     <Card
       className={
-        "border-white/10 bg-card/60 backdrop-blur-xl shadow-lg dark:border-white/5 " +
+        "border-border bg-card/60  shadow-lg dark:border-white/5 " +
         className
       }
       {...props}
@@ -748,7 +748,7 @@ export function AiAgentsView() {
 
       {/* Run Agent Dialog */}
       <Dialog open={!!runDialogAgent} onOpenChange={(v) => !v && setRunDialogAgent(null)}>
-        <DialogContent className="sm:max-w-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-white/20 dark:border-white/10 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl bg-white border-border max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-lg">{runDialogAgent?.icon}</span>
@@ -767,7 +767,7 @@ export function AiAgentsView() {
                 onChange={(e) => setRunTask(e.target.value)}
                 placeholder="e.g. Score this lead: Sarah Chen from TechVault Inc, source LinkedIn, currently 65"
                 disabled={runningAgentId === runDialogAgent?.id}
-                className="w-full min-h-[80px] rounded-md border border-border/50 bg-white/80 dark:bg-slate-800/80 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                className="w-full min-h-[80px] rounded-md border border-border/50 bg-white px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                 rows={3}
               />
             </div>

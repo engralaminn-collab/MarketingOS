@@ -272,7 +272,7 @@ function GlassCard({
   return (
     <Card
       className={
-        "border-white/10 bg-card/60 backdrop-blur-xl shadow-lg dark:border-white/5 " +
+        "border-border bg-card/60  shadow-lg dark:border-white/5 " +
         className
       }
       {...props}
@@ -435,7 +435,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-white/10 bg-card/90 px-3 py-2 text-sm shadow-xl backdrop-blur-md">
+    <div className="rounded-lg border border-border bg-card/90 px-3 py-2 text-sm shadow-xl -md">
       <p className="mb-1 font-medium text-foreground">{label}</p>
       {payload.map((entry, i) => (
         <p key={i} className="text-muted-foreground">
