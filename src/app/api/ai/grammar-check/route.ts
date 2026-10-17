@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     if (text.length > 10000) return NextResponse.json({ error: 'Text too long' }, { status: 400 });
 
     let result;
+    let generationMode: 'local-model' | 'rule-based-fallback' = 'rule-based-fallback';
     try {
       const completion = await generateChatCompletion([
         { role: 'system', content: 'You are a grammar and spell checker. Check the text for errors. Return JSON: {"errors":[{"type":"grammar|spelling|punctuation|style","original":"...","suggestion":"...","message":"..."}],"correctedText":"..."}' },
@@ -24,12 +25,13 @@ export async function POST(req: NextRequest) {
       ], { temperature: 0 });
       const jsonText = completion.content.replace(/^\`\`\`(?:json)?\s*/i, '').replace(/\s*\`\`\`$/, '');
       result = JSON.parse(jsonText);
+      generationMode = 'local-model';
     } catch {
       // Fallback: basic rule-based check
       result = grammarCheckFallback(text);
     }
 
-    return NextResponse.json({ data: result });
+    return NextResponse.json({ data: result, generationMode, degraded: generationMode !== 'local-model' });
   } catch { return NextResponse.json({ error: 'Failed' }, { status: 500 }); }
 }
 
