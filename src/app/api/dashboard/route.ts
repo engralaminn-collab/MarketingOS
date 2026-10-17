@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       recentLeads,
       campaigns,
     ] = await Promise.all([
-      db.socialAccount.count({ where: { companyId, status: 'active' } }),
+      db.socialAccount.count({ where: { companyId, status: 'active', accessToken: { startsWith: 'enc:v1:' } } }),
       db.lead.count({ where: { companyId } }),
       db.lead.count({ where: { companyId, createdAt: { gte: thirtyDaysAgo } } }),
       db.content.count({ where: { companyId } }),
@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
     // Platform distribution — real count from socialAccount table
     const platformGroups = await db.socialAccount.groupBy({
       by: ['platform'],
-      where: { companyId },
+      where: { companyId, status: 'active', accessToken: { startsWith: 'enc:v1:' } },
       _count: true,
     });
     const totalPlatforms = platformGroups.reduce((s, g) => s + g._count, 0) || 1;

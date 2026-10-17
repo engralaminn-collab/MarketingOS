@@ -9,7 +9,10 @@ export async function GET(req: NextRequest) {
     const token = req.headers.get('Authorization')?.replace('Bearer ', '');
     if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
     const payload = await verifyToken(token);
-    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
+    if (!payload?.companyId || !payload.userId) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
+
+    const companyMembers = await db.companyUser.findMany({ where: { companyId: payload.companyId }, select: { userId: true } });
+    const companyMemberIds = companyMembers.map((membership) => membership.userId);
 
     // Get CRM tickets (as social conversations)
     const tickets = await db.ticket.findMany({
@@ -21,7 +24,12 @@ export async function GET(req: NextRequest) {
 
     // Get internal messages (team conversations)
     const messages = await db.message.findMany({
-      where: { OR: [{ senderId: payload.userId }, { recipientId: payload.userId }] },
+      where: {
+        OR: [
+          { senderId: payload.userId, recipientId: { in: companyMemberIds } },
+          { recipientId: payload.userId, senderId: { in: companyMemberIds } },
+        ],
+      },
       orderBy: { createdAt: 'desc' },
       take: 20,
       include: {
@@ -38,7 +46,8 @@ export async function GET(req: NextRequest) {
 
     // Get social accounts (connected platforms)
     const socialAccounts = await db.socialAccount.findMany({
-      where: { companyId: payload.companyId, status: 'active' },
+      where: { companyId: payload.companyId, status: 'active', accessToken: { startsWith: 'enc:v1:' } },
+      select: { platform: true, accountName: true, status: true },
     });
 
     // Combine all conversations into one inbox

@@ -172,10 +172,10 @@ async function seed() {
         // Inert placeholder for demo data — not a credential. Real tokens are
         // supplied at runtime through the integrations flow and stored encrypted.
         accessToken: `placeholder-no-token-${platform.toLowerCase()}`,
-        status: 'active',
+        status: 'needs_revalidation',
         companyId: company.id,
-        scopes: JSON.stringify(['read', 'write', 'publish']),
-        lastSyncedAt: new Date(),
+        scopes: JSON.stringify([]),
+        lastSyncedAt: null,
       },
     });
   }

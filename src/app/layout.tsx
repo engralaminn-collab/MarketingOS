@@ -18,7 +18,7 @@ const geistMono = localFont({
 const SITE_URL = "https://www.kexsio.com";
 const SITE_NAME = "Kexsio MarketingOS";
 const SITE_DESCRIPTION =
-  "Kexsio MarketingOS — Enterprise AI Workforce Platform with 2,000 specialized AI employees, 120+ integrations, autonomous CRM, SEO, content, and campaign automation. Built by Kexsio.";
+  "Kexsio MarketingOS — AI-assisted marketing operations with a catalog of 116 integrations, CRM, SEO, content, and campaign tools. Built by Kexsio.";
 const OG_IMAGE = `${SITE_URL}/kexsio-logo.png`;
 
 export const metadata: Metadata = {

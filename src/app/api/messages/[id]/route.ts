@@ -2,55 +2,56 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
-// GET /api/messages/[id] — list all messages in the thread between me and user [id]
-// (where [id] is the OTHER user's id — we return every message exchanged with them)
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
+    const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const payload = await verifyToken(token);
-    if (!payload || !payload.userId) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    if (!payload?.userId || !payload.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
     const { id: otherUserId } = await params;
-    const meId = payload.userId;
+    if (!otherUserId || otherUserId === payload.userId) return NextResponse.json({ error: 'Invalid thread' }, { status: 400 });
 
-    // Fetch all messages between me and otherUser
+    const member = await db.companyUser.findFirst({
+      where: { companyId: payload.companyId, userId: otherUserId, user: { isActive: true } },
+      select: { id: true },
+    });
+    if (!member) return NextResponse.json({ error: 'Thread not found' }, { status: 404 });
+
     const messages = await db.message.findMany({
       where: {
         OR: [
-          { senderId: meId, recipientId: otherUserId },
-          { senderId: otherUserId, recipientId: meId },
+          { senderId: payload.userId, recipientId: otherUserId },
+          { senderId: otherUserId, recipientId: payload.userId },
         ],
+        sender: { companyUsers: { some: { companyId: payload.companyId } } },
+        recipient: { companyUsers: { some: { companyId: payload.companyId } } },
       },
-      include: {
-        sender: { select: { id: true, name: true, email: true, avatar: true } },
-      },
+      include: { sender: { select: { id: true, name: true, email: true, avatar: true } } },
       orderBy: { createdAt: 'asc' },
+      take: 5_000,
     });
 
-    // Mark inbound unread messages as read
-    const unreadIds = messages.filter((m) => m.recipientId === meId && !m.isRead).map((m) => m.id);
+    const unreadIds = messages.filter((message) => message.recipientId === payload.userId && !message.isRead).map((message) => message.id);
     if (unreadIds.length > 0) {
       await db.message.updateMany({
-        where: { id: { in: unreadIds } },
+        where: { id: { in: unreadIds }, recipientId: payload.userId },
         data: { isRead: true, readAt: new Date() },
       });
     }
 
     return NextResponse.json({
-      data: messages.map((m) => ({
-        id: m.id,
-        content: m.content,
-        createdAt: m.createdAt.toISOString(),
-        senderId: m.senderId,
-        sender: m.sender,
-        isRead: m.isRead,
+      data: messages.map((message) => ({
+        id: message.id,
+        content: message.content,
+        createdAt: message.createdAt.toISOString(),
+        senderId: message.senderId,
+        sender: message.sender,
+        isRead: message.isRead || unreadIds.includes(message.id),
       })),
     });
-  } catch (err) {
-    console.error('[GET /api/messages/[id]]', err);
+  } catch (error) {
+    console.error('[GET /api/messages/[id]]', error);
     return NextResponse.json({ error: 'Failed to fetch thread' }, { status: 500 });
   }
 }

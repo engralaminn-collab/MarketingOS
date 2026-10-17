@@ -14,6 +14,16 @@ const VALID_SIZES: Record<string, { width: number; height: number }> = {
   '1152x864': { width: 1152, height: 864 },
 };
 
+const VALID_SIZES = new Set([
+  '1024x1024',
+  '768x1344',
+  '1344x768',
+  '1440x720',
+  '720x1440',
+  '864x1152',
+  '1152x864',
+]);
+
 export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
@@ -53,6 +63,13 @@ export async function POST(req: NextRequest) {
         provider: 'self-hosted-stable-diffusion',
       }, { status: 503 });
     }
+  }
+
+  if (process.env.ZAI_MEDIA_ENABLED !== 'true') {
+    return NextResponse.json({
+      error: 'No model-based image provider is enabled. Configure COMFYUI_BASE_URL and COMFYUI_IMAGE_CHECKPOINT for self-hosted generation, or explicitly enable ZAI_MEDIA_ENABLED for the optional hosted provider.',
+    }, { status: 503 });
+  }
 
     if (!response.ok) {
       const detail = (await response.text().catch(() => '')).slice(0, 300);

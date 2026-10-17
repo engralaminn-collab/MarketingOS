@@ -56,7 +56,6 @@ import {
   Rocket,
   ChevronLeft,
   ChevronRight,
-  Brain,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -109,7 +108,7 @@ const DURATIONS = [
   { value: 365, label: "365 Days" },
 ];
 
-const AI_RECOMMENDATIONS = [
+const STARTER_TIPS = [
   {
     title: "Optimize Core Web Vitals",
     description: "Improve LCP, FID, and CLS scores. Aim for LCP under 2.5s and CLS under 0.1 for better rankings.",
@@ -253,6 +252,15 @@ function StatCard({
   );
 }
 
+function parseKeywords(value: string | null): string[] {
+  try {
+    const parsed: unknown = value ? JSON.parse(value) : [];
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export function SeoView() {
@@ -280,7 +288,7 @@ export function SeoView() {
     method: "POST",
     path: "/api/seo",
     onSuccess: () => {
-      toast.success("SEO Challenge created!");
+      toast.success("SEO checklist created");
       setShowNewChallenge(false);
       setFormName("");
       setFormUrl("");
@@ -296,15 +304,6 @@ export function SeoView() {
     (c) => c.id === selectedChallenge && c.status === "active"
   );
   const activeChallenges = challenges.filter((c) => c.status === "active");
-
-  // Parse results from JSON string
-  const parseResults = (results: string | null) => {
-    try {
-      return results ? JSON.parse(results) : {};
-    } catch {
-      return {};
-    }
-  };
 
   const handleCreateChallenge = () => {
     if (!formUrl.trim()) {
@@ -352,10 +351,10 @@ export function SeoView() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-blue-500" />
-            AI SEO Engine
+            SEO Planner
           </h1>
           <p className="text-muted-foreground mt-1">
-            AI-powered SEO challenges and daily optimization tasks
+            Structured SEO checklists for your team. Ranking, traffic and backlink data are not connected in this build.
           </p>
         </div>
         <Button
@@ -363,7 +362,7 @@ export function SeoView() {
           className="bg-orange-600 hover:bg-orange-700 text-white gap-2"
         >
           <Plus className="h-4 w-4" />
-          New Challenge
+          New SEO Plan
         </Button>
       </div>
 
@@ -375,15 +374,14 @@ export function SeoView() {
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
         >
           <StatCard
-            label="Active Challenges"
+            label="Active Plans"
             value={activeChallenges.length}
           />
           <StatCard
             label="Total Keywords"
             value={activeChallenges.reduce((acc, c) => {
               try {
-                const kw = JSON.parse(c.targetKeywords || "[]");
-                return acc + kw.length;
+                return acc + parseKeywords(c.targetKeywords).length;
               } catch {
                 return acc;
               }
@@ -398,29 +396,16 @@ export function SeoView() {
             )}
           />
           <StatCard
-            label="Avg. Score"
-            value={
-              activeChallenges.length
-                ? Math.round(
-                    activeChallenges.reduce((a, c) => a + c.score, 0) /
-                      activeChallenges.length
-                  )
-                : 0
-            }
-            trend="up"
-            trendLabel="+12%"
+            label="Avg. Checklist Progress"
+            value={`${activeChallenges.length ? Math.round(activeChallenges.reduce((sum, challenge) => sum + challenge.score, 0) / activeChallenges.length) : 0}%`}
           />
           <StatCard
-            label="Organic Traffic"
-            value="2.4K"
-            trend="up"
-            trendLabel="+18%"
+            label="Actions Remaining"
+            value={activeChallenges.reduce((sum, challenge) => sum + challenge.dailyTasks.filter((task) => task.status !== "completed").length, 0)}
           />
           <StatCard
-            label="Backlinks"
-            value="156"
-            trend="up"
-            trendLabel="+8%"
+            label="Sites in Plans"
+            value={new Set(activeChallenges.map((challenge) => challenge.websiteUrl)).size}
           />
         </motion.div>
       )}
@@ -430,7 +415,7 @@ export function SeoView() {
         <TabsList>
           <TabsTrigger value="challenges" className="gap-1.5">
             <Target className="h-3.5 w-3.5" />
-            Challenges
+            Plans
           </TabsTrigger>
           <TabsTrigger value="tasks" className="gap-1.5">
             <Calendar className="h-3.5 w-3.5" />
@@ -438,7 +423,7 @@ export function SeoView() {
           </TabsTrigger>
           <TabsTrigger value="recommendations" className="gap-1.5">
             <Lightbulb className="h-3.5 w-3.5" />
-            AI Tips
+            Starter Tips
           </TabsTrigger>
         </TabsList>
 
@@ -470,10 +455,9 @@ export function SeoView() {
                 <div className="h-16 w-16 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
                   <Rocket className="h-8 w-8 text-blue-500" />
                 </div>
-                <h3 className="text-lg font-semibold">No SEO Challenges Yet</h3>
+                <h3 className="text-lg font-semibold">No SEO Plans Yet</h3>
                 <p className="text-muted-foreground text-sm mt-1 max-w-md">
-                  Start your first AI-powered SEO challenge to systematically
-                  improve your search rankings.
+                  Create a manual checklist for your website and target queries. Connect a search-data provider separately to measure real rankings or traffic.
                 </p>
                 <Button
                   onClick={() => setShowNewChallenge(true)}
@@ -481,7 +465,7 @@ export function SeoView() {
                   className="mt-4 gap-2 border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-950/30"
                 >
                   <Play className="h-4 w-4" />
-                  Start Your First Challenge
+                  Start Your First SEO Plan
                 </Button>
               </CardContent>
             </Card>
@@ -489,7 +473,7 @@ export function SeoView() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <AnimatePresence mode="popLayout">
                 {challenges.map((challenge, i) => {
-                  const results = parseResults(challenge.results);
+                  const challengeKeywords = parseKeywords(challenge.targetKeywords);
                   const completedTasks = challenge.dailyTasks.filter(
                     (t) => t.status === "completed"
                   ).length;
@@ -561,67 +545,29 @@ export function SeoView() {
                             </div>
                           </div>
 
-                          {/* Stats */}
+                          {/* Checklist facts — live search performance is not connected */}
                           <div className="grid grid-cols-3 gap-3">
                             <div className="text-center p-2 rounded-lg bg-muted/50">
-                              <p className="text-xs text-muted-foreground">
-                                Initial
-                              </p>
-                              <p className="text-sm font-bold">
-                                #{results.initialRanking || "—"}
-                              </p>
+                              <p className="text-xs text-muted-foreground">Checklist</p>
+                              <p className="text-sm font-bold">{progressPct}%</p>
                             </div>
                             <div className="text-center p-2 rounded-lg bg-muted/50">
-                              <p className="text-xs text-muted-foreground">
-                                Current
-                              </p>
-                              <div className="flex items-center justify-center gap-1">
-                                <p className="text-sm font-bold">
-                                  #{results.currentRanking || "—"}
-                                </p>
-                                {results.initialRanking &&
-                                  results.currentRanking &&
-                                  results.currentRanking <
-                                    results.initialRanking && (
-                                    <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-                                  )}
-                              </div>
+                              <p className="text-xs text-muted-foreground">Completed</p>
+                              <p className="text-sm font-bold">{completedTasks}/{totalTasks}</p>
                             </div>
                             <div className="text-center p-2 rounded-lg bg-muted/50">
-                              <p className="text-xs text-muted-foreground">
-                                Backlinks
-                              </p>
-                              <p className="text-sm font-bold">
-                                {results.backlinks || 0}
-                              </p>
+                              <p className="text-xs text-muted-foreground">Keywords</p>
+                              <p className="text-sm font-bold">{challengeKeywords.length}</p>
                             </div>
                           </div>
 
                           {/* Keywords */}
-                          {challenge.targetKeywords && (
+                          {challengeKeywords.length > 0 && (
                             <div className="flex flex-wrap gap-1">
-                              {JSON.parse(challenge.targetKeywords)
-                                .slice(0, 4)
-                                .map((kw: string, ki: number) => (
-                                  <Badge
-                                    key={ki}
-                                    variant="outline"
-                                    className="text-[10px] px-2 py-0"
-                                  >
-                                    {kw}
-                                  </Badge>
-                                ))}
-                              {JSON.parse(challenge.targetKeywords).length >
-                                4 && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] px-2 py-0"
-                                >
-                                  +
-                                  {JSON.parse(challenge.targetKeywords).length -
-                                    4}
-                                </Badge>
-                              )}
+                              {challengeKeywords.slice(0, 4).map((keyword, index) => (
+                                <Badge key={`${keyword}-${index}`} variant="outline" className="text-[10px] px-2 py-0">{keyword}</Badge>
+                              ))}
+                              {challengeKeywords.length > 4 && <Badge variant="outline" className="text-[10px] px-2 py-0">+{challengeKeywords.length - 4}</Badge>}
                             </div>
                           )}
                         </CardContent>
@@ -642,7 +588,7 @@ export function SeoView() {
                 <Calendar className="h-10 w-10 text-muted-foreground mb-3" />
                 <h3 className="text-lg font-semibold">No Challenge Selected</h3>
                 <p className="text-muted-foreground text-sm mt-1">
-                  Select an active challenge to view and manage its daily tasks.
+                  Select an active plan to view and manage its daily checklist.
                 </p>
                 {challenges.length > 0 && (
                   <Button
@@ -655,7 +601,7 @@ export function SeoView() {
                       if (firstActive) handleSelectChallenge(firstActive.id);
                     }}
                   >
-                    Select Active Challenge
+                    Select Active Plan
                   </Button>
                 )}
               </CardContent>
@@ -683,7 +629,7 @@ export function SeoView() {
                   onClick={() => setSelectedChallenge(null)}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
-                  All Challenges
+                  All Plans
                 </Button>
               </div>
 
@@ -694,7 +640,7 @@ export function SeoView() {
                     Daily Task Grid
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Click a pending task to mark it as complete
+                    Mark a task complete after your team has reviewed or performed it.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
@@ -716,12 +662,12 @@ export function SeoView() {
                             transition={{ delay: i * 0.03 }}
                             layout
                           >
-                            <div
-                              onClick={() =>
-                                isPending &&
-                                handleMarkComplete(task.id)
-                              }
-                              className={`
+                            <button
+                              type="button"
+                              onClick={() => isPending && handleMarkComplete(task.id)}
+                              disabled={!isPending}
+                              aria-label={`${isPending ? "Mark complete" : isCompleted ? "Completed" : "Task"}: ${task.title}`}
+                              className={`w-full
                                 relative rounded-lg border p-3 transition-all text-left
                                 ${
                                   isCompleted
@@ -775,7 +721,7 @@ export function SeoView() {
                                   className="absolute inset-0 rounded-lg border-2 border-orange-400 dark:border-orange-500 opacity-0 hover:opacity-100 transition-opacity pointer-events-none"
                                 />
                               )}
-                            </div>
+                            </button>
                           </motion.div>
                         );
                       })}
@@ -824,19 +770,18 @@ export function SeoView() {
           )}
         </TabsContent>
 
-        {/* ─── AI Recommendations Tab ────────────────────────────────────────── */}
+        {/* ─── Generic starter tips (not generated from site data) ───────────── */}
         <TabsContent value="recommendations" className="space-y-4">
           <div className="flex items-center gap-2 mb-2">
-            <Brain className="h-5 w-5 text-purple-500" />
-            <h3 className="font-semibold">AI-Powered SEO Recommendations</h3>
+            <Lightbulb className="h-5 w-5 text-purple-500" />
+            <h3 className="font-semibold">SEO best-practice starter tips</h3>
           </div>
           <p className="text-sm text-muted-foreground -mt-2">
-            Personalized tips based on current SEO best practices and your
-            challenge progress.
+            Generic planning prompts only—not AI output, a site audit, or a ranking analysis. Validate each suggestion against your actual site and data.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AnimatePresence>
-              {AI_RECOMMENDATIONS.map((rec, i) => {
+              {STARTER_TIPS.map((rec, i) => {
                 const catStyle =
                   CATEGORY_STYLES[rec.category] ||
                   CATEGORY_STYLES.technical;
@@ -908,21 +853,20 @@ export function SeoView() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Rocket className="h-5 w-5 text-orange-500" />
-              Start New SEO Challenge
+              Start a New SEO Plan
             </DialogTitle>
             <DialogDescription>
-              Define your SEO challenge parameters and let AI generate a
-              personalized daily action plan.
+              Create a manual checklist from your site, target queries and time horizon. No crawl, rank tracking or traffic measurement is performed.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="challenge-name">Challenge Name</Label>
+              <Label htmlFor="challenge-name">Plan Name</Label>
               <Input
                 id="challenge-name"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="e.g., Q1 Ranking Push"
+                placeholder="e.g., Q1 SEO priorities"
               />
             </div>
             <div className="space-y-2">
@@ -948,7 +892,7 @@ export function SeoView() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="duration">Challenge Duration</Label>
+              <Label htmlFor="duration">Plan Duration</Label>
               <Select value={formDuration} onValueChange={setFormDuration}>
                 <SelectTrigger id="duration">
                   <SelectValue placeholder="Select duration" />
@@ -983,7 +927,7 @@ export function SeoView() {
               ) : (
                 <Zap className="h-4 w-4" />
               )}
-              Create Challenge
+              Create Checklist
             </Button>
           </DialogFooter>
         </DialogContent>

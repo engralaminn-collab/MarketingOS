@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useApiQuery, useApiMutation } from "@/hooks/use-api-query";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,9 +17,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   Plus,
@@ -30,7 +27,6 @@ import {
   Unplug,
   Shield,
   Check,
-  X as XIcon,
   ChevronRight,
   ChevronLeft,
   Globe,
@@ -85,17 +81,6 @@ const PLATFORM_COLORS: Record<string, string> = {
   Telegram: "#26A5E4",
 };
 
-const PLATFORM_LIGHT_COLORS: Record<string, string> = {
-  Facebook: "#E8F0FE",
-  Instagram: "#FDE8ED",
-  LinkedIn: "#E3EFF8",
-  X: "#F3F3F3",
-  YouTube: "#FEE8E8",
-  TikTok: "#E8E8E8",
-  Pinterest: "#FDE3E3",
-  Telegram: "#E3F2FB",
-};
-
 const PLATFORM_INITIALS: Record<string, string> = {
   Facebook: "f",
   Instagram: "ig",
@@ -105,14 +90,6 @@ const PLATFORM_INITIALS: Record<string, string> = {
   TikTok: "TK",
   Pinterest: "P",
   Telegram: "TG",
-};
-
-const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
-  technical: { label: "Technical", color: "bg-blue-500" },
-  research: { label: "Research", color: "bg-purple-500" },
-  onpage: { label: "On-Page", color: "bg-orange-500" },
-  content: { label: "Content", color: "bg-emerald-500" },
-  offpage: { label: "Off-Page", color: "bg-rose-500" },
 };
 
 // ─── Platform Icon Component ───────────────────────────────────────────────────
@@ -142,63 +119,12 @@ function PlatformIcon({
 
 const WIZARD_STEPS = [
   { title: "Select Platform", icon: Globe },
-  { title: "Connection Method", icon: KeyRound },
+  { title: "Token Method", icon: KeyRound },
   { title: "Requirements Check", icon: Shield },
   { title: "Setup Instructions", icon: AlertTriangle },
   { title: "Token Setup", icon: Lock },
-  { title: "Test Connection", icon: Zap },
+  { title: "Verify Token", icon: Zap },
 ];
-
-// ─── Requirements Checklist ────────────────────────────────────────────────────
-
-interface RequirementItem {
-  label: string;
-  met: boolean;
-}
-
-function getRequirementItems(
-  platform: string,
-  requirements: PlatformRequirement | undefined,
-  method: "oauth" | "api"
-): RequirementItem[] {
-  if (!requirements) {
-    return [
-      { label: "API Key", met: false },
-      { label: "Client ID", met: false },
-      { label: "Client Secret", met: false },
-      { label: "Scopes", met: false },
-      { label: "Webhook URL", met: false },
-      { label: "Business Verification", met: false },
-    ];
-  }
-
-  const items: RequirementItem[] = [];
-
-  if (method === "api") {
-    items.push({ label: "API Key", met: false });
-    items.push({ label: "Client ID", met: false });
-    items.push({ label: "Client Secret", met: false });
-  } else {
-    items.push({ label: "OAuth Token", met: false });
-    items.push({ label: "Client ID", met: false });
-    items.push({ label: "Client Secret", met: false });
-  }
-
-  items.push({
-    label: "Scopes",
-    met: requirements.scopes.length > 0,
-  });
-  items.push({
-    label: "Webhook URL",
-    met: platform === "Telegram",
-  });
-  items.push({
-    label: "Business Verification",
-    met: !requirements.needsBusinessVerification,
-  });
-
-  return items;
-}
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
@@ -210,7 +136,6 @@ export function SocialAccountsView() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(0);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
-  const [connectionMethod, setConnectionMethod] = useState<"oauth" | "api">("oauth");
   const [accountName, setAccountName] = useState("");
   const [accountHandle, setAccountHandle] = useState("");
   const [accessToken, setAccessToken] = useState("");
@@ -251,7 +176,6 @@ export function SocialAccountsView() {
   const resetWizard = () => {
     setWizardStep(0);
     setSelectedPlatform(null);
-    setConnectionMethod("oauth");
     setAccountName("");
     setAccountHandle("");
     setAccessToken("");
@@ -269,13 +193,14 @@ export function SocialAccountsView() {
   const handlePlatformSelect = (platform: string) => {
     setSelectedPlatform(platform);
     setAccountName(`My ${platform}`);
+    setTestError(null);
     setWizardStep(1);
   };
 
-  const handleTestMethod = (method: "oauth" | "api") => {
-    setConnectionMethod(method);
-    setWizardStep(2);
-  };
+  const tokenTestMutation = useApiMutation<{ platform: string; accessToken: string }, any>({
+    method: "POST",
+    path: "/api/social-accounts/test",
+  });
 
   const handleConnect = async () => {
     if (!selectedPlatform || !accessToken.trim()) return;
@@ -285,8 +210,6 @@ export function SocialAccountsView() {
         accountName: accountName.trim() || `My ${selectedPlatform}`,
         accountHandle: accountHandle.trim() || undefined,
         accessToken: accessToken.trim(),
-        scopes:
-          data?.requirements?.[selectedPlatform]?.scopes || [],
       });
     } catch {
       // error handled in onError
@@ -322,17 +245,8 @@ export function SocialAccountsView() {
     }
   };
 
-  const requirementItems = useMemo(() => {
-    if (!selectedPlatform) return [];
-    return getRequirementItems(
-      selectedPlatform,
-      data?.requirements?.[selectedPlatform],
-      connectionMethod
-    );
-  }, [selectedPlatform, data?.requirements, connectionMethod]);
-
   const accounts = data?.accounts || [];
-  const missingPlatforms = data?.missingPlatforms || [];
+  const selectedRequirements = selectedPlatform ? data?.requirements?.[selectedPlatform] : undefined;
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -346,7 +260,7 @@ export function SocialAccountsView() {
             Social Media Accounts
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage your connected social media platforms
+            Verify and store social access tokens. Posting and automatic sync are not implemented.
           </p>
         </div>
         <Button onClick={openWizard} className="bg-orange-600 hover:bg-orange-700 text-white gap-2">
@@ -363,9 +277,7 @@ export function SocialAccountsView() {
       >
         <Lock className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
         <p className="text-sm text-blue-800 dark:text-blue-200">
-          <span className="font-semibold">No passwords stored.</span> Only OAuth
-          tokens and API keys are encrypted at rest using AES-256. Your credentials
-          are never shared with third parties.
+          <span className="font-semibold">Access tokens are encrypted at rest.</span> Tokens are sent only to the selected provider's profile endpoint during verification. Posting and automatic sync are not enabled.
         </p>
       </motion.div>
 
@@ -392,9 +304,9 @@ export function SocialAccountsView() {
             <div className="h-16 w-16 rounded-2xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-4">
               <CircleDot className="h-8 w-8 text-orange-500" />
             </div>
-            <h3 className="text-lg font-semibold">No accounts connected</h3>
+            <h3 className="text-lg font-semibold">No verified accounts</h3>
             <p className="text-muted-foreground text-sm mt-1 max-w-md">
-              Connect your social media accounts to start managing your content and engagement across platforms.
+              Verify and store tokens for supported social accounts. Publishing and automatic sync are not available in this build.
             </p>
             <Button
               onClick={openWizard}
@@ -439,7 +351,7 @@ export function SocialAccountsView() {
                           </h3>
                           {account.accountHandle && (
                             <p className="text-xs text-muted-foreground">
-                              @{account.accountHandle}
+                              {account.accountHandle.startsWith("@") ? account.accountHandle : `@${account.accountHandle}`}
                             </p>
                           )}
                         </div>
@@ -457,7 +369,7 @@ export function SocialAccountsView() {
                         }
                       >
                         <CircleDot className="h-3 w-3 mr-1" />
-                        {account.status}
+                        {account.status === "active" ? "Token verified" : "Needs revalidation"}
                       </Badge>
                     </div>
 
@@ -468,7 +380,7 @@ export function SocialAccountsView() {
                         <RefreshCw className="h-3 w-3" />
                         {account.lastSyncedAt
                           ? `Synced ${new Date(account.lastSyncedAt).toLocaleDateString()}`
-                          : "Not yet synced"}
+                          : "Automatic sync unavailable"}
                       </div>
                       <Button
                         variant="ghost"
@@ -562,7 +474,7 @@ export function SocialAccountsView() {
                       Select the social media platform you want to connect.
                     </p>
                     <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
-                      {((data?.platforms || missingPlatforms.length > 0 ? data?.platforms : ["Facebook", "Instagram", "LinkedIn", "X", "YouTube", "TikTok", "Pinterest", "Telegram"]) ?? []).map(
+                      {(data?.platforms ?? ["Facebook", "Instagram", "LinkedIn", "X", "YouTube", "TikTok", "Pinterest", "Telegram"]).map(
                         (platform) => {
                           const isConnected =
                             data?.connectedPlatforms?.includes(platform);
@@ -591,7 +503,7 @@ export function SocialAccountsView() {
                                   variant="secondary"
                                   className="absolute -top-1.5 -right-1.5 text-[9px] px-1.5 py-0 bg-emerald-500 text-white"
                                 >
-                                  Connected
+                                  Token verified
                                 </Badge>
                               )}
                             </motion.button>
@@ -621,19 +533,7 @@ export function SocialAccountsView() {
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleTestMethod("oauth")}
-                        className={`
-                          relative flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-colors text-center
-                          ${
-                            connectionMethod === "oauth" && wizardStep >= 1
-                              ? "border-orange-500 bg-orange-50/50 dark:bg-orange-950/20"
-                              : "border-muted hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-950/20"
-                          }
-                        `}
-                      >
+                      <div className="relative flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-muted bg-muted/30 text-center opacity-80">
                         <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
                           <KeyRound className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                         </div>
@@ -643,24 +543,13 @@ export function SocialAccountsView() {
                             Paste a token you already obtained from {selectedPlatform}. This wizard does not launch an OAuth login.
                           </p>
                         </div>
-                        {connectionMethod === "oauth" && wizardStep >= 1 && (
-                          <Badge className="absolute -top-1.5 -right-1.5 bg-orange-500 text-white text-[9px] px-1.5 py-0">
-                            Selected
-                          </Badge>
-                        )}
-                      </motion.button>
+                        <Badge variant="outline" className="text-[9px]">Unavailable</Badge>
+                      </div>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={() => handleTestMethod("api")}
-                        className={`
-                          relative flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-colors text-center
-                          ${
-                            connectionMethod === "api" && wizardStep >= 1
-                              ? "border-orange-500 bg-orange-50/50 dark:bg-orange-950/20"
-                              : "border-muted hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20"
-                          }
-                        `}
+                        onClick={() => setWizardStep(2)}
+                        className="relative flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-orange-500 bg-orange-50/50 text-center transition-colors hover:bg-orange-100/60 dark:bg-orange-950/20 dark:hover:bg-orange-950/40"
                       >
                         <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
                           <Zap className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
@@ -673,11 +562,9 @@ export function SocialAccountsView() {
                             Manually supplied platform credential
                           </p>
                         </div>
-                        {connectionMethod === "api" && wizardStep >= 1 && (
-                          <Badge className="absolute -top-1.5 -right-1.5 bg-orange-500 text-white text-[9px] px-1.5 py-0">
-                            Selected
-                          </Badge>
-                        )}
+                        <Badge className="absolute -top-1.5 -right-1.5 bg-orange-500 text-white text-[9px] px-1.5 py-0">
+                          Available
+                        </Badge>
                       </motion.button>
                     </div>
                     <Button
@@ -703,57 +590,30 @@ export function SocialAccountsView() {
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <Shield className="h-5 w-5 text-orange-500" />
-                      <h3 className="font-semibold">AI Requirements Detection</h3>
+                      <h3 className="font-semibold">Provider Access Requirements</h3>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Checking {selectedPlatform} integration requirements for{" "}
-                      {connectionMethod === "oauth" ? "OAuth" : "API"} connection.
+                      These are reference scopes only; the app cannot request them for you. Verification checks whether the supplied token can read the provider profile.
                     </p>
                     <Card className="border-muted bg-muted/30">
-                      <CardContent className="p-4 space-y-3">
-                        {requirementItems.map((item, i) => (
-                          <motion.div
-                            key={item.label}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.08 }}
-                            className="flex items-center justify-between py-1"
-                          >
-                            <div className="flex items-center gap-2">
-                              {item.met ? (
-                                <div className="h-5 w-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-                                  <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                                </div>
-                              ) : (
-                                <div className="h-5 w-5 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-                                  <XIcon className="h-3 w-3 text-red-600 dark:text-red-400" />
-                                </div>
-                              )}
-                              <span className="text-sm">{item.label}</span>
-                            </div>
-                            <Badge
-                              variant="secondary"
-                              className={
-                                item.met
-                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 text-[10px]"
-                                  : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 text-[10px]"
-                              }
-                            >
-                              {item.met ? "Ready" : "Required"}
-                            </Badge>
-                          </motion.div>
-                        ))}
+                      <CardContent className="p-4 space-y-4">
+                        <div>
+                          <p className="text-sm font-medium">Recommended scopes</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {selectedRequirements?.scopes.length ? selectedRequirements.scopes.map((scope) => (
+                              <Badge key={scope} variant="secondary" className="font-mono text-[10px]">{scope}</Badge>
+                            )) : <p className="text-xs text-muted-foreground">This provider does not use OAuth scopes for bot tokens.</p>}
+                          </div>
+                        </div>
+                        <div className="border-t pt-3">
+                          <p className="text-sm font-medium">Business verification</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {selectedRequirements?.needsBusinessVerification ? "The provider may require business or app review before granting access." : "No additional business verification is indicated in this guide."}
+                          </p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">A successful profile lookup proves only that the token is accepted for that read request. It does not verify publishing permissions.</p>
                       </CardContent>
                     </Card>
-                    {requirementItems.every((r) => r.met) && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-sm text-emerald-600 dark:text-emerald-400 font-medium"
-                      >
-                        ✓ All requirements are available. Proceed to setup.
-                      </motion.p>
-                    )}
                   </motion.div>
                 )}
 
@@ -771,7 +631,7 @@ export function SocialAccountsView() {
                       <h3 className="font-semibold">Setup Instructions</h3>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Follow these steps to set up {selectedPlatform} integration.
+                      Obtain a provider-issued token with the required profile-read permissions. OAuth consent and publishing access are not handled by this app.
                     </p>
                     <div className="space-y-3">
                       {data?.requirements?.[selectedPlatform]?.setupGuide.map(
@@ -834,18 +694,10 @@ export function SocialAccountsView() {
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <Lock className="h-5 w-5 text-orange-500" />
-                      <h3 className="font-semibold">
-                        {connectionMethod === "oauth"
-                          ? "OAuth Token"
-                          : "API Key Setup"}
-                      </h3>
+                      <h3 className="font-semibold">Provider Access Token</h3>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Enter your{" "}
-                      {connectionMethod === "oauth"
-                        ? "OAuth access token from the authorization flow"
-                        : "API key or access token"}{" "}
-                      for {selectedPlatform}.
+                      Enter an access token issued by {selectedPlatform}. The token is checked against a read-only profile endpoint before it is saved.
                     </p>
                     <div className="space-y-3">
                       <div className="space-y-2">
@@ -867,21 +719,13 @@ export function SocialAccountsView() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="access-token">
-                          {connectionMethod === "oauth"
-                            ? "Access Token"
-                            : "API Key / Token"}
-                        </Label>
+                        <Label htmlFor="access-token">Access Token</Label>
                         <Input
                           id="access-token"
                           type="password"
                           value={accessToken}
-                          onChange={(e) => setAccessToken(e.target.value)}
-                          placeholder={
-                            connectionMethod === "oauth"
-                              ? "Enter OAuth access token..."
-                              : "Enter API key or token..."
-                          }
+                          onChange={(e) => { setAccessToken(e.target.value); setConnectSuccess(false); setTestError(null); }}
+                          placeholder="Enter provider-issued access token..."
                           className="font-mono text-sm"
                         />
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -894,7 +738,7 @@ export function SocialAccountsView() {
                   </motion.div>
                 )}
 
-                {/* Step 5: Connection Test */}
+                {/* Step 5: Provider Token Verification */}
                 {wizardStep === 5 && selectedPlatform && (
                   <motion.div
                     key="step-test"
@@ -922,10 +766,10 @@ export function SocialAccountsView() {
                         </div>
                         <div className="text-center">
                           <h3 className="font-semibold">
-                            Testing connection to {selectedPlatform}...
+                            Verifying access token with {selectedPlatform}...
                           </h3>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Verifying credentials and permissions
+                            Checking the provider profile endpoint (read-only)
                           </p>
                         </div>
                         <div className="space-y-2 w-full max-w-xs">
@@ -1032,22 +876,26 @@ export function SocialAccountsView() {
                 onClick={simulateConnectionTest}
                 disabled={!accessToken.trim() || testConnectionMutation.isLoading}
               >
-                {connectMutation.isLoading ? (
+                {testing || tokenTestMutation.isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Zap className="h-4 w-4" />
                 )}
-                Test Connection
+                Verify Access Token
               </Button>
-            ) : (
+            ) : connectSuccess ? (
               <Button
                 size="sm"
                 className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
                 onClick={handleConnect}
-                disabled={!connectSuccess}
+                disabled={connectMutation.isLoading}
               >
-                <Check className="h-4 w-4" />
-                Complete Setup
+                {connectMutation.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                Save Verified Token
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => setWizardStep(4)}>
+                Edit Token
               </Button>
             )}
           </div>

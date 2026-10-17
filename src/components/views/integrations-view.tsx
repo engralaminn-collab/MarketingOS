@@ -42,6 +42,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/stores/app-store';
+import { toast } from 'sonner';
 
 // ==================== TYPES ====================
 
@@ -49,6 +50,7 @@ interface Credential {
   key: string;
   label: string;
   isSecret: boolean;
+  optional?: boolean;
 }
 
 interface ToolConnection {
@@ -59,6 +61,7 @@ interface ToolConnection {
   lastError: string | null;
   totalCalls: number;
   errorCount: number;
+  hasCredentials: boolean;
 }
 
 interface Tool {
@@ -82,9 +85,10 @@ interface Tool {
 interface ToolsResponse {
   tools: Tool[];
   total: number;
+  configured: number;
   connected: number;
   disconnected: number;
-  categoryBreakdown: Record<string, { total: number; connected: number }>;
+  categoryBreakdown: Record<string, { total: number; configured: number }>;
   automationBreakdown: Record<string, number>;
 }
 
@@ -110,6 +114,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: LucideIcon; color: 
   crm: { label: 'CRM', icon: Database, color: '#FF7A59', gradient: 'from-orange-500 to-orange-600' },
   email: { label: 'Email / SMS', icon: Mail, color: '#1A82E2', gradient: 'from-sky-500 to-sky-600' },
   ai_provider: { label: 'AI Providers', icon: Bot, color: '#10A37F', gradient: 'from-emerald-500 to-teal-600' },
+  audio: { label: 'Audio', icon: Radio, color: '#7C3AED', gradient: 'from-violet-500 to-purple-600' },
   payment: { label: 'Payments', icon: CreditCard, color: '#635BFF', gradient: 'from-violet-500 to-violet-600' },
   tracking: { label: 'Tracking', icon: Eye, color: '#F97316', gradient: 'from-orange-500 to-orange-600' },
   security: { label: 'Security', icon: Shield, color: '#F48120', gradient: 'from-orange-500 to-amber-600' },
@@ -156,19 +161,19 @@ function StatCard({ label, value, accent }: { label: string; value: number | str
 function CategoryRow({
   category,
   total,
-  connected,
+  configured,
   isSelected,
   onClick,
 }: {
   category: string;
   total: number;
-  connected: number;
+  configured: number;
   isSelected: boolean;
   onClick: () => void;
 }) {
   const cfg = CATEGORY_CONFIG[category] || { label: category, icon: Plug, color: '#666', gradient: 'from-gray-500 to-gray-600' };
   const Icon = cfg.icon;
-  const pct = total > 0 ? Math.round((connected / total) * 100) : 0;
+  const pct = total > 0 ? Math.round((configured / total) * 100) : 0;
 
   return (
     <button
@@ -183,7 +188,7 @@ function CategoryRow({
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium truncate">{cfg.label}</p>
           <span className="text-xs text-muted-foreground ml-2 shrink-0">
-            {connected}/{total}
+            {configured}/{total}
           </span>
         </div>
         <div className="mt-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -199,32 +204,20 @@ function CategoryRow({
 
 // ==================== TOOL CARD ====================
 
-function ToolCard({ tool, onConnect }: { tool: Tool; onConnect: (t: Tool) => void }) {
-  const isConnected = tool.connection?.status === 'active';
+function ToolCard({ tool, onConnect, onDisconnect }: { tool: Tool; onConnect: (t: Tool) => void; onDisconnect: (toolId: string) => void }) {
+  const isConfigured = Boolean(tool.connection && !['disconnected', 'revoked'].includes(tool.connection.status));
   const hasError = tool.connection?.status === 'error';
   const catCfg = CATEGORY_CONFIG[tool.category] || { label: tool.category, color: '#666' };
   const autoCfg = AUTO_LABELS[tool.automationLevel] || { label: tool.automationLevel, variant: 'outline' as const };
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.2 }}
-    >
-      <Card className={`group hover:shadow-md transition-all duration-200 ${isConnected ? 'border-primary/30 bg-primary/[0.03]' : 'border-border/50 bg-card/50'}`}>
+    <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+      <Card className={`group hover:shadow-md transition-all duration-200 ${isConfigured ? 'border-primary/30 bg-primary/[0.03]' : 'border-border/50 bg-card/50'}`}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            {/* Icon */}
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white font-bold text-sm"
-              style={{ backgroundColor: tool.color || catCfg.color || '#666' }}
-            >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white font-bold text-sm" style={{ backgroundColor: tool.color || catCfg.color || '#666' }}>
               {tool.name.charAt(0)}
             </div>
-
-            {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-semibold truncate">{tool.name}</h3>
@@ -232,53 +225,17 @@ function ToolCard({ tool, onConnect }: { tool: Tool; onConnect: (t: Tool) => voi
               </div>
               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{tool.capabilities}</p>
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                <Badge variant={autoCfg.variant} className="text-[9px] px-1.5 py-0 h-4">
-                  {autoCfg.label}
-                </Badge>
-                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4">
-                  {AUTH_LABELS[tool.authType] || tool.authType}
-                </Badge>
-                {isConnected && (
-                  <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4 bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
-                    <CheckCircle2 className="w-2.5 h-2.5 mr-0.5" /> Connected
-                  </Badge>
-                )}
-                {hasError && (
-                  <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4">
-                    <XCircle className="w-2.5 h-2.5 mr-0.5" /> Error
-                  </Badge>
-                )}
+                <Badge variant={autoCfg.variant} className="text-[9px] px-1.5 py-0 h-4">{autoCfg.label}</Badge>
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4">{AUTH_LABELS[tool.authType] || tool.authType}</Badge>
+                {isConfigured && <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-amber-500/40 text-amber-600">Credentials saved · not verified</Badge>}
+                {hasError && <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4"><XCircle className="w-2.5 h-2.5 mr-0.5" />Configuration error</Badge>}
               </div>
             </div>
-
-            {/* Actions */}
             <div className="flex items-center gap-1 shrink-0">
-              {isConnected ? (
-                <div className="flex flex-col items-end gap-1">
-                  {tool.connection!.totalCalls > 0 && (
-                    <span className="text-[10px] text-muted-foreground">{tool.connection!.totalCalls.toLocaleString()} calls</span>
-                  )}
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                      <a href={tool.url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
-                      <XCircle className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => onConnect(tool)}
-                >
-                  <Plug className="w-3 h-3 mr-1" />
-                  Connect
-                </Button>
-              )}
+              <Button size="sm" variant={isConfigured ? 'outline' : 'default'} className="h-7 text-xs" disabled={tool.requiredCredentials.length === 0} onClick={() => onConnect(tool)}>
+                <Settings2 className="w-3 h-3 mr-1" />{isConfigured ? 'Edit' : 'Configure'}
+              </Button>
+              {isConfigured && <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" aria-label={`Remove ${tool.name} credentials`} onClick={() => onDisconnect(tool.id)}><XCircle className="w-3.5 h-3.5" /></Button>}
             </div>
           </div>
         </CardContent>
@@ -298,114 +255,76 @@ function ConnectDialog({
   tool: Tool | null;
   open: boolean;
   onClose: () => void;
-  onConnect: (toolId: string, credentials: Record<string, string>) => void;
+  onConnect: (toolId: string, credentials: Record<string, string>) => Promise<void>;
 }) {
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [creds, setCreds] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleConnect = async () => {
     if (!tool) return;
+    setError(null);
     setLoading(true);
     try {
-      onConnect(tool.id, creds);
+      await onConnect(tool.id, creds);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Unable to save configuration');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleSecret = (key: string) => {
-    setShowSecrets((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
+  const toggleSecret = (key: string) => setShowSecrets((previous) => ({ ...previous, [key]: !previous[key] }));
   if (!tool) return null;
   const catCfg = CATEGORY_CONFIG[tool.category] || { label: tool.category, color: '#666' };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
-              style={{ backgroundColor: tool.color || catCfg.color || '#666' }}
-            >
-              {tool.name.charAt(0)}
-            </div>
-            <div>
-              <p>{tool.name}</p>
-              <p className="text-xs text-muted-foreground font-normal">#{String(tool.toolNumber).padStart(3, '0')} &middot; {catCfg.label}</p>
-            </div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold" style={{ backgroundColor: tool.color || catCfg.color || '#666' }}>{tool.name.charAt(0)}</div>
+            <div><p>{tool.name}</p><p className="text-xs text-muted-foreground font-normal">#{String(tool.toolNumber).padStart(3, '0')} &middot; {catCfg.label}</p></div>
           </DialogTitle>
           <DialogDescription>{tool.description || tool.capabilities}</DialogDescription>
         </DialogHeader>
-
         <Separator />
-
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-muted-foreground">
+          Credentials are encrypted before storage. Saving them does not verify the provider. Text AI uses self-hosted Ollama by default; OpenRouter is used only when the server explicitly sets AI_PROVIDER=openrouter. Mureka is an optional external music API and may incur charges; most other catalog entries remain setup-only.
+        </div>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">Credentials</p>
-            <Badge variant="outline" className="text-[10px]">
-              {AUTH_LABELS[tool.authType] || tool.authType}
-            </Badge>
+            <Badge variant="outline" className="text-[10px]">{AUTH_LABELS[tool.authType] || tool.authType}</Badge>
           </div>
-
-          {tool.requiredCredentials.map((cred) => (
-            <div key={cred.key} className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
-                {cred.label}
-                {cred.isSecret && <span className="text-destructive ml-1">*</span>}
-              </Label>
+          {tool.requiredCredentials.length === 0 ? (
+            <p className="text-xs text-muted-foreground">This catalog entry has no credential fields and cannot be connected automatically in this build.</p>
+          ) : tool.requiredCredentials.map((credential) => (
+            <div key={credential.key} className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{credential.label}{!credential.optional && <span className="text-destructive ml-1">*</span>}</Label>
               <div className="relative">
                 <Input
-                  type={cred.isSecret && !showSecrets[cred.key] ? 'password' : 'text'}
-                  placeholder={`Enter ${cred.label.toLowerCase()}`}
-                  value={creds[cred.key] || ''}
-                  onChange={(e) => setCreds((prev) => ({ ...prev, [cred.key]: e.target.value }))}
+                  type={credential.isSecret && !showSecrets[credential.key] ? 'password' : 'text'}
+                  placeholder={`Enter ${credential.label.toLowerCase()}`}
+                  value={creds[credential.key] || ''}
+                  onChange={(event) => setCreds((previous) => ({ ...previous, [credential.key]: event.target.value }))}
                   className="pr-10 font-mono text-xs"
+                  autoComplete="off"
                 />
-                {cred.isSecret && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                    onClick={() => toggleSecret(cred.key)}
-                  >
-                    {showSecrets[cred.key] ? (
-                      <EyeOff className="w-3.5 h-3.5" />
-                    ) : (
-                      <Eye className="w-3.5 h-3.5" />
-                    )}
-                  </Button>
-                )}
+                {credential.isSecret && <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => toggleSecret(credential.key)}>{showSecrets[credential.key] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</Button>}
               </div>
             </div>
           ))}
         </div>
-
+        {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
         <Separator />
-
         <div className="flex items-center justify-between">
-          <Button variant="ghost" asChild>
-            <a href={tool.url} target="_blank" rel="noopener noreferrer" className="text-xs">
-              <ExternalLink className="w-3.5 h-3.5 mr-1" />
-              Get credentials
-            </a>
-          </Button>
+          <Button variant="ghost" asChild><a href={tool.url} target="_blank" rel="noopener noreferrer" className="text-xs"><ExternalLink className="w-3.5 h-3.5 mr-1" />Get credentials</a></Button>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button size="sm" onClick={handleConnect} disabled={loading}>
-              {loading ? (
-                <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Plug className="w-3.5 h-3.5 mr-1" />
-                  Connect
-                </>
-              )}
+            <Button variant="outline" size="sm" onClick={onClose} disabled={loading}>Cancel</Button>
+            <Button size="sm" onClick={handleConnect} disabled={loading || tool.requiredCredentials.length === 0}>
+              {loading ? <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" /> : <><Plug className="w-3.5 h-3.5 mr-1" />Save Credentials</>}
             </Button>
           </div>
         </div>
@@ -450,6 +369,7 @@ export function IntegrationsView() {
         });
         const json = await res.json();
         if (signal?.aborted) return;
+        if (!res.ok) throw new Error(json.error || 'Failed to load integrations');
         if (json.tools) setData(json);
       } catch {
         // silent
@@ -521,20 +441,32 @@ export function IntegrationsView() {
   }, [data?.tools, search, selectedCategory]);
 
   const handleConnect = async (toolId: string, credentials: Record<string, string>) => {
+    if (!user?.token) throw new Error('Please sign in again');
+    const res = await fetch('/api/tools', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ toolId, credentials }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error || 'Unable to save credentials');
+    toast.success(json.message || 'Credentials saved. Provider connectivity was not tested.');
+    setConnectTool(null);
+    reloadTools();
+  };
+
+  const handleDisconnect = async (toolId: string) => {
     if (!user?.token) return;
     try {
-      await fetch('/api/tools', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ toolId, credentials }),
+      const res = await fetch(`/api/tools/${toolId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${user.token}` },
       });
-      setConnectTool(null);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || 'Unable to remove configuration');
+      toast.success('Stored credentials removed');
       reloadTools();
-    } catch {
-      // silent
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to remove configuration');
     }
   };
 
@@ -605,7 +537,7 @@ export function IntegrationsView() {
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="Total Integrations" value={data?.total ?? '-'} />
-        <StatCard label="Connected" value={data?.connected ?? '-'} accent="text-emerald-500" />
+        <StatCard label="Configured (not live)" value={data?.configured ?? '-'} accent="text-amber-500" />
         <StatCard label="Disconnected" value={data?.disconnected ?? '-'} />
         <StatCard label="Categories" value={sortedCategories.length || '-'} />
       </div>
@@ -669,7 +601,7 @@ export function IntegrationsView() {
                     key={cat}
                     category={cat}
                     total={info.total}
-                    connected={info.connected}
+                    configured={info.configured}
                     isSelected={selectedCategory === cat}
                     onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
                   />
@@ -714,7 +646,7 @@ export function IntegrationsView() {
               <div className="space-y-2 max-h-[calc(100vh-320px)] overflow-y-auto pr-1">
                 <AnimatePresence mode="popLayout">
                   {filteredTools.map((tool) => (
-                    <ToolCard key={tool.id} tool={tool} onConnect={setConnectTool} />
+                    <ToolCard key={tool.id} tool={tool} onConnect={setConnectTool} onDisconnect={handleDisconnect} />
                   ))}
                 </AnimatePresence>
                 {filteredTools.length === 0 && (
@@ -734,6 +666,7 @@ export function IntegrationsView() {
 
       {/* Connect Dialog */}
       <ConnectDialog
+        key={connectTool?.id ?? 'closed'}
         tool={connectTool}
         open={!!connectTool}
         onClose={() => setConnectTool(null)}

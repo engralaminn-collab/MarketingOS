@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { emitEvent } from '@/lib/events';
 import { generateChatCompletion, generateLocalVideo } from '@/lib/ai-provider';
@@ -14,20 +14,26 @@ import { generateChatCompletion, generateLocalVideo } from '@/lib/ai-provider';
 // 4. Saves everything to Content table
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
-    const payload = await verifyToken(token);
-    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
+    const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const actor = await verifyToken(token);
+    if (!actor?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!hasPermission(actor.role, 'content_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const body = await req.json();
-    const topic = String(body.topic || '').trim();
-    if (!topic) return NextResponse.json({ error: 'topic required' }, { status: 400 });
+    const body: unknown = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: 'A JSON object is required' }, { status: 400 });
+    const input = body as Record<string, unknown>;
+    const topic = asText(input.topic, 1_000);
+    if (!topic) return NextResponse.json({ error: 'A video topic is required' }, { status: 400 });
 
-    const duration = Math.min(120, Math.max(15, body.duration || 30));
-    const style = body.style || 'cinematic';
-    const language = body.language || 'english';
+    const durationValue = input.duration === undefined ? 30 : Number(input.duration);
+    if (!Number.isInteger(durationValue) || durationValue < 15 || durationValue > 120) {
+      return NextResponse.json({ error: 'Duration must be a whole number from 15 to 120 seconds' }, { status: 400 });
+    }
+    const duration = durationValue;
+    const style = typeof input.style === 'string' && STYLES.has(input.style) ? input.style : 'cinematic';
+    const language = asText(input.language, 40, 'English') || 'English';
 
-    // Step 1: Generate video script via LLM
     let script = '';
     let storyboard: any[] = [];
     let scriptSource: 'local-model' | 'template-fallback' = 'template-fallback';
@@ -48,14 +54,13 @@ Return valid JSON with title, script in ${language}, storyboard array (scene, du
       storyboard = parsed.storyboard || [];
       if (script.trim()) scriptSource = 'local-model';
     } catch {
-      // Fallback script
-      script = `Welcome to this cinematic video about ${topic}. In the next ${duration} seconds, we'll explore the key aspects that make this topic fascinating. From the fundamentals to advanced insights, this video will give you a comprehensive understanding. Let's dive in.`;
-      storyboard = [
-        { scene: 1, duration: '0-5s', visual: 'Opening title with brand logo', narration: `Welcome to this video about ${topic}.`, mood: 'professional' },
-        { scene: 2, duration: '5-15s', visual: 'Overview shot of the topic', narration: `Let's start with the basics.`, mood: 'informative' },
-        { scene: 3, duration: '15-25s', visual: 'Close-up of key detail', narration: `Here's what makes it special.`, mood: 'engaging' },
-        { scene: 4, duration: '25-30s', visual: 'Closing shot with call-to-action', narration: `Thanks for watching. Follow for more.`, mood: 'uplifting' },
-      ];
+      // The explicit template fallback keeps the user informed that this is not an AI-written script.
+    }
+
+    if (!script || storyboard.length === 0) {
+      script = `Opening: Introduce ${topic}. Explain the audience need and one key benefit. Close with a clear, relevant call to action.`;
+      storyboard = getFallbackStoryboard(duration, topic);
+      scriptSource = 'template';
     }
 
     // Step 2: Initiate generation through the configured self-hosted video adapter.
@@ -69,29 +74,36 @@ Return valid JSON with title, script in ${language}, storyboard array (scene, du
       console.error('[cinematic-video] local video service unavailable:', error instanceof Error ? error.message : 'unknown error');
     }
 
-    // Step 3: Save to Content table
+    const storyboardText = storyboard.map((scene) =>
+      `### Scene ${scene.scene} (${scene.duration})\n**Visual:** ${scene.visual}\n**Narration:** ${scene.narration}\n**Mood:** ${scene.mood}`,
+    ).join('\n\n');
+    const statusNote = videoTaskId
+      ? `Provider task: ${videoTaskId} (${videoStatus})`
+      : 'Provider render was not available; this draft contains a script and storyboard only.';
     const content = await db.content.create({
       data: {
-        title: `Cinematic Video: ${topic.slice(0, 80)}`,
+        title: `Video Plan: ${generatedTitle}`.slice(0, 200),
         type: 'video',
         status: 'draft',
         platform: body.platform || null,
         body: `# Video Script\n\n## Title\n${topic}\n\n## Script\n${script}\n\n## Script source\n${scriptSource}\n\n## Storyboard\n${storyboard.map(s => `### Scene ${s.scene} (${s.duration})\n**Visual:** ${s.visual}\n**Narration:** ${s.narration}\n**Mood:** ${s.mood}`).join('\n\n')}`,
         mediaUrl: null,
         mediaType: 'video',
-        aiGenerated: true,
-        creatorId: payload.userId,
-        companyId: payload.companyId,
+        aiGenerated: scriptSource === 'ai',
+        creatorId: actor.userId,
+        companyId: actor.companyId,
       },
     });
 
-    // Step 4: Emit event
+    const message = videoTaskId
+      ? `Script and storyboard saved as a content draft. A rendering task was accepted (${videoStatus}); use Check render status for updates.`
+      : `Script and storyboard saved as a content draft. The video provider is unavailable, so no rendered video was created. ${scriptSource === 'template' ? 'The script is a generic template—edit and review it before use.' : ''}`;
     await emitEvent({
-      companyId: payload.companyId,
-      userId: payload.userId,
+      companyId: actor.companyId,
+      userId: actor.userId,
       type: 'ai.cinematic_video_created',
-      title: 'Cinematic video created',
-      description: `Topic: "${topic.slice(0, 60)}" — ${storyboard.length} scenes, ${duration}s`,
+      title: 'Video plan saved',
+      description: `Topic: "${topic.slice(0, 60)}" — ${storyboard.length} scenes, ${duration}s; render ${videoStatus}`,
       resourceType: 'content',
       resourceId: content.id,
       link: '/content',
@@ -101,7 +113,7 @@ Return valid JSON with title, script in ${language}, storyboard array (scene, du
     return NextResponse.json({
       data: {
         contentId: content.id,
-        title: topic,
+        title: generatedTitle,
         script,
         storyboard,
         videoTaskId,
@@ -112,9 +124,9 @@ Return valid JSON with title, script in ${language}, storyboard array (scene, du
         scriptSource,
         scriptGeneratedByAI: scriptSource === 'local-model',
       },
-    }, { status: 201 });
-  } catch (err) {
-    console.error('[POST /api/ai/cinematic-video]', err);
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    }, { status: 201, headers: { 'Cache-Control': 'no-store' } });
+  } catch (error) {
+    console.error('[POST /api/ai/cinematic-video]', error);
+    return NextResponse.json({ error: 'Failed to save video plan' }, { status: 500 });
   }
 }

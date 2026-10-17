@@ -2,19 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { generateChatCompletion } from '@/lib/ai-provider';
 
-// POST /api/ai/grammar-check — check grammar + spelling via LLM
-// Inspired by languagetool/languagetool pattern
+// POST /api/ai/grammar-check — check grammar + spelling via the configured text model.
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
-    const payload = await verifyToken(token);
-    if (!payload) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
+    const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const actor = await verifyToken(token);
+    if (!actor?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-    const body = await req.json();
-    const text = String(body.text || '').trim();
-    if (!text) return NextResponse.json({ error: 'text required' }, { status: 400 });
-    if (text.length > 10000) return NextResponse.json({ error: 'Text too long' }, { status: 400 });
+    const body: unknown = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: 'A JSON object is required' }, { status: 400 });
+    const rawText = (body as Record<string, unknown>).text;
+    const text = typeof rawText === 'string' ? rawText.trim() : '';
+    if (!text || text.length > 10_000) return NextResponse.json({ error: 'Text is required and must be at most 10,000 characters' }, { status: 400 });
 
     let result;
     let generationMode: 'local-model' | 'rule-based-fallback' = 'rule-based-fallback';
@@ -27,7 +27,6 @@ export async function POST(req: NextRequest) {
       result = JSON.parse(jsonText);
       generationMode = 'local-model';
     } catch {
-      // Fallback: basic rule-based check
       result = grammarCheckFallback(text);
     }
 

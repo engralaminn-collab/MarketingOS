@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { emitEvent } from '@/lib/events';
 import { generateLocalVideo, generateLocalSpeech } from '@/lib/ai-provider';
 
@@ -18,6 +18,10 @@ export async function POST(req: NextRequest) {
     if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
     const payload = await verifyToken(token);
     if (!payload?.companyId) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
+    if (!hasPermission(payload.role, 'content_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (process.env.ZAI_MEDIA_ENABLED !== 'true') {
+      return NextResponse.json({ error: 'Hosted avatar/video generation is disabled. Configure a local media model or explicitly enable ZAI_MEDIA_ENABLED.' }, { status: 503 });
+    }
 
     const body = await req.json();
     const { avatarId, script } = body;

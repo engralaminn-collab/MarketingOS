@@ -2,19 +2,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { generateChatCompletion } from '@/lib/ai-provider';
 
-// POST /api/ai/diagram — generate a Mermaid diagram from text description
-// Inspired by cathrynlavery/diagram-design pattern
+const DIAGRAM_TYPES = new Set(['flowchart', 'sequence', 'class', 'state', 'er', 'gantt']);
+
+function safeMermaidLabel(value: string, maxLength: number): string {
+  return value.slice(0, maxLength).replace(/[\r\n\[\]{}<>"`|]/g, ' ').replace(/-->|---|==>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function diagramFallback(type: string, description: string): string {
+  const label = safeMermaidLabel(description, 40) || 'Marketing workflow';
+  if (type === 'flowchart') {
+    return `graph TD\n    A[Start: ${label}] --> B{Decision}\n    B -->|Yes| C[Process]\n    B -->|No| D[Alternative]\n    C --> E[End]\n    D --> E`;
+  }
+  if (type === 'sequence') {
+    return `sequenceDiagram\n    participant User\n    participant System\n    User->>System: ${label}\n    System-->>User: Response\n    System->>System: Process`;
+  }
+  return `graph TD\n    A[${safeMermaidLabel(description, 50) || 'Marketing workflow'}]`;
+}
+
+// POST /api/ai/diagram — generate a Mermaid diagram from a description.
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
-    const payload = await verifyToken(token);
-    if (!payload) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
+    const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const actor = await verifyToken(token);
+    if (!actor?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-    const body = await req.json();
-    const description = String(body.description || '').trim();
-    if (!description) return NextResponse.json({ error: 'description required' }, { status: 400 });
-    const type = ['flowchart', 'sequence', 'class', 'state', 'er', 'gantt'].includes(body.type) ? body.type : 'flowchart';
+    const body: unknown = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: 'A JSON object is required' }, { status: 400 });
+    const input = body as Record<string, unknown>;
+    const description = typeof input.description === 'string' ? input.description.trim() : '';
+    if (!description || description.length > 3_000) return NextResponse.json({ error: 'Description is required and must be at most 3,000 characters' }, { status: 400 });
+    const type = typeof input.type === 'string' && DIAGRAM_TYPES.has(input.type) ? input.type : 'flowchart';
 
     let diagram: string;
     let generationMode: 'local-model' | 'rule-based-fallback' = 'rule-based-fallback';
@@ -26,8 +44,9 @@ export async function POST(req: NextRequest) {
       diagram = completion.content;
       generationMode = 'local-model';
     } catch {
-      diagram = diagramFallback(type, description);
+      // A clearly labeled template remains available when the local model is offline.
     }
+    if (!mermaid) mermaid = diagramFallback(type, description);
 
     return NextResponse.json({ data: { type, description, mermaid: diagram, generationMode, degraded: generationMode !== 'local-model' } });
   } catch { return NextResponse.json({ error: 'Failed' }, { status: 500 }); }
@@ -50,5 +69,4 @@ function diagramFallback(type: string, desc: string): string {
     System-->>User: Response
     System->>System: Process`;
   }
-  return `graph TD\n    A[${desc.slice(0, 50)}]`;
 }

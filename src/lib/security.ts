@@ -14,14 +14,13 @@ interface RateLimitEntry {
 
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
-setInterval(() => {
+const rateLimitCleanup = setInterval(() => {
   const now = Date.now();
   for (const [key, entry] of rateLimitStore) {
-    if (now > entry.resetAt) {
-      rateLimitStore.delete(key);
-    }
+    if (now > entry.resetAt) rateLimitStore.delete(key);
   }
 }, 60_000);
+rateLimitCleanup.unref?.();
 
 export interface RateLimitOptions {
   maxRequests?: number;

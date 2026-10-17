@@ -1,6 +1,6 @@
 // ============================================================================
-// AI WORKFORCE ENGINE — Core Orchestration System for 2,000 AI Employees
-// MarketingOS — The single most critical module in the system
+// AI WORKFORCE ENGINE — Orchestration for seeded workforce profiles
+// MarketingOS — execution still requires configured provider/model capacity
 // ============================================================================
 
 import { db } from '@/lib/db';
@@ -1266,7 +1266,8 @@ export async function executeSop(
 
 export async function classifyComplexity(
   title: string,
-  description: string
+  description: string,
+  companyId: string,
 ): Promise<string> {
   try {
     const response = await generateChatCompletion([
@@ -1300,7 +1301,7 @@ export async function routeTask(
     // 1. Classify complexity if not provided
     let complexity = task.complexity || 'standard';
     if (!task.complexity) {
-      complexity = await classifyComplexity(task.title, task.description);
+      complexity = await classifyComplexity(task.title, task.description, task.companyId);
     }
 
     // 2. Select execution path based on complexity
@@ -1320,7 +1321,8 @@ export async function routeTask(
       throw new Error('No suitable AI employee found for this task');
     }
 
-    // 4. Select model via ModelRouter
+    // 4. Preserve the complexity tier as metadata. Actual inference is routed
+    // by AI_PROVIDER and OLLAMA_MODEL (or another explicitly selected provider).
     const tier = resolveTier(complexity);
     const modelName = getAiProviderConfig().model || 'local-model';
 
@@ -1396,7 +1398,7 @@ export async function routeTask(
           type: task.type,
           userId: task.userId,
         }),
-        modelUsed: modelName,
+        modelUsed: `${(process.env.AI_PROVIDER || 'ollama').trim().toLowerCase()}:pending`,
         modelTier: tier,
         skillsUsed: JSON.stringify(skillsUsed),
         sopsUsed: JSON.stringify(sopsUsed),
@@ -1424,6 +1426,7 @@ export async function routeTask(
       data: {
         status: 'completed',
         output: JSON.stringify({ result }),
+        modelUsed: actualModel,
         latencyMs,
         completedAt: new Date(),
       },
@@ -1450,13 +1453,13 @@ export async function routeTask(
     await addMemory(employee.employeeId, {
       memoryType: 'episodic',
       title: `Completed task: ${task.title}`,
-      content: `Successfully executed ${task.type} task with complexity ${complexity} using ${modelName}. Latency: ${latencyMs}ms.`,
+      content: `Successfully executed ${task.type} task with complexity ${complexity} using ${actualModel}. Latency: ${latencyMs}ms.`,
       category: 'task_execution',
       metadata: {
         taskId: executionId,
         taskType: task.type,
         complexity,
-        modelUsed: modelName,
+        modelUsed: actualModel,
         latencyMs,
       },
       relevance: 0.7,
@@ -1472,7 +1475,7 @@ export async function routeTask(
       employeeName: employee.name,
       employeeId: employee.employeeId,
       departmentName: employee.department.name,
-      modelUsed: modelName,
+      modelUsed: actualModel,
       modelTier: tier,
       latencyMs,
       skillsUsed,

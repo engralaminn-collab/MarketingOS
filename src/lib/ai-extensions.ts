@@ -29,7 +29,11 @@ export async function retrieveMemories(companyId: string, agentType: string, cat
 }
 
 // ─── Text Humanizer (blader/humanizer) ──────────────────────────
-export async function humanizeText(text: string, tone: 'casual' | 'professional' | 'friendly' | 'persuasive' = 'casual'): Promise<string> {
+export async function humanizeText(
+  text: string,
+  tone: 'casual' | 'professional' | 'friendly' | 'persuasive' = 'casual',
+  companyId = '',
+): Promise<{ text: string; provider: string | null; source: 'ai' | 'rules' }> {
   try {
     const completion = await generateChatCompletion([
       { role: 'system', content: `Rewrite this text to sound more natural and human. Use ${tone} tone. Remove AI-typical phrases. Return ONLY the rewritten text.` },
@@ -37,7 +41,7 @@ export async function humanizeText(text: string, tone: 'casual' | 'professional'
     ]);
     return completion.content;
   } catch {
-    return humanizeFallback(text, tone);
+    return { text: humanizeFallback(text, tone), provider: null, source: 'rules' };
   }
 }
 
@@ -55,6 +59,7 @@ function humanizeFallback(text: string, tone: string): string {
 
 // ─── Self-hosted image generation ───────────────────────────────
 export async function generateImage(prompt: string, size: string = '1024x1024'): Promise<{ url: string; prompt: string } | null> {
+  if (!isZaiMediaEnabled()) return null;
   try {
     const result = await generateLocalImage(prompt, size);
     return { url: result.dataUrl, prompt };
@@ -66,6 +71,7 @@ export async function generateImage(prompt: string, size: string = '1024x1024'):
 
 // ─── Self-hosted video generation ────────────────────────────────
 export async function generateVideo(prompt: string): Promise<{ videoUrl: string; taskId: string; status: string } | null> {
+  if (!isZaiMediaEnabled()) return null;
   try {
     return await generateLocalVideo(prompt);
   } catch (error) {
@@ -76,6 +82,7 @@ export async function generateVideo(prompt: string): Promise<{ videoUrl: string;
 
 // ─── Self-hosted video status polling ────────────────────────────
 export async function getVideoStatus(taskId: string): Promise<{ status: string; videoUrl: string } | null> {
+  if (!isZaiMediaEnabled()) return null;
   try {
     return await getLocalVideoStatus(taskId);
   } catch (error) {
@@ -86,6 +93,7 @@ export async function getVideoStatus(taskId: string): Promise<{ status: string; 
 
 // ─── Self-hosted text-to-speech ──────────────────────────────────
 export async function generateSpeech(text: string, voice: string = 'default'): Promise<{ audioUrl: string } | null> {
+  if (!isZaiMediaEnabled()) return null;
   try {
     return await generateLocalSpeech(text, voice);
   } catch (error) {

@@ -1,4 +1,4 @@
-# ALO Labs MarketingOS
+# Kexsio MarketingOS
 
 Self-hosted marketing operations platform with CRM, campaigns, content, SEO, analytics, workflow automation, and AI agent execution.
 
@@ -43,7 +43,9 @@ Do not expose local model ports directly to the public internet. Put them on a p
 ## Production
 
 ```bash
-bash deploy.sh
+bun run lint
+bun run typecheck
+bun run build
 ```
 
 Production uses the SQLite database configured in `prisma/schema.prisma`; the database file must live in the persistent `./db` volume described in `docker-compose.prod.yml`. Back up both the database and the credential-encryption key. SQLite is suitable for smaller/self-hosted deployments but should be load-tested before multi-user high-write production use.

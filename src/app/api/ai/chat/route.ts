@@ -5,30 +5,30 @@ import { generateChatCompletion } from '@/lib/ai-provider';
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
-    const payload = await verifyToken(token);
-    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const token = getBearerToken(req);
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const actor = await verifyToken(token);
+    if (!actor?.companyId || !actor.userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-    const { message, conversationId } = await req.json();
-    if (!message) return NextResponse.json({ error: 'Message required' }, { status: 400 });
+    const body: unknown = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: 'A JSON object is required' }, { status: 400 });
+    const rawMessage = (body as Record<string, unknown>).message;
+    const message = typeof rawMessage === 'string' ? rawMessage.trim() : '';
+    if (!message || message.length > 12_000) return NextResponse.json({ error: 'Message is required and must be at most 12,000 characters' }, { status: 400 });
 
-    // Save user message
-    await db.aiChatMessage.create({
-      data: { role: 'user', content: message, userId: payload.userId },
-    });
-
-    // Get recent conversation history
+    await db.aiChatMessage.create({ data: { role: 'user', content: message, userId: actor.userId } });
     const recentMessages = await db.aiChatMessage.findMany({
-      where: { userId: payload.userId },
+      where: { userId: actor.userId },
       orderBy: { createdAt: 'desc' },
       take: 20,
     });
-    const history = recentMessages.reverse().map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+    const history: ChatMessage[] = recentMessages.reverse().map((item) => ({
+      role: item.role === 'assistant' ? 'assistant' : 'user',
+      content: item.content,
+    }));
 
-    // Get company context for personalized responses
     const companyUser = await db.companyUser.findFirst({
-      where: { userId: payload.userId },
+      where: { userId: actor.userId, companyId: actor.companyId },
       include: { company: true },
     });
 
@@ -62,30 +62,44 @@ Be specific, actionable, and provide concrete steps. Use markdown formatting whe
 
     // Save AI response
     await db.aiChatMessage.create({
-      data: { role: 'assistant', content: aiResponse, userId: payload.userId },
+      data: { role: 'assistant', content: completion.content, userId: actor.userId },
     });
 
-    return NextResponse.json({ response: aiResponse });
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({
+      response: completion.content,
+      provider: completion.provider,
+      model: completion.model,
+    }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to generate a response';
+    if (error instanceof ToolCredentialsError) {
+      return NextResponse.json({ error: message }, { status: 503 });
+    }
+    const safeProviderError = /OpenRouter|Ollama|AI provider|configured AI provider|Z\.A\.I/i.test(message);
+    if (safeProviderError) {
+      console.warn('[POST /api/ai/chat] configured provider failed:', message);
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
+    console.error('[POST /api/ai/chat]', error);
+    return NextResponse.json({ error: 'Unable to generate a response' }, { status: 500 });
   }
 }
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
-    const payload = await verifyToken(token);
-    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const token = getBearerToken(req);
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const actor = await verifyToken(token);
+    if (!actor?.userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-    const messages = await db.aiChatMessage.findMany({
-      where: { userId: payload.userId },
-      orderBy: { createdAt: 'asc' },
+    const recent = await db.aiChatMessage.findMany({
+      where: { userId: actor.userId },
+      orderBy: { createdAt: 'desc' },
       take: 50,
     });
-
-    return NextResponse.json({ messages });
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ messages: recent.reverse() }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (error) {
+    console.error('[GET /api/ai/chat]', error);
+    return NextResponse.json({ error: 'Unable to fetch chat history' }, { status: 500 });
   }
 }
