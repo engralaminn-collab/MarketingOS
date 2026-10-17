@@ -616,7 +616,7 @@ export function SocialAccountsView() {
                       <div>
                         <h3 className="font-semibold">{selectedPlatform}</h3>
                         <p className="text-xs text-muted-foreground">
-                          Choose how to connect
+                          Choose the token source
                         </p>
                       </div>
                     </div>
@@ -638,9 +638,9 @@ export function SocialAccountsView() {
                           <KeyRound className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-sm">OAuth Login</h4>
+                          <h4 className="font-semibold text-sm">OAuth access token</h4>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Secure login via {selectedPlatform} authorization
+                            Paste a token you already obtained from {selectedPlatform}. This wizard does not launch an OAuth login.
                           </p>
                         </div>
                         {connectionMethod === "oauth" && wizardStep >= 1 && (
@@ -667,10 +667,10 @@ export function SocialAccountsView() {
                         </div>
                         <div>
                           <h4 className="font-semibold text-sm">
-                            API Setup Wizard
+                            API or bot token
                           </h4>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Manual API key &amp; credential configuration
+                            Manually supplied platform credential
                           </p>
                         </div>
                         {connectionMethod === "api" && wizardStep >= 1 && (
@@ -692,7 +692,7 @@ export function SocialAccountsView() {
                   </motion.div>
                 )}
 
-                {/* Step 2: AI Requirements Detection */}
+                {/* Step 2: Requirements Checklist */}
                 {wizardStep === 2 && selectedPlatform && (
                   <motion.div
                     key="step-requirements"
@@ -886,7 +886,7 @@ export function SocialAccountsView() {
                         />
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Lock className="h-3 w-3" />
-                          Token will be encrypted (AES-256) and stored securely.
+                          Token is encrypted with AES-256-GCM before database storage. Set CREDENTIAL_ENCRYPTION_KEY first.
                           No passwords are ever stored.
                         </p>
                       </div>
@@ -936,7 +936,7 @@ export function SocialAccountsView() {
                             className="flex items-center gap-2 text-sm text-muted-foreground"
                           >
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            Validating token...
+                            Validating token with the platform...
                           </motion.div>
                           <motion.div
                             initial={{ opacity: 0 }}
@@ -945,7 +945,7 @@ export function SocialAccountsView() {
                             className="flex items-center gap-2 text-sm text-muted-foreground"
                           >
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            Checking permissions...
+                            Waiting for identity response...
                           </motion.div>
                           <motion.div
                             initial={{ opacity: 0 }}
@@ -954,7 +954,7 @@ export function SocialAccountsView() {
                             className="flex items-center gap-2 text-sm text-muted-foreground"
                           >
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            Fetching account details...
+                            Confirming account identity...
                           </motion.div>
                         </div>
                       </>
