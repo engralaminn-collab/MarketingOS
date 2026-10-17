@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
     // Step 1: Generate video script via LLM
     let script = '';
     let storyboard: any[] = [];
+    let scriptSource: 'local-model' | 'template-fallback' = 'template-fallback';
 
     try {
       const completion = await generateChatCompletion([
@@ -45,6 +46,7 @@ Return valid JSON with title, script in ${language}, storyboard array (scene, du
       const parsed = JSON.parse(response);
       script = parsed.script || '';
       storyboard = parsed.storyboard || [];
+      if (script.trim()) scriptSource = 'local-model';
     } catch {
       // Fallback script
       script = `Welcome to this cinematic video about ${topic}. In the next ${duration} seconds, we'll explore the key aspects that make this topic fascinating. From the fundamentals to advanced insights, this video will give you a comprehensive understanding. Let's dive in.`;
@@ -74,7 +76,7 @@ Return valid JSON with title, script in ${language}, storyboard array (scene, du
         type: 'video',
         status: 'draft',
         platform: body.platform || null,
-        body: `# Video Script\n\n## Title\n${topic}\n\n## Script\n${script}\n\n## Storyboard\n${storyboard.map(s => `### Scene ${s.scene} (${s.duration})\n**Visual:** ${s.visual}\n**Narration:** ${s.narration}\n**Mood:** ${s.mood}`).join('\n\n')}`,
+        body: `# Video Script\n\n## Title\n${topic}\n\n## Script\n${script}\n\n## Script source\n${scriptSource}\n\n## Storyboard\n${storyboard.map(s => `### Scene ${s.scene} (${s.duration})\n**Visual:** ${s.visual}\n**Narration:** ${s.narration}\n**Mood:** ${s.mood}`).join('\n\n')}`,
         mediaUrl: null,
         mediaType: 'video',
         aiGenerated: true,
@@ -93,7 +95,7 @@ Return valid JSON with title, script in ${language}, storyboard array (scene, du
       resourceType: 'content',
       resourceId: content.id,
       link: '/content',
-      metadata: { topic, duration, style, videoTaskId, sceneCount: storyboard.length },
+      metadata: { topic, duration, style, videoTaskId, sceneCount: storyboard.length, scriptSource },
     });
 
     return NextResponse.json({
@@ -107,6 +109,8 @@ Return valid JSON with title, script in ${language}, storyboard array (scene, du
         duration,
         style,
         language,
+        scriptSource,
+        scriptGeneratedByAI: scriptSource === 'local-model',
       },
     }, { status: 201 });
   } catch (err) {
