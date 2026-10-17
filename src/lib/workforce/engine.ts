@@ -1609,7 +1609,7 @@ export async function executeWithEmployee(
 
     // 7. Select model
     // The actual inference model is the configured local/private model.
-    const modelName = getAiProviderConfig().model || 'local-model';
+
 
     // 8. Execute via the self-hosted AI gateway
     const completion = await generateChatCompletion(messages);
