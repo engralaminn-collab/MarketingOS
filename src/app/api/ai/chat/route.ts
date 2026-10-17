@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
-import ZAI from 'z-ai-web-dev-sdk';
+import { generateChatCompletion } from '@/lib/ai-provider';
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,21 +47,18 @@ ${companyUser ? `The user's company: ${companyUser.company.name}, Industry: ${co
 
 Be specific, actionable, and provide concrete steps. Use markdown formatting when helpful. Be enthusiastic and professional.`;
 
-    const zai = await ZAI.create();
-    const messages = [{ role: 'assistant' as const, content: systemPrompt }, ...history];
+    const messages = [{ role: 'system' as const, content: systemPrompt }, ...history];
 
-    // Trim if too long
+    // Trim history without dropping the system instructions.
     const maxMessages = 24;
     const trimmedMessages = messages.length > maxMessages
       ? [messages[0], ...messages.slice(-(maxMessages - 1))]
       : messages;
 
-    const completion = await zai.chat.completions.create({
-      messages: trimmedMessages,
-      thinking: { type: 'disabled' },
-    });
-
-    const aiResponse = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+    // Uses the configured self-hosted provider (Ollama by default). Provider
+    // failures are surfaced instead of silently calling a paid cloud API.
+    const completion = await generateChatCompletion(trimmedMessages);
+    const aiResponse = completion.content;
 
     // Save AI response
     await db.aiChatMessage.create({
