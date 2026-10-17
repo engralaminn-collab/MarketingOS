@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { encryptSecret, isEncryptedSecret } from '@/lib/credentials';
-import { hasPermission, verifyToken } from '@/lib/auth';
-import { SocialTokenVerificationError, verifySocialAccessToken } from '@/lib/social-provider';
+import { verifyToken } from '@/lib/auth';
+import { encryptCredential, isEncryptedCredential } from '@/lib/credential-vault';
+import { verifySocialCredential } from '@/lib/social-provider';
 
 const PLATFORMS = ['Facebook', 'Instagram', 'LinkedIn', 'X', 'YouTube', 'TikTok', 'Pinterest', 'Telegram'];
 
@@ -36,19 +36,24 @@ export async function GET(req: NextRequest) {
     const payload = await verifyToken(token);
     if (!payload?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-    const storedAccounts = await db.socialAccount.findMany({
+    if (!payload.companyId) return NextResponse.json({ error: 'No company associated' }, { status: 400 });
+
+    // Read tokens only server-side to detect legacy plaintext/base64 credentials.
+    // Never serialize accessToken or refreshToken into the browser response.
+    const records = await db.socialAccount.findMany({
       where: { companyId: payload.companyId },
       orderBy: { connectedAt: 'desc' },
       select: { id: true, platform: true, accountName: true, accountHandle: true, status: true, lastSyncedAt: true, connectedAt: true, accessToken: true },
     });
-    // Legacy/demo rows used plaintext or Base64 placeholders. They must not be
-    // reported as validated connections and the secret is never serialized.
-    const accounts = storedAccounts.map(({ accessToken, ...account }) => ({
+    const accounts = records.map(({ accessToken, refreshToken, ...account }) => ({
       ...account,
-      status: account.status === 'active' && isEncryptedSecret(accessToken) ? 'active' : 'needs_revalidation',
+      status: isEncryptedCredential(accessToken) ? account.status : 'needs_reconnect',
+      credentialStoredSecurely: isEncryptedCredential(accessToken),
+      hasRefreshToken: Boolean(refreshToken),
     }));
-    const connectedPlatforms = accounts.filter((account) => account.status === 'active').map((account) => account.platform);
-    const missingPlatforms = PLATFORMS.filter((platform) => !connectedPlatforms.includes(platform));
+
+    const connectedPlatforms = accounts.filter(a => a.status === 'active').map(a => a.platform);
+    const missingPlatforms = PLATFORMS.filter(p => !connectedPlatforms.includes(p));
 
     return NextResponse.json({
       accounts: accounts.map(accountDto),
@@ -80,53 +85,50 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'A supported platform and access token are required' }, { status: 400 });
     }
 
-    let encryptedToken: string;
+    if (!payload.companyId) return NextResponse.json({ error: 'No company associated' }, { status: 400 });
+    const { platform, accountName, accountHandle, accessToken, scopes } = await req.json();
+    if (!PLATFORMS.includes(platform) || typeof accessToken !== 'string' || !accessToken.trim()) {
+      return NextResponse.json({ error: 'A supported platform and access token are required' }, { status: 400 });
+    }
+    if (accessToken.length > 10000) return NextResponse.json({ error: 'Access token is too long' }, { status: 400 });
+
+    let verification: Awaited<ReturnType<typeof verifySocialCredential>>;
     try {
-      encryptedToken = encryptSecret(accessToken);
+      verification = await verifySocialCredential(platform, accessToken.trim());
     } catch (error) {
-      console.error('[POST /api/social-accounts] credential encryption unavailable:', error);
-      return NextResponse.json({ error: 'Social credentials cannot be stored until CREDENTIAL_ENCRYPTION_KEY is configured' }, { status: 503 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : 'Platform rejected the credential' }, { status: 502 });
     }
 
-    let verifiedAccount;
+    let encryptedAccessToken: string;
     try {
-      verifiedAccount = await verifySocialAccessToken(platform, accessToken);
+      encryptedAccessToken = encryptCredential(accessToken.trim());
     } catch (error) {
-      const status = error instanceof SocialTokenVerificationError ? error.httpStatus : 503;
-      const message = error instanceof SocialTokenVerificationError ? error.message : 'Unable to verify the token with the provider';
-      return NextResponse.json({ error: message }, { status });
+      console.error('[social-accounts] credential encryption is not configured:', error instanceof Error ? error.message : 'unknown error');
+      return NextResponse.json({ error: 'Secure credential storage is not configured. Set CREDENTIAL_ENCRYPTION_KEY before connecting social accounts.' }, { status: 503 });
     }
 
-    const requestedName = typeof body.accountName === 'string' ? body.accountName.trim().slice(0, 120) : '';
-    const requestedHandle = typeof body.accountHandle === 'string' ? body.accountHandle.trim().slice(0, 120) : '';
-    const accountName = (verifiedAccount.name || requestedName || `My ${platform}`).slice(0, 120);
-    const accountHandle = verifiedAccount.handle || requestedHandle || null;
-    const existing = await db.socialAccount.findFirst({
-      where: { companyId: payload.companyId, platform, accountId: verifiedAccount.id },
-      select: { id: true },
+    const account = await db.socialAccount.create({
+      data: {
+        platform,
+        accountName: typeof accountName === 'string' && accountName.trim() && !accountName.startsWith('My ') ? accountName.trim().slice(0, 160) : (verification.accountName || `My ${platform}`).slice(0, 160),
+        accountHandle: typeof accountHandle === 'string' && accountHandle.trim() ? accountHandle.slice(0, 160) : null,
+        accountId: verification.accountId,
+        accessToken: encryptedAccessToken,
+        scopes: JSON.stringify(Array.isArray(scopes) ? scopes.filter((s: unknown) => typeof s === 'string').slice(0, 100) : []),
+        // Mark active only after a live read-only identity check succeeds.
+        status: 'active',
+        lastSyncedAt: new Date(),
+        companyId: payload.companyId,
+      },
+      select: {
+        id: true, platform: true, accountName: true, accountHandle: true, accountId: true, avatarUrl: true,
+        status: true, scopes: true, lastSyncedAt: true, connectedAt: true, createdAt: true, updatedAt: true,
+      },
     });
 
-    const saved = existing
-      ? await db.socialAccount.update({
-          where: { id: existing.id },
-          data: { accountName, accountHandle, accessToken: encryptedToken, scopes: JSON.stringify([]), status: 'active', lastSyncedAt: null },
-          select: { id: true, platform: true, accountName: true, accountHandle: true, status: true, lastSyncedAt: true, connectedAt: true },
-        })
-      : await db.socialAccount.create({
-          data: { platform, accountName, accountHandle, accountId: verifiedAccount.id, accessToken: encryptedToken, scopes: JSON.stringify([]), status: 'active', lastSyncedAt: null, companyId: payload.companyId },
-          select: { id: true, platform: true, accountName: true, accountHandle: true, status: true, lastSyncedAt: true, connectedAt: true },
-        });
-
-    return NextResponse.json({
-      account: accountDto(saved),
-      tokenVerified: true,
-      publishingEnabled: false,
-      syncEnabled: false,
-      message: 'Token verified and encrypted. Publishing and automatic sync are not implemented.',
-    }, { status: existing ? 200 : 201 });
-  } catch (error) {
-    console.error('[POST /api/social-accounts]', error);
-    return NextResponse.json({ error: 'Unable to save social account' }, { status: 500 });
+    return NextResponse.json({ account }, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -135,8 +137,14 @@ export async function DELETE(req: NextRequest) {
     const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const payload = await verifyToken(token);
-    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    if (!hasPermission(payload.role, 'social_media_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+
+    if (!payload.companyId) return NextResponse.json({ error: 'No company associated' }, { status: 400 });
+    const body = await req.json();
+    const id = typeof body.id === 'string' ? body.id : '';
+    if (!id) return NextResponse.json({ error: 'Account ID required' }, { status: 400 });
+    const result = await db.socialAccount.deleteMany({ where: { id, companyId: payload.companyId } });
+    if (result.count === 0) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
 
     const body = await req.json();
     const id = typeof body?.id === 'string' ? body.id : '';

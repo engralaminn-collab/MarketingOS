@@ -1,6 +1,14 @@
-import ZAI from 'z-ai-web-dev-sdk';
-import { getCompanyToolCredentials, ToolCredentialsError } from '@/lib/tool-credentials';
-
+/**
+ * Self-hosted AI gateway for MarketingOS.
+ *
+ * Default provider is Ollama on the operator's own infrastructure. There is
+ * intentionally no automatic cloud-provider fallback. If the local model
+ * server is unavailable, callers receive an error and can show a truthful
+ * degraded state rather than silently incur third-party charges.
+ *
+ * Compatible servers may be selected explicitly with AI_PROVIDER=openai-compatible
+ * (for example a self-hosted vLLM endpoint). This does not imply OpenAI hosting.
+ */
 export type ChatMessage = {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -8,145 +16,233 @@ export type ChatMessage = {
 
 export type ChatCompletionResult = {
   content: string;
-  provider: 'Ollama' | 'OpenRouter' | 'Z.AI';
-  model: string | null;
+  model: string;
+  promptTokens?: number;
+  completionTokens?: number;
 };
 
-const OPENROUTER_TOOL_NUMBER = 83;
-const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_OLLAMA_BASE_URL = 'http://127.0.0.1:11434';
-const DEFAULT_OLLAMA_MODEL = 'llama3.2:3b';
+const DEFAULT_TIMEOUT_MS = 120_000;
 
-function configuredProvider(): string {
-  return (process.env.AI_PROVIDER || 'ollama').trim().toLowerCase();
+function getTimeoutMs(): number {
+  const value = Number(process.env.AI_REQUEST_TIMEOUT_MS || DEFAULT_TIMEOUT_MS);
+  return Number.isFinite(value) && value >= 1_000 && value <= 600_000
+    ? value
+    : DEFAULT_TIMEOUT_MS;
 }
 
-function getOllamaConfig(): { baseUrl: URL; model: string; apiKey: string | null } {
-  let baseUrl: URL;
-  try {
-    baseUrl = new URL(process.env.OLLAMA_BASE_URL?.trim() || DEFAULT_OLLAMA_BASE_URL);
-  } catch {
-    throw new Error('OLLAMA_BASE_URL must be a valid server URL.');
+function providerName(): string {
+  const provider = (process.env.AI_PROVIDER || 'ollama').trim().toLowerCase();
+  if (provider !== 'ollama' && provider !== 'openai-compatible') {
+    throw new Error(`Unsupported AI_PROVIDER "${provider}". Supported providers: ollama, openai-compatible.`);
   }
-  if (!['http:', 'https:'].includes(baseUrl.protocol) || baseUrl.username || baseUrl.password || baseUrl.search || baseUrl.hash) {
-    throw new Error('OLLAMA_BASE_URL must use HTTP(S) and must not include credentials, query parameters, or fragments.');
-  }
-  const model = process.env.OLLAMA_MODEL?.trim() || DEFAULT_OLLAMA_MODEL;
-  if (model.length > 160 || !/^[A-Za-z0-9._:/-]+$/.test(model)) {
-    throw new Error('OLLAMA_MODEL contains unsupported characters.');
-  }
-  const apiKey = process.env.OLLAMA_API_KEY?.trim() || null;
-  return { baseUrl, model, apiKey };
+  return provider;
 }
 
-function endpoint(baseUrl: URL, path: string): string {
-  const prefix = baseUrl.pathname.replace(/\/+$/, '');
-  return `${baseUrl.origin}${prefix}${path}`;
+function baseUrl(): string {
+  const provider = providerName();
+  if (provider === 'ollama') {
+    return (process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434').replace(/\/+$/, '');
+  }
+  if (provider === 'openai-compatible') {
+    const value = process.env.AI_COMPATIBLE_BASE_URL;
+    if (!value) throw new Error('AI_COMPATIBLE_BASE_URL is required for AI_PROVIDER=openai-compatible');
+    return value.replace(/\/+$/, '');
+  }
+  throw new Error(`Unsupported AI_PROVIDER "${provider}". Supported providers: ollama, openai-compatible.`);
 }
 
-async function createOllamaCompletion(messages: ChatMessage[]): Promise<ChatCompletionResult> {
-  const { baseUrl, model, apiKey } = getOllamaConfig();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 120_000);
-  try {
-    const response = await fetch(endpoint(baseUrl, '/api/chat'), {
-      method: 'POST',
-      redirect: 'error',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-      },
-      body: JSON.stringify({
+function modelName(): string {
+  if (providerName() === 'ollama') {
+    const model = process.env.OLLAMA_CHAT_MODEL || 'qwen2.5:7b';
+    if (!model.trim()) throw new Error('OLLAMA_CHAT_MODEL must not be empty');
+    return model.trim();
+  }
+  const model = process.env.AI_COMPATIBLE_MODEL;
+  if (!model?.trim()) throw new Error('AI_COMPATIBLE_MODEL is required for AI_PROVIDER=openai-compatible');
+  return model.trim();
+}
+
+export async function generateChatCompletion(
+  messages: ChatMessage[],
+  options: { temperature?: number; maxTokens?: number } = {},
+): Promise<ChatCompletionResult> {
+  if (!Array.isArray(messages) || messages.length === 0) {
+    throw new Error('At least one chat message is required');
+  }
+  const provider = providerName();
+  const model = modelName();
+  const url = provider === 'ollama' ? `${baseUrl()}/api/chat` : `${baseUrl()}/chat/completions`;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (provider === 'openai-compatible' && process.env.AI_COMPATIBLE_API_KEY) {
+    headers.Authorization = `Bearer ${process.env.AI_COMPATIBLE_API_KEY}`;
+  }
+  const body = provider === 'ollama'
+    ? {
         model,
         messages,
         stream: false,
-        keep_alive: '5m',
-        options: { temperature: 0.7, num_predict: 4_000 },
-      }),
-    });
-    if (!response.ok) {
-      throw new Error(`Ollama request failed (HTTP ${response.status}). Check the local model server, model name, and server logs.`);
-    }
-    const result: unknown = await response.json();
-    if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('Ollama returned an invalid response.');
-    const message = (result as { message?: unknown }).message;
-    const content = message && typeof message === 'object' ? (message as { content?: unknown }).content : null;
-    if (typeof content !== 'string' || !content.trim()) throw new Error('Ollama returned no text.');
-    return { content, provider: 'Ollama', model };
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') throw new Error('Ollama request timed out after two minutes.');
-    throw error;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
+        options: {
+          ...(options.temperature !== undefined ? { temperature: options.temperature } : {}),
+          ...(options.maxTokens !== undefined ? { num_predict: options.maxTokens } : {}),
+        },
+      }
+    : {
+        model,
+        messages,
+        stream: false,
+        ...(options.temperature !== undefined ? { temperature: options.temperature } : {}),
+        ...(options.maxTokens !== undefined ? { max_tokens: options.maxTokens } : {}),
+      };
 
-async function createOpenRouterCompletion(companyId: string, messages: ChatMessage[]): Promise<ChatCompletionResult> {
-  const stored = await getCompanyToolCredentials(companyId, OPENROUTER_TOOL_NUMBER, ['OPENROUTER_API_KEY']);
-  if (!stored) throw new ToolCredentialsError('Connect OpenRouter in Integrations and set AI_PROVIDER=openrouter to use it.');
-
-  const model = stored.OPENROUTER_MODEL?.trim() || 'openrouter/auto';
-  if (model.length > 160 || !/^[A-Za-z0-9._:/~-]+$/.test(model)) {
-    throw new ToolCredentialsError('OpenRouter model ID is invalid. Re-save the connection in Integrations.');
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 45_000);
+  let response: Response;
   try {
-    const response = await fetch(OPENROUTER_ENDPOINT, {
+    response = await fetch(url, {
       method: 'POST',
-      redirect: 'error',
-      signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${stored.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://marketingos.ai',
-        'X-OpenRouter-Title': 'MarketingOS',
-      },
-      body: JSON.stringify({ model, messages, max_tokens: 4_000 }),
+      headers,
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(getTimeoutMs()),
+      cache: 'no-store',
     });
-    if (!response.ok) {
-      throw new Error(`OpenRouter request failed (HTTP ${response.status}). Check the stored key, model ID, and provider balance.`);
-    }
-    const result: unknown = await response.json();
-    if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('OpenRouter returned an invalid response.');
-    const choices = (result as { choices?: unknown }).choices;
-    const first = Array.isArray(choices) ? choices[0] : null;
-    const message = first && typeof first === 'object' ? (first as { message?: unknown }).message : null;
-    const content = message && typeof message === 'object' ? (message as { content?: unknown }).content : null;
-    if (typeof content !== 'string' || !content.trim()) throw new Error('OpenRouter returned no text.');
-    return { content, provider: 'OpenRouter', model };
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') throw new Error('OpenRouter request timed out. Please retry.');
-    throw error;
-  } finally {
-    clearTimeout(timeout);
+    const reason = error instanceof Error ? error.message : 'network error';
+    throw new Error(`Self-hosted AI provider "${provider}" is unreachable at ${url}: ${reason}`);
   }
+
+  if (!response.ok) {
+    const detail = (await response.text().catch(() => '')).slice(0, 500);
+    throw new Error(`AI provider "${provider}" returned HTTP ${response.status}${detail ? `: ${detail}` : ''}`);
+  }
+
+  const data = await response.json() as any;
+  const result = provider === 'ollama'
+    ? {
+        content: data.message?.content,
+        model: data.model || model,
+        promptTokens: data.prompt_eval_count,
+        completionTokens: data.eval_count,
+      }
+    : {
+        content: data.choices?.[0]?.message?.content,
+        model: data.model || model,
+        promptTokens: data.usage?.prompt_tokens,
+        completionTokens: data.usage?.completion_tokens,
+      };
+
+  if (typeof result.content !== 'string' || !result.content.trim()) {
+    throw new Error(`AI provider "${provider}" returned an empty or invalid response`);
+  }
+  return {
+    content: result.content,
+    model: result.model,
+    ...(typeof result.promptTokens === 'number' ? { promptTokens: result.promptTokens } : {}),
+    ...(typeof result.completionTokens === 'number' ? { completionTokens: result.completionTokens } : {}),
+  };
 }
 
-async function createZaiCompletion(messages: ChatMessage[]): Promise<ChatCompletionResult> {
-  const zai = await ZAI.create();
-  const completion = await zai.chat.completions.create({ messages, thinking: { type: 'disabled' } });
-  const content = completion.choices[0]?.message?.content;
-  if (typeof content !== 'string' || !content.trim()) throw new Error('The Z.AI provider returned no text.');
-  return { content, provider: 'Z.AI', model: null };
+/** Safe operational status for the Settings / integrations UI. */
+export function getAiProviderConfig() {
+  const provider = providerName();
+  return {
+    provider,
+    model: provider === 'ollama'
+      ? (process.env.OLLAMA_CHAT_MODEL || 'qwen2.5:7b')
+      : (process.env.AI_COMPATIBLE_MODEL || ''),
+    baseUrl: provider === 'ollama'
+      ? (process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434')
+      : (process.env.AI_COMPATIBLE_BASE_URL || ''),
+    automaticPaidFallback: false as const,
+  };
+}
+
+
+const IMAGE_SIZES: Record<string, { width: number; height: number }> = {
+  '1024x1024': { width: 1024, height: 1024 },
+  '768x1344': { width: 768, height: 1344 },
+  '1344x768': { width: 1344, height: 768 },
+  '1440x720': { width: 1440, height: 720 },
+  '720x1440': { width: 720, height: 1440 },
+  '864x1152': { width: 864, height: 1152 },
+  '1152x864': { width: 1152, height: 864 },
+};
+
+export async function generateLocalImage(prompt: string, size = '1024x1024'): Promise<{ dataUrl: string }> {
+  const dimensions = IMAGE_SIZES[size];
+  if (!dimensions) throw new Error('Unsupported image size');
+  const baseUrl = (process.env.IMAGE_GENERATION_URL || 'http://127.0.0.1:7860').replace(/\\/+$/, '');
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/sdapi/v1/txt2img`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, width: dimensions.width, height: dimensions.height, steps: 25, batch_size: 1, n_iter: 1 }),
+      signal: AbortSignal.timeout(Number(process.env.IMAGE_GENERATION_TIMEOUT_MS) || 120_000),
+      cache: 'no-store',
+    });
+  } catch {
+    throw new Error('Local image service is unavailable. Configure IMAGE_GENERATION_URL. No cloud fallback was attempted.');
+  }
+  if (!response.ok) throw new Error(`Local image service returned HTTP ${response.status}`);
+  const result = await response.json() as { images?: string[] };
+  const image = result.images?.[0];
+  if (!image) throw new Error('Local image service returned no image');
+  return { dataUrl: image.startsWith('data:') ? image : `data:image/png;base64,${image}` };
 }
 
 /**
- * Server-side text generation. Self-hosted Ollama is the default and never
- * falls back to a paid API. OpenRouter and the existing Z.AI adapter are only
- * used when an operator explicitly selects them with AI_PROVIDER.
+ * Video and speech services are self-hosted adapter contracts. Configure a
+ * local adapter that implements POST /generate and GET /status/:taskId for
+ * video, and POST /api/tts for speech. Missing services fail closed.
  */
-export async function createChatCompletion(companyId: string, messages: ChatMessage[]): Promise<ChatCompletionResult> {
-  switch (configuredProvider()) {
-    case 'ollama':
-      return createOllamaCompletion(messages);
-    case 'openrouter':
-      return createOpenRouterCompletion(companyId, messages);
-    case 'zai':
-      return createZaiCompletion(messages);
-    default:
-      throw new Error('Unsupported AI_PROVIDER. Choose ollama, openrouter, or zai.');
-  }
+export async function generateLocalVideo(prompt: string, options: { duration?: number; referenceImageUrl?: string } = {}): Promise<{ videoUrl: string; taskId: string; status: string }> {
+  const baseUrl = process.env.VIDEO_GENERATION_URL?.replace(/\\/+$/, '');
+  if (!baseUrl) throw new Error('VIDEO_GENERATION_URL is not configured');
+  const response = await fetch(`${baseUrl}/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, ...options }),
+    signal: AbortSignal.timeout(Number(process.env.VIDEO_GENERATION_TIMEOUT_MS) || 120_000),
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`Local video service returned HTTP ${response.status}`);
+  const data = await response.json() as any;
+  const taskId = data.taskId || data.id;
+  if (typeof taskId !== 'string' || !taskId) throw new Error('Local video service returned no task ID');
+  return {
+    taskId,
+    videoUrl: String(data.videoUrl || data.video_url || data.url || ''),
+    status: String(data.status || (data.completed ? 'completed' : 'processing')),
+  };
+}
+
+export async function getLocalVideoStatus(taskId: string): Promise<{ status: string; videoUrl: string }> {
+  const baseUrl = process.env.VIDEO_GENERATION_URL?.replace(/\\/+$/, '');
+  if (!baseUrl) throw new Error('VIDEO_GENERATION_URL is not configured');
+  const response = await fetch(`${baseUrl}/status/${encodeURIComponent(taskId)}`, {
+    method: 'GET',
+    signal: AbortSignal.timeout(Number(process.env.VIDEO_GENERATION_TIMEOUT_MS) || 30_000),
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`Local video service returned HTTP ${response.status}`);
+  const data = await response.json() as any;
+  return {
+    status: String(data.status || 'processing'),
+    videoUrl: String(data.videoUrl || data.video_url || data.url || ''),
+  };
+}
+
+export async function generateLocalSpeech(text: string, voice = 'default'): Promise<{ audioUrl: string }> {
+  const baseUrl = process.env.TTS_SERVICE_URL?.replace(/\\/+$/, '');
+  if (!baseUrl) throw new Error('TTS_SERVICE_URL is not configured');
+  const response = await fetch(`${baseUrl}/api/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, voice }),
+    signal: AbortSignal.timeout(Number(process.env.TTS_TIMEOUT_MS) || 60_000),
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`Local TTS service returned HTTP ${response.status}`);
+  const data = await response.json() as any;
+  const audioUrl = data.audioUrl || data.audio_url || (data.audioBase64 ? `data:audio/wav;base64,${data.audioBase64}` : '');
+  if (typeof audioUrl !== 'string' || !audioUrl) throw new Error('Local TTS service returned no audio URL or audio data');
+  return { audioUrl };
 }

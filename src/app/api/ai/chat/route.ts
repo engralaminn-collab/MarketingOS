@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
-import { createChatCompletion, type ChatMessage } from '@/lib/ai-provider';
-import { ToolCredentialsError } from '@/lib/tool-credentials';
-
-function getBearerToken(req: NextRequest): string | null {
-  return req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1] || null;
-}
+import { generateChatCompletion } from '@/lib/ai-provider';
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,15 +31,36 @@ export async function POST(req: NextRequest) {
       where: { userId: actor.userId, companyId: actor.companyId },
       include: { company: true },
     });
-    const systemPrompt = `You are the AI Command Center for MarketingOS, a marketing operations workspace. Help with marketing strategy, campaign planning, content drafting, SEO checklists, CRM workflows, and competitor research. Distinguish verified data from estimates and never claim a provider action happened unless the app confirms it.
-${companyUser ? `Company: ${companyUser.company.name}. Industry: ${companyUser.company.industry || 'General'}.` : ''}
-Be specific, actionable, and professional. Use Markdown where helpful.`;
 
-    const promptMessages: ChatMessage[] = [
-      { role: 'system', content: systemPrompt },
-      ...history.slice(-19),
-    ];
-    const completion = await createChatCompletion(actor.companyId, promptMessages);
+    const systemPrompt = `You are the AI Command Center for MarketingOS, a comprehensive AI-powered marketing operating system. You help users with:
+- Creating marketing plans and strategies
+- Generating social media content, blogs, emails, and SMS campaigns
+- SEO optimization and challenges
+- Lead generation and CRM management
+- Campaign planning and execution
+- Content scheduling and publishing
+- Analytics and performance insights
+- Competitor analysis
+- Brand strategy
+
+${companyUser ? `The user's company: ${companyUser.company.name}, Industry: ${companyUser.company.industry || 'General'}` : ''}
+
+Be specific, actionable, and provide concrete steps. Use markdown formatting when helpful. Be enthusiastic and professional.`;
+
+    const messages = [{ role: 'system' as const, content: systemPrompt }, ...history];
+
+    // Trim history without dropping the system instructions.
+    const maxMessages = 24;
+    const trimmedMessages = messages.length > maxMessages
+      ? [messages[0], ...messages.slice(-(maxMessages - 1))]
+      : messages;
+
+    // Uses the configured self-hosted provider (Ollama by default). Provider
+    // failures are surfaced instead of silently calling a paid cloud API.
+    const completion = await generateChatCompletion(trimmedMessages);
+    const aiResponse = completion.content;
+
+    // Save AI response
     await db.aiChatMessage.create({
       data: { role: 'assistant', content: completion.content, userId: actor.userId },
     });

@@ -5,7 +5,7 @@
 
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
-import { createChatCompletion } from '@/lib/ai-provider';
+import { generateChatCompletion, getAiProviderConfig } from '@/lib/ai-provider';
 
 // ============================================================================
 // TYPES
@@ -1270,7 +1270,7 @@ export async function classifyComplexity(
   companyId: string,
 ): Promise<string> {
   try {
-    const response = await createChatCompletion(companyId, [
+    const response = await generateChatCompletion([
       {
         role: 'system',
         content:
@@ -1281,9 +1281,8 @@ export async function classifyComplexity(
           '- enterprise: Organizational strategy, cross-functional orchestration, executive decisions, large-scale campaigns',
       },
       { role: 'user', content: `Task: ${title}\nDescription: ${description}` },
-    ]);
-
-    const result = response.content.trim().toLowerCase() || 'standard';
+    ], { temperature: 0 });
+    const result = response.content.trim().toLowerCase();
     const validComplexities = ['simple', 'standard', 'complex', 'enterprise'];
     return validComplexities.includes(result) ? result : 'standard';
   } catch (error) {
@@ -1325,6 +1324,7 @@ export async function routeTask(
     // 4. Preserve the complexity tier as metadata. Actual inference is routed
     // by AI_PROVIDER and OLLAMA_MODEL (or another explicitly selected provider).
     const tier = resolveTier(complexity);
+    const modelName = getAiProviderConfig().model || 'local-model';
 
     // 5. Load employee context in parallel
     const [sops, knowledge, memories] = await Promise.all([
@@ -1413,13 +1413,11 @@ export async function routeTask(
     // 8. Execute via LLM
     const userMessage = `Please complete the following task:\n\n**Task:** ${task.title}\n**Description:** ${task.description}\n**Type:** ${task.type}\n**Complexity:** ${complexity}\n\nProvide a thorough, professional response based on your expertise and the provided context.`;
 
-    const completion = await createChatCompletion(task.companyId, [
+    const completion = await generateChatCompletion([
       { role: 'system', content: fullSystemPrompt },
       { role: 'user', content: userMessage },
     ]);
-
-    const result = completion.content || 'Task execution completed but no output was generated.';
-    const actualModel = `${completion.provider}${completion.model ? `:${completion.model}` : ''}`;
+    const result = completion.content;
     const latencyMs = Date.now() - startTime;
 
     // 9. Update TaskExecution with results
@@ -1612,9 +1610,13 @@ export async function executeWithEmployee(
     // Add current user message
     messages.push({ role: 'user', content: message });
 
-    // 7. Execute through the configured self-hosted or explicitly selected model
-    const completion = await createChatCompletion(companyId || employee.companyId, messages);
-    const aiResponse = completion.content || 'I was unable to generate a response. Please try again.';
+    // 7. Select model
+    // The actual inference model is the configured local/private model.
+
+
+    // 8. Execute via the self-hosted AI gateway
+    const completion = await generateChatCompletion(messages);
+    const aiResponse = completion.content;
 
     // 9. Update conversation with new messages
     const updatedMessages: ConversationMessage[] = [

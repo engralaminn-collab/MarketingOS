@@ -141,14 +141,14 @@ export function SocialAccountsView() {
   const [accessToken, setAccessToken] = useState("");
   const [testing, setTesting] = useState(false);
   const [connectSuccess, setConnectSuccess] = useState(false);
-  const [testError, setTestError] = useState<string | null>(null);
+  const [connectTestError, setConnectTestError] = useState<string | null>(null);
 
   // Mutations
   const connectMutation = useApiMutation<any>({
     method: "POST",
     path: "/api/social-accounts",
     onSuccess: () => {
-      toast.success("Token verified and encrypted. Posting and automatic sync are not available.");
+      toast.success("Credential verified and saved. Publishing access depends on the platform permissions granted.");
       refetch();
       resetWizard();
     },
@@ -165,6 +165,14 @@ export function SocialAccountsView() {
     onError: (err) => toast.error(err),
   });
 
+  const testConnectionMutation = useApiMutation<
+    { platform: string; accessToken: string },
+    { verified: boolean; accountName?: string | null; accountId?: string | null; error?: string }
+  >({
+    method: "POST",
+    path: "/api/social-accounts/test",
+  });
+
   const resetWizard = () => {
     setWizardStep(0);
     setSelectedPlatform(null);
@@ -173,7 +181,7 @@ export function SocialAccountsView() {
     setAccessToken("");
     setTesting(false);
     setConnectSuccess(false);
-    setTestError(null);
+    setConnectTestError(null);
     setWizardOpen(false);
   };
 
@@ -213,20 +221,25 @@ export function SocialAccountsView() {
     toast.info(`Disconnecting ${name}...`);
   };
 
-  const verifyAccessToken = async () => {
+  const simulateConnectionTest = async () => {
     if (!selectedPlatform || !accessToken.trim()) return;
     setWizardStep(5);
     setTesting(true);
     setConnectSuccess(false);
-    setTestError(null);
+    setConnectTestError(null);
     try {
-      const result = await tokenTestMutation.mutateAsync({ platform: selectedPlatform, accessToken: accessToken.trim() });
-      if (result?.valid !== true) throw new Error("The provider did not confirm this token");
-      if (result.account?.name) setAccountName(result.account.name);
-      if (result.account?.handle) setAccountHandle(result.account.handle);
+      const result = await testConnectionMutation.mutateAsync({
+        platform: selectedPlatform,
+        accessToken: accessToken.trim(),
+      });
+      if (!result.verified) throw new Error(result.error || 'The platform did not verify this credential');
+      if (result.accountName) setAccountName(result.accountName);
       setConnectSuccess(true);
+      toast.success('The platform accepted the credential. Publish permissions may still require app review.');
     } catch (error) {
-      setTestError(error instanceof Error ? error.message : "Unable to verify this token");
+      const message = error instanceof Error ? error.message : 'Credential verification failed';
+      setConnectTestError(message);
+      toast.error(message);
     } finally {
       setTesting(false);
     }
@@ -515,7 +528,7 @@ export function SocialAccountsView() {
                       <div>
                         <h3 className="font-semibold">{selectedPlatform}</h3>
                         <p className="text-xs text-muted-foreground">
-OAuth redirect is not configured. Use a provider-issued token for verification.
+                          Choose the token source
                         </p>
                       </div>
                     </div>
@@ -525,8 +538,10 @@ OAuth redirect is not configured. Use a provider-issued token for verification.
                           <KeyRound className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-sm">OAuth Login</h4>
-                          <p className="text-xs text-muted-foreground mt-1">OAuth authorization redirects are not implemented.</p>
+                          <h4 className="font-semibold text-sm">OAuth access token</h4>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Paste a token you already obtained from {selectedPlatform}. This wizard does not launch an OAuth login.
+                          </p>
                         </div>
                         <Badge variant="outline" className="text-[9px]">Unavailable</Badge>
                       </div>
@@ -541,10 +556,10 @@ OAuth redirect is not configured. Use a provider-issued token for verification.
                         </div>
                         <div>
                           <h4 className="font-semibold text-sm">
-                            API Setup Wizard
+                            API or bot token
                           </h4>
                           <p className="text-xs text-muted-foreground mt-1">
-Manual provider-issued access token verification
+                            Manually supplied platform credential
                           </p>
                         </div>
                         <Badge className="absolute -top-1.5 -right-1.5 bg-orange-500 text-white text-[9px] px-1.5 py-0">
@@ -564,7 +579,7 @@ Manual provider-issued access token verification
                   </motion.div>
                 )}
 
-                {/* Step 2: AI Requirements Detection */}
+                {/* Step 2: Requirements Checklist */}
                 {wizardStep === 2 && selectedPlatform && (
                   <motion.div
                     key="step-requirements"
@@ -715,7 +730,8 @@ Manual provider-issued access token verification
                         />
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Lock className="h-3 w-3" />
-                          The token is encrypted before storage and is never returned by the API.
+                          Token is encrypted with AES-256-GCM before database storage. Set CREDENTIAL_ENCRYPTION_KEY first.
+                          No passwords are ever stored.
                         </p>
                       </div>
                     </div>
@@ -756,14 +772,43 @@ Manual provider-issued access token verification
                             Checking the provider profile endpoint (read-only)
                           </p>
                         </div>
-                        <p className="text-sm text-muted-foreground">Waiting for the provider response…</p>
+                        <div className="space-y-2 w-full max-w-xs">
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.5 }}
+                            className="flex items-center gap-2 text-sm text-muted-foreground"
+                          >
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Validating token with the platform...
+                          </motion.div>
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 1.2 }}
+                            className="flex items-center gap-2 text-sm text-muted-foreground"
+                          >
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Waiting for identity response...
+                          </motion.div>
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 1.8 }}
+                            className="flex items-center gap-2 text-sm text-muted-foreground"
+                          >
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Confirming account identity...
+                          </motion.div>
+                        </div>
                       </>
                     )}
-                    {!testing && !connectSuccess && testError && (
-                      <div role="alert" className="w-full rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-center">
-                        <h3 className="font-semibold text-destructive">Token verification failed</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{testError}</p>
-                        <p className="text-xs text-muted-foreground mt-2">Go back to review or replace the token. It has not been stored.</p>
+                    {!testing && connectTestError && (
+                      <div className="w-full rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-center">
+                        <AlertTriangle className="h-6 w-6 text-destructive mx-auto mb-2" />
+                        <p className="font-medium text-destructive">Credential verification failed</p>
+                        <p className="text-sm text-muted-foreground mt-1">{connectTestError}</p>
+                        <p className="text-xs text-muted-foreground mt-2">Check the token, expiry, API product access, and granted scopes, then try again.</p>
                       </div>
                     )}
                     {!testing && connectSuccess && (
@@ -788,10 +833,10 @@ Manual provider-issued access token verification
                         </motion.div>
                         <div className="text-center">
                           <h3 className="font-semibold text-lg text-emerald-600 dark:text-emerald-400">
-                            Access Token Verified
+                            Credential Verified
                           </h3>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {accountName} was confirmed by {selectedPlatform}. Publishing and sync are still unavailable.
+                            The {selectedPlatform} identity endpoint accepted this token. Posting permissions may still need approval.
                           </p>
                         </div>
                       </>
@@ -828,8 +873,8 @@ Manual provider-issued access token verification
               <Button
                 size="sm"
                 className="bg-orange-600 hover:bg-orange-700 text-white gap-1"
-                onClick={verifyAccessToken}
-                disabled={!accessToken.trim() || testing || tokenTestMutation.isLoading || connectMutation.isLoading}
+                onClick={simulateConnectionTest}
+                disabled={!accessToken.trim() || testConnectionMutation.isLoading}
               >
                 {testing || tokenTestMutation.isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

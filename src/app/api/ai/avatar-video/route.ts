@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { hasPermission, verifyToken } from '@/lib/auth';
 import { emitEvent } from '@/lib/events';
-import ZAI from 'z-ai-web-dev-sdk';
+import { generateLocalVideo, generateLocalSpeech } from '@/lib/ai-provider';
 
 // POST /api/ai/avatar-video — generate video with consistent avatar face + voice
 // Body: { avatarId: string, script: string, duration?: number, platform?: string }
 //
 // This endpoint:
 // 1. Loads the avatar profile (face image URL + voice ID)
-// 2. Generates video using the face as image_url (keeps face consistent)
+// 2. Requests a self-hosted video adapter to use the avatar reference image
 // 3. Generates audio using the same voice ID (keeps voice consistent)
 // 4. Saves the result to Content table
 export async function POST(req: NextRequest) {
@@ -40,46 +40,28 @@ export async function POST(req: NextRequest) {
     const faceImageUrl = config.faceImageUrl;
     const voiceId = config.voiceId || 'default';
 
-    // 2. Generate video with the avatar's face (image_url keeps the face consistent)
+    // 2. Ask the configured self-hosted video adapter to use the avatar reference.
+    // Actual reference-image conditioning depends on the adapter/model deployed by the operator.
     let videoTaskId: string | null = null;
-    let videoStatus = 'pending';
-
+    let videoStatus = 'unavailable';
     try {
-      const zai = await ZAI.create();
-
-      const videoBody: any = {
-        prompt: `A ${config.ethnicity || 'asian'} ${config.gender || 'female'} person presenting to camera, speaking naturally, professional marketing video style. Scene: ${script.slice(0, 500)}`,
-        quality: 'quality',
-        with_audio: true,
-        size: '1920x1080',
-        fps: 30,
-        duration,
-      };
-
-      // If we have a face image URL, pass it to maintain consistency
-      if (faceImageUrl && !faceImageUrl.startsWith('data:')) {
-        videoBody.image_url = faceImageUrl;
-      }
-
-      const videoResult = await zai.video.generations.create(videoBody);
-      videoTaskId = videoResult.id;
-      videoStatus = videoResult.task_status || 'PROCESSING';
+      const videoResult = await generateLocalVideo(
+        `A ${config.ethnicity || 'asian'} ${config.gender || 'female'} person presenting to camera, speaking naturally, professional marketing video style. Scene: ${script.slice(0, 500)}`,
+        { duration, referenceImageUrl: faceImageUrl },
+      );
+      videoTaskId = videoResult.taskId;
+      videoStatus = videoResult.status;
     } catch (err) {
-      videoStatus = 'rate_limited';
-      console.error('[avatar-video] video generation failed:', err);
+      console.error('[avatar-video] local video service unavailable:', err instanceof Error ? err.message : 'unknown error');
     }
 
-    // 3. Generate voice narration with the avatar's voice
+    // 3. Generate narration using a local TTS voice preset.
     let audioUrl: string | null = null;
     try {
-      const zai = await ZAI.create();
-      const ttsResult = await zai.audio.tts.create({
-        input: script,
-        voice: voiceId,
-      });
-      audioUrl = ttsResult.url || ttsResult.audio_url || null;
-    } catch {
-      // Voice generation failed — video may still have audio from with_audio: true
+      const ttsResult = await generateLocalSpeech(script, voiceId);
+      audioUrl = ttsResult.audioUrl;
+    } catch (err) {
+      console.info('[avatar-video] local TTS unavailable:', err instanceof Error ? err.message : 'unknown error');
     }
 
     // 4. Save to Content table
@@ -129,9 +111,9 @@ export async function POST(req: NextRequest) {
         videoTaskId,
         videoStatus,
         audioUrl,
-        message: videoStatus === 'rate_limited'
-          ? 'Video API is rate-limited. The script + storyboard are saved. Video will be generated when the API is available. Voice narration is also saved.'
-          : 'Video generation started. Use the videoTaskId to check status via /api/ai/video-status?taskId=xxx',
+        message: videoStatus === 'unavailable'
+          ? 'The content draft was saved, but local video generation is unavailable. Configure VIDEO_GENERATION_URL. TTS output is available only when TTS_SERVICE_URL is configured.'
+          : 'Local video generation started. Use videoTaskId to check status via /api/ai/video-status?taskId=xxx',
       },
     }, { status: 201 });
   } catch (err) {

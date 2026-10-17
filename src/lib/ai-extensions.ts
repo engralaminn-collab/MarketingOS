@@ -4,13 +4,7 @@
  * heygen/hyperframes, MoneyPrinterTurbo, mksglu/context-mode
  */
 import { db } from './db';
-import ZAI from 'z-ai-web-dev-sdk';
-import { createChatCompletion } from './ai-provider';
-
-/** Paid/hosted media generation is opt-in; self-hosted Ollama remains the default for text. */
-function isZaiMediaEnabled(): boolean {
-  return process.env.ZAI_MEDIA_ENABLED === 'true';
-}
+import { generateChatCompletion, generateLocalImage, generateLocalVideo, getLocalVideoStatus, generateLocalSpeech } from './ai-provider';
 
 // ─── AI Memory (akitaonrails/ai-memory) ──────────────────────────
 export async function storeMemory(companyId: string, agentType: string, category: string, content: string, metadata?: any): Promise<void> {
@@ -41,11 +35,11 @@ export async function humanizeText(
   companyId = '',
 ): Promise<{ text: string; provider: string | null; source: 'ai' | 'rules' }> {
   try {
-    const completion = await createChatCompletion(companyId, [
+    const completion = await generateChatCompletion([
       { role: 'system', content: `Rewrite this text to sound more natural and human. Use ${tone} tone. Remove AI-typical phrases. Return ONLY the rewritten text.` },
       { role: 'user', content: text },
     ]);
-    return { text: completion.content || text, provider: completion.provider, source: 'ai' };
+    return completion.content;
   } catch {
     return { text: humanizeFallback(text, tone), provider: null, source: 'rules' };
   }
@@ -63,62 +57,47 @@ function humanizeFallback(text: string, tone: string): string {
   return r;
 }
 
-// ─── AI Image Generation (heygen/hyperframes) ───────────────────
-// The SDK returns { created, data: [{ base64 }] }. Images are delivered as
-// base64 data URIs, not remote URLs. We convert to a data URL so the UI can
-// render them without a separate hosting step.
+// ─── Self-hosted image generation ───────────────────────────────
 export async function generateImage(prompt: string, size: string = '1024x1024'): Promise<{ url: string; prompt: string } | null> {
   if (!isZaiMediaEnabled()) return null;
   try {
-    const zai = await ZAI.create();
-    const result = await zai.images.generations.create({ prompt, size: size as '1024x1024' });
-    const base64 = result.data?.[0]?.base64;
-    if (!base64) return null;
-    const url = `data:image/png;base64,${base64}`;
-    return { url, prompt };
-  } catch { return null; }
+    const result = await generateLocalImage(prompt, size);
+    return { url: result.dataUrl, prompt };
+  } catch (error) {
+    console.error('[local-image] generation unavailable:', error instanceof Error ? error.message : 'unknown error');
+    return null;
+  }
 }
 
-// ─── AI Video Generation (MoneyPrinterTurbo) ────────────────────
-// The SDK returns { id, task_status: 'PROCESSING' | 'SUCCESS' | 'FAIL' }.
-// The actual video URL is retrieved later via zai.async.result.query(taskId).
-// This function initiates the generation and returns the task ID for polling.
+// ─── Self-hosted video generation ────────────────────────────────
 export async function generateVideo(prompt: string): Promise<{ videoUrl: string; taskId: string; status: string } | null> {
   if (!isZaiMediaEnabled()) return null;
   try {
-    const zai = await ZAI.create();
-    const result = await zai.video.generations.create({ prompt });
-    const taskId = result.id;
-    const status = result.task_status === 'SUCCESS' ? 'completed'
-      : result.task_status === 'FAIL' ? 'failed'
-      : 'processing';
-    // Video URL is not available immediately — must poll zai.async.result.query(taskId)
-    return { videoUrl: '', taskId, status };
-  } catch { return null; }
+    return await generateLocalVideo(prompt);
+  } catch (error) {
+    console.error('[local-video] generation unavailable:', error instanceof Error ? error.message : 'unknown error');
+    return null;
+  }
 }
 
-// ─── AI Video Status Polling ────────────────────────────────────
-// Poll the async result endpoint to get the final video URL.
+// ─── Self-hosted video status polling ────────────────────────────
 export async function getVideoStatus(taskId: string): Promise<{ status: string; videoUrl: string } | null> {
   if (!isZaiMediaEnabled()) return null;
   try {
-    const zai = await ZAI.create();
-    const result = await zai.async.result.query(taskId);
-    const status = result.task_status === 'SUCCESS' ? 'completed'
-      : result.task_status === 'FAIL' ? 'failed'
-      : 'processing';
-    const videoUrl = result.video_url || result.url || result.video_result?.[0]?.url || '';
-    return { status, videoUrl };
-  } catch { return null; }
+    return await getLocalVideoStatus(taskId);
+  } catch (error) {
+    console.error('[local-video] status unavailable:', error instanceof Error ? error.message : 'unknown error');
+    return null;
+  }
 }
 
-// ─── AI Voice/TTS (debpalash/VoiceStudio) ──────────────────────
+// ─── Self-hosted text-to-speech ──────────────────────────────────
 export async function generateSpeech(text: string, voice: string = 'default'): Promise<{ audioUrl: string } | null> {
   if (!isZaiMediaEnabled()) return null;
   try {
-    const zai = await ZAI.create();
-    const result = await zai.audio.tts.create({ input: text, voice }) as Record<string, unknown>;
-    const url = (result.url as string) || (result.audio_url as string) || null;
-    return url ? { audioUrl: url } : null;
-  } catch { return null; }
+    return await generateLocalSpeech(text, voice);
+  } catch (error) {
+    console.error('[local-tts] generation unavailable:', error instanceof Error ? error.message : 'unknown error');
+    return null;
+  }
 }

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { hasPermission, verifyToken } from '@/lib/auth';
-import { db } from '@/lib/db';
-import ZAI from 'z-ai-web-dev-sdk';
+import { verifyToken } from '@/lib/auth';
+import { getLocalVideoStatus } from '@/lib/ai-provider';
 
 // GET /api/ai/video-status?taskId=xxx — poll only a render task saved by this company.
 export async function GET(req: NextRequest) {
@@ -25,20 +24,18 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-      const zai = await ZAI.create();
-      const result = await zai.async.result.query(taskId);
-      const videoUrl = result.video_result?.[0]?.url || result.video_url || result.url || result.video || null;
-      const status = String(result.task_status || 'UNKNOWN');
-      const isReady = status === 'SUCCESS' && typeof videoUrl === 'string' && videoUrl.length > 0;
-
+      const result = await getLocalVideoStatus(taskId);
+      const status = result.status.toLowerCase();
+      const isReady = ['success', 'completed', 'complete', 'done'].includes(status) && !!result.videoUrl;
+      const isFailed = ['fail', 'failed', 'error'].includes(status);
       return NextResponse.json({
         data: {
           taskId,
-          status,
-          videoUrl: isReady ? videoUrl : null,
+          status: result.status,
+          videoUrl: result.videoUrl || null,
           isReady,
-          isProcessing: status === 'PROCESSING' || status === 'PENDING',
-          isFailed: status === 'FAIL',
+          isProcessing: !isReady && !isFailed,
+          isFailed,
         },
       }, { headers: { 'Cache-Control': 'no-store' } });
     } catch (error) {

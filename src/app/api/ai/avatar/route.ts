@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { hasPermission, verifyToken } from '@/lib/auth';
 import { emitEvent } from '@/lib/events';
-import ZAI from 'z-ai-web-dev-sdk';
+import { generateLocalImage, generateLocalSpeech } from '@/lib/ai-provider';
 
 // GET /api/ai/avatar — list all avatar profiles
 export async function GET(req: NextRequest) {
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/ai/avatar — create a new AI avatar with consistent face + voice
 // Body: { name, ethnicity?, gender?, age?, style?, description? }
-// Generates a face image via z-ai SDK + creates a voice profile
+// Generates a face image locally and selects a local TTS voice preset
 export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get('Authorization')?.replace('Bearer ', '');
@@ -62,27 +62,22 @@ export async function POST(req: NextRequest) {
     const age = body.age || 'young adult';
     const style = body.style || 'professional';
 
-    // Generate the face image via z-ai SDK
-    let faceImageUrl: string | null = null;
+    // Generate the face with the local Stable Diffusion service. Do not substitute
+    // a stock avatar when real image generation is unavailable.
+    let faceImageUrl: string;
     try {
-      const zai = await ZAI.create();
-      const imageResult = await zai.images.generations.create({
-        prompt: `Professional portrait photo of a ${age} ${ethnicity} ${gender} person, ${style} appearance, natural lighting, high quality, photorealistic, looking at camera, neutral background, head and shoulders shot`,
-        size: '1024x1024',
-      });
-
-      // The SDK returns base64 data — we need to save it or use it as a reference URL
-      // For now, store the base64 as a data URL (in production, save to cloud storage)
-      if (imageResult.data?.[0]?.base64) {
-        faceImageUrl = `data:image/png;base64,${imageResult.data[0].base64}`;
-      }
-    } catch {
-      // Fallback: use a placeholder URL that represents the avatar
-      faceImageUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}&backgroundColor=f97316`;
+      const imageResult = await generateLocalImage(
+        `Professional portrait photo of a ${age} ${ethnicity} ${gender} person, ${style} appearance, natural lighting, photorealistic, looking at camera, neutral background, head and shoulders shot`,
+        '1024x1024',
+      );
+      faceImageUrl = imageResult.dataUrl;
+    } catch (error) {
+      console.error('[avatar] local image service unavailable:', error instanceof Error ? error.message : 'unknown error');
+      return NextResponse.json({ error: 'Local avatar image generation is unavailable. Configure IMAGE_GENERATION_URL. No cloud fallback was attempted.' }, { status: 503 });
     }
 
-    // Generate a unique voice ID (in production, this would clone a voice via TTS API)
-    const voiceId = `voice_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    // This selects a configured TTS voice preset; it does not clone a voice.
+    const voiceId = String(body.voiceId || process.env.TTS_DEFAULT_VOICE || 'default');
 
     // Store the avatar profile as an AiAgent record
     const avatar = await db.aiAgent.create({
@@ -104,17 +99,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Test the voice by generating a sample TTS
+    // Optional local TTS smoke test. The avatar can exist without a configured TTS service.
     let voiceTestUrl: string | null = null;
     try {
-      const zai = await ZAI.create();
-      const ttsResult = await zai.audio.tts.create({
-        input: `Hello, I am ${name}. I will be your AI presenter for marketing videos.`,
-        voice: voiceId,
-      });
-      voiceTestUrl = ttsResult.url || ttsResult.audio_url || null;
-    } catch {
-      // Voice test failed — avatar still created, voice will work when API is available
+      const ttsResult = await generateLocalSpeech(`Hello, I am ${name}. I will be your AI presenter for marketing videos.`, voiceId);
+      voiceTestUrl = ttsResult.audioUrl;
+    } catch (error) {
+      console.info('[avatar] local TTS not configured:', error instanceof Error ? error.message : 'unknown error');
     }
 
     await emitEvent({
@@ -122,7 +113,7 @@ export async function POST(req: NextRequest) {
       userId: payload.userId,
       type: 'ai.avatar_created',
       title: `AI Avatar "${name}" created`,
-      description: `${ethnicity} ${gender}, ${age}, ${style}. Face + voice profile ready for video generation.`,
+      description: `${ethnicity} ${gender}, ${age}, ${style}. Local face generated; selected TTS voice preset.`,
       resourceType: 'avatar',
       resourceId: avatar.id,
       metadata: { name, ethnicity, gender, voiceId, hasVoice: !!voiceTestUrl },
@@ -139,7 +130,7 @@ export async function POST(req: NextRequest) {
         faceImageUrl,
         voiceId,
         voiceTestUrl,
-        message: 'Avatar created. Use this avatar ID with /api/ai/avatar-video to generate videos with consistent face + voice.',
+        message: 'Avatar profile created using local image generation. Video and TTS services must be configured separately.',
       },
     }, { status: 201 });
   } catch (err) {

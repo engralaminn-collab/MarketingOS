@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { hasPermission, verifyToken } from '@/lib/auth';
-import { generateWithComfyUI } from '@/lib/comfyui';
-import ZAI from 'z-ai-web-dev-sdk';
+import { verifyToken } from '@/lib/auth';
+
+export const runtime = 'nodejs';
+export const maxDuration = 120;
+
+const VALID_SIZES: Record<string, { width: number; height: number }> = {
+  '1024x1024': { width: 1024, height: 1024 },
+  '768x1344': { width: 768, height: 1344 },
+  '1344x768': { width: 1344, height: 768 },
+  '1440x720': { width: 1440, height: 720 },
+  '720x1440': { width: 720, height: 1440 },
+  '864x1152': { width: 864, height: 1152 },
+  '1152x864': { width: 1152, height: 864 },
+};
 
 const VALID_SIZES = new Set([
   '1024x1024',
@@ -14,37 +25,43 @@ const VALID_SIZES = new Set([
 ]);
 
 export async function POST(req: NextRequest) {
-  const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
+    if (!token) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    const payload = await verifyToken(token);
+    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-  const actor = await verifyToken(token);
-  if (!actor?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-  if (!hasPermission(actor.role, 'content_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const body = await req.json();
+    const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
+    const size = typeof body.size === 'string' ? body.size : '1024x1024';
+    if (!prompt) return NextResponse.json({ error: 'Prompt required' }, { status: 400 });
+    if (prompt.length > 4000) return NextResponse.json({ error: 'Prompt must be 4,000 characters or fewer' }, { status: 400 });
+    const dimensions = VALID_SIZES[size];
+    if (!dimensions) return NextResponse.json({ error: `Invalid size. Use: ${Object.keys(VALID_SIZES).join(', ')}` }, { status: 400 });
 
-  const body: unknown = await req.json().catch(() => null);
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return NextResponse.json({ error: 'A JSON object is required' }, { status: 400 });
-  }
-  const input = body as Record<string, unknown>;
-  const prompt = typeof input.prompt === 'string' ? input.prompt.trim() : '';
-  if (!prompt || prompt.length > 2_000) {
-    return NextResponse.json({ error: 'Prompt is required and must be at most 2,000 characters' }, { status: 400 });
-  }
-  const size = typeof input.size === 'string' ? input.size : '1024x1024';
-  if (!VALID_SIZES.has(size)) return NextResponse.json({ error: 'Unsupported image dimensions' }, { status: 400 });
-
-  const [width, height] = size.split('x').map(Number);
-  const localImageModelConfigured = Boolean(process.env.COMFYUI_BASE_URL?.trim());
-
-  if (localImageModelConfigured) {
+    // Local Stable Diffusion WebUI API. No cloud image API or paid fallback.
+    const baseUrl = (process.env.IMAGE_GENERATION_URL || 'http://127.0.0.1:7860').replace(/\/+$/, '');
+    let response: Response;
     try {
-      const image = await generateWithComfyUI(prompt, width, height);
-      if (!image) return NextResponse.json({ error: 'Local ComfyUI is not configured' }, { status: 503 });
-      return NextResponse.json({ success: true, image, size, provider: 'ComfyUI (self-hosted)' }, { headers: { 'Cache-Control': 'no-store' } });
-    } catch (error) {
-      console.error('[POST /api/ai/generate-image] self-hosted ComfyUI failure', error);
-      const message = error instanceof Error ? error.message : 'Local image generation failed';
-      return NextResponse.json({ error: `Self-hosted ComfyUI failed: ${message}. No hosted fallback was used.` }, { status: 503 });
+      response = await fetch(`${baseUrl}/sdapi/v1/txt2img`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          width: dimensions.width,
+          height: dimensions.height,
+          steps: Math.min(40, Math.max(1, Number(body.steps) || 25)),
+          batch_size: 1,
+          n_iter: 1,
+        }),
+        signal: AbortSignal.timeout(Number(process.env.IMAGE_GENERATION_TIMEOUT_MS) || 120_000),
+        cache: 'no-store',
+      });
+    } catch {
+      return NextResponse.json({
+        error: 'Local image generation is unavailable. Start a Stable Diffusion WebUI service and configure IMAGE_GENERATION_URL. No third-party provider was called.',
+        provider: 'self-hosted-stable-diffusion',
+      }, { status: 503 });
     }
   }
 
@@ -54,22 +71,25 @@ export async function POST(req: NextRequest) {
     }, { status: 503 });
   }
 
-  try {
-    const zai = await ZAI.create();
-    const response = await zai.images.generations.create({ prompt, size: size as never });
-    const imageBase64 = response.data?.[0]?.base64;
-    if (!imageBase64 || typeof imageBase64 !== 'string') {
-      return NextResponse.json({ error: 'Image provider returned no image data' }, { status: 502 });
+    if (!response.ok) {
+      const detail = (await response.text().catch(() => '')).slice(0, 300);
+      return NextResponse.json({
+        error: `Local image service returned HTTP ${response.status}`,
+        ...(detail ? { detail } : {}),
+      }, { status: 502 });
     }
 
+    const result = await response.json() as { images?: string[] };
+    const image = result.images?.[0];
+    if (!image) return NextResponse.json({ error: 'Local image service returned no image' }, { status: 502 });
     return NextResponse.json({
       success: true,
-      image: `data:image/png;base64,${imageBase64}`,
+      image: image.startsWith('data:') ? image : `data:image/png;base64,${image}`,
       size,
-      provider: 'Z.AI (hosted)',
-    }, { headers: { 'Cache-Control': 'no-store' } });
+      provider: 'self-hosted-stable-diffusion',
+    });
   } catch (error) {
-    console.error('[POST /api/ai/generate-image] provider failure', error);
-    return NextResponse.json({ error: 'Image generation is temporarily unavailable. Please retry later.' }, { status: 503 });
+    console.error('[POST /api/ai/generate-image]', error);
+    return NextResponse.json({ error: 'Image generation request failed' }, { status: 500 });
   }
 }
