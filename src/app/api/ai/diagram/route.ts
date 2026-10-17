@@ -16,18 +16,20 @@ export async function POST(req: NextRequest) {
     if (!description) return NextResponse.json({ error: 'description required' }, { status: 400 });
     const type = ['flowchart', 'sequence', 'class', 'state', 'er', 'gantt'].includes(body.type) ? body.type : 'flowchart';
 
-    let diagram;
+    let diagram: string;
+    let generationMode: 'local-model' | 'rule-based-fallback' = 'rule-based-fallback';
     try {
       const completion = await generateChatCompletion([
         { role: 'system', content: `Generate a Mermaid ${type} diagram based on the user's description. Return ONLY valid Mermaid code (no markdown, no backticks, no explanation). Start with the diagram type keyword (e.g. "graph TD" or "sequenceDiagram").` },
         { role: 'user', content: description },
       ]);
       diagram = completion.content;
+      generationMode = 'local-model';
     } catch {
       diagram = diagramFallback(type, description);
     }
 
-    return NextResponse.json({ data: { type, description, mermaid: diagram } });
+    return NextResponse.json({ data: { type, description, mermaid: diagram, generationMode, degraded: generationMode !== 'local-model' } });
   } catch { return NextResponse.json({ error: 'Failed' }, { status: 500 }); }
 }
 
