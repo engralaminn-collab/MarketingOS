@@ -82,7 +82,8 @@ export async function POST(req: NextRequest) {
         accountHandle: typeof accountHandle === 'string' ? accountHandle.slice(0, 160) : null,
         accessToken: encryptedAccessToken,
         scopes: JSON.stringify(Array.isArray(scopes) ? scopes.filter((s: unknown) => typeof s === 'string').slice(0, 100) : []),
-        status: 'active',
+        // A saved token is configured, not proven connected until a live provider test succeeds.
+        status: 'configured',
         lastSyncedAt: null,
         companyId: payload.companyId,
       },
