@@ -10,7 +10,7 @@ import { generateChatCompletion, generateLocalVideo } from '@/lib/ai-provider';
 // This endpoint:
 // 1. Generates a video script via LLM
 // 2. Generates a storyboard (scene-by-scene breakdown)
-// 3. Initiates video generation via z-ai SDK
+// 3. Requests video generation from the configured local adapter
 // 4. Saves everything to Content table
 export async function POST(req: NextRequest) {
   try {
