@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { emitEvent } from '@/lib/events';
-import ZAI from 'z-ai-web-dev-sdk';
+import { generateChatCompletion, generateLocalVideo } from '@/lib/ai-provider';
 
 // POST /api/ai/cinematic-video — generate cinematic video with script + storyboard
 // Body: { topic: string, duration?: number, style?: string, language?: string }
@@ -32,29 +32,16 @@ export async function POST(req: NextRequest) {
     let storyboard: any[] = [];
 
     try {
-      const zai = await ZAI.create();
-      const completion = await zai.chat.completions.create({
-        messages: [
-          {
-            role: 'system',
-            content: `You are a professional video scriptwriter. Create a ${duration}-second ${style} video script about: ${topic}. 
+      const completion = await generateChatCompletion([
+        {
+          role: 'system',
+          content: `You are a professional video scriptwriter. Create a ${duration}-second ${style} video script about: ${topic}.
 
-Return JSON with:
-{
-  "title": "...",
-  "script": "Full narration script in ${language}",
-  "storyboard": [
-    { "scene": 1, "duration": "0-5s", "visual": "Description of what's shown", "narration": "Voiceover text", "mood": "tone" }
-  ],
-  "hashtags": ["#tag1", "#tag2"]
-}`
-          },
-          { role: 'user', content: `Create a ${style} video about: ${topic}` }
-        ],
-        thinking: { type: 'disabled' },
-      });
-
-      const response = completion.choices[0]?.message?.content || '{}';
+Return valid JSON with title, script in ${language}, storyboard array (scene, duration, visual, narration, mood), and hashtags array. Return JSON only.`
+        },
+        { role: 'user', content: `Create a ${style} video about: ${topic}` },
+      ], { temperature: 0.4 });
+      const response = completion.content.replace(/^\`\`\`(?:json)?\s*/i, '').replace(/\s*\`\`\`$/, '');
       const parsed = JSON.parse(response);
       script = parsed.script || '';
       storyboard = parsed.storyboard || [];
@@ -69,22 +56,15 @@ Return JSON with:
       ];
     }
 
-    // Step 2: Initiate video generation
-    // The SDK returns { id, task_status }. The actual video URL must be polled
-    // later via zai.async.result.query(taskId).
+    // Step 2: Initiate generation through the configured self-hosted video adapter.
     let videoTaskId: string | null = null;
-    let videoStatus = 'pending';
+    let videoStatus = 'unavailable';
     try {
-      const zai = await ZAI.create();
-      const videoResult = await zai.video.generations.create({
-        prompt: `${style} video: ${topic}. ${script.slice(0, 500)}`,
-      });
-      videoTaskId = videoResult.id;
-      videoStatus = videoResult.task_status === 'SUCCESS' ? 'completed'
-        : videoResult.task_status === 'FAIL' ? 'failed'
-        : 'processing';
-    } catch {
-      videoStatus = 'rate_limited';
+      const videoResult = await generateLocalVideo(`${style} video: ${topic}. ${script.slice(0, 500)}`, { duration });
+      videoTaskId = videoResult.taskId;
+      videoStatus = videoResult.status;
+    } catch (error) {
+      console.error('[cinematic-video] local video service unavailable:', error instanceof Error ? error.message : 'unknown error');
     }
 
     // Step 3: Save to Content table
