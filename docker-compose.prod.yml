@@ -54,6 +54,20 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
       TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
 
+      # Self-hosted AI. By default, Ollama runs on the host/private network.
+      # Override these values if you run the model services in another container.
+      AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-qwen2.5:7b}
+      AI_REQUEST_TIMEOUT_MS: ${AI_REQUEST_TIMEOUT_MS:-120000}
+      IMAGE_GENERATION_URL: ${IMAGE_GENERATION_URL:-http://host.docker.internal:7860}
+      IMAGE_GENERATION_TIMEOUT_MS: ${IMAGE_GENERATION_TIMEOUT_MS:-120000}
+      VIDEO_GENERATION_URL: ${VIDEO_GENERATION_URL:-}
+      VIDEO_GENERATION_TIMEOUT_MS: ${VIDEO_GENERATION_TIMEOUT_MS:-120000}
+      TTS_SERVICE_URL: ${TTS_SERVICE_URL:-}
+      TTS_TIMEOUT_MS: ${TTS_TIMEOUT_MS:-60000}
+      TTS_DEFAULT_VOICE: ${TTS_DEFAULT_VOICE:-default}
+
     volumes:
       # Database. THIS is what makes the data survive a deploy.
       - ./db:/app/db
