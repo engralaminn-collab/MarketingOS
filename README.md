@@ -1,18 +1,43 @@
 # ALO Labs MarketingOS
 
-Enterprise AI Workforce Platform — CRM, Marketing Automation, AI Agents, Video Generation, SMS, VoIP, and more.
+Self-hosted marketing operations platform with CRM, campaigns, content, SEO, analytics, workflow automation, and AI agent execution.
 
-## Quick Start
+## Quick start
+
+Requirements: Node.js 22.23.2, Bun 1.x, and a reachable SQLite database path.
 
 ```bash
 bun install
 cp .env.example .env
-# Edit .env with your DATABASE_URL, JWT_SECRET, ADMIN_SEED_PASSWORD
+# Set JWT_SECRET to a fresh secret and set ADMIN_SEED_PASSWORD for seeding.
+openssl rand -hex 32
 bunx prisma generate
 bunx prisma db push
 bunx tsx prisma/seed.ts
 bun run dev
 ```
+
+## Self-hosted AI
+
+Text generation defaults to **Ollama**. MarketingOS does not automatically fall back to a paid cloud AI provider. If Ollama is down, the request returns an explicit error or a clearly degraded rule-based result.
+
+```env
+AI_PROVIDER="ollama"
+OLLAMA_BASE_URL="http://127.0.0.1:11434"
+OLLAMA_CHAT_MODEL="qwen2.5:7b"
+```
+
+Install Ollama on the same host or a private trusted network, pull a model that fits available RAM/VRAM, and verify the Ollama API is reachable from the MarketingOS runtime. For example, run `ollama pull qwen2.5:7b` on the machine hosting Ollama. A model is not downloaded automatically by the application.
+
+### Local image, video, and speech generation
+
+- **Images:** configure `IMAGE_GENERATION_URL` to a self-hosted Stable Diffusion WebUI API (AUTOMATIC1111-compatible `/sdapi/v1/txt2img`).
+- **Video:** configure `VIDEO_GENERATION_URL` to a private self-hosted adapter implementing `POST /generate` and `GET /status/:taskId`. The adapter must return JSON containing a task ID and, when ready, a video URL.
+- **Speech:** configure `TTS_SERVICE_URL` to a private self-hosted adapter implementing `POST /api/tts` with JSON `{ "text": "...", "voice": "default" }` and returning `audioUrl`, `audio_url`, or `audioBase64`.
+
+These services are optional. Missing or unreachable media services fail explicitly and do not call a hosted generation provider. Video reference-image conditioning depends on the local video adapter and its model; a voice preset is not voice cloning.
+
+Do not expose local model ports directly to the public internet. Put them on a private network, apply authentication at the adapter or network layer, and set resource limits. Model weights, GPU/CPU hardware, electricity, storage, and maintenance still have costs even without per-request AI API fees.
 
 ## Production
 
@@ -20,40 +45,24 @@ bun run dev
 bash deploy.sh
 ```
 
-## Domain: marketing.alolabs.net (103.231.239.79)
+Production uses the SQLite database configured in `prisma/schema.prisma`; the database file must live in the persistent `./db` volume described in `docker-compose.prod.yml`. Back up both the database and the credential-encryption key. SQLite is suitable for smaller/self-hosted deployments but should be load-tested before multi-user high-write production use.
 
-## Features (36)
-- CRM (Leads, Deals, Contacts, Tickets) with kanban DnD
-- AI Agents (23 agents, real LLM calls via z-ai SDK)
-- AI Avatar (consistent face + voice for video generation)
-- AI Video + Cinematic Video + Video Status
-- AI Image + Voice + Grammar Check + Diagram Builder
-- AI Memory + Context + Auto-Reply Chatbot
-- Text Humanizer
-- SMS (send, broadcast, OTP, templates)
-- VoIP Click-to-Call
-- RSS Feeds + Feed Parser
-- Web Scraper (firecrawl pattern)
-- Lead Enrichment (open-enrich pattern)
-- Market Intelligence Radar
-- Competitor + Keyword Tracking
-- Workflow Builder + Execute Engine
-- CSV Import/Export (RFC-4180 + injection protection)
-- Notifications + Bell + Command Palette
-- Webhooks (HMAC-SHA256 + SSRF protection)
-- Audit Logs + Activity Feed
-- Social Media (8 platforms, no WhatsApp)
-- SEO Engine
-- Campaigns + Content Management
-- Analytics
-- Team Management
-- Settings (Company, API Keys, Webhooks, Sessions, Password)
+## Platform areas
 
-## Tech Stack
-- Next.js 16 (App Router)
-- React 19 + TypeScript 5
-- Tailwind CSS 4 + shadcn/ui
-- Prisma 6 (SQLite dev, MySQL/PostgreSQL prod)
-- JWT (jose) + bcryptjs
-- z-ai-web-dev-sdk for AI
-- 139 API routes, 46 Prisma models, 250 source files
+- CRM: leads, contacts, deals, tickets
+- AI agents and task execution records
+- AI content generation, grammar checking, humanization, diagrams, and command chat
+- Local image generation and optional self-hosted video/TTS adapters
+- Campaigns, content calendar, analytics, SEO, competitor and keyword tracking
+- Social account records, integration settings, workflow builder and execution
+- SMS/OTP, webhooks, audit logs, notifications, team management and settings
+
+## Tech stack
+
+- Next.js App Router, React, TypeScript, Tailwind CSS
+- Prisma ORM with SQLite in the checked-in schema
+- JWT authentication and bcrypt password hashing
+- Ollama-first, OpenAI-compatible private inference endpoint optional
+- Stable Diffusion WebUI and operator-managed local video/TTS adapters
+
+Social networks, advertising accounts, SMS carriers, and email delivery still require their respective account permissions and/or provider infrastructure. A configured record or integration catalog entry is not proof of a live OAuth connection.
