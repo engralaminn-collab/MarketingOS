@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 import { encryptCredential, isEncryptedCredential } from '@/lib/credential-vault';
+import { verifySocialCredential } from '@/lib/social-provider';
 
 const PLATFORMS = ['Facebook', 'Instagram', 'LinkedIn', 'X', 'YouTube', 'TikTok', 'Pinterest', 'Telegram'];
 
@@ -67,6 +68,13 @@ export async function POST(req: NextRequest) {
     }
     if (accessToken.length > 10000) return NextResponse.json({ error: 'Access token is too long' }, { status: 400 });
 
+    let verification: Awaited<ReturnType<typeof verifySocialCredential>>;
+    try {
+      verification = await verifySocialCredential(platform, accessToken.trim());
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : 'Platform rejected the credential' }, { status: 502 });
+    }
+
     let encryptedAccessToken: string;
     try {
       encryptedAccessToken = encryptCredential(accessToken.trim());
@@ -78,17 +86,18 @@ export async function POST(req: NextRequest) {
     const account = await db.socialAccount.create({
       data: {
         platform,
-        accountName: typeof accountName === 'string' && accountName.trim() ? accountName.trim().slice(0, 160) : `My ${platform}`,
-        accountHandle: typeof accountHandle === 'string' ? accountHandle.slice(0, 160) : null,
+        accountName: typeof accountName === 'string' && accountName.trim() && !accountName.startsWith('My ') ? accountName.trim().slice(0, 160) : (verification.accountName || `My ${platform}`).slice(0, 160),
+        accountHandle: typeof accountHandle === 'string' && accountHandle.trim() ? accountHandle.slice(0, 160) : null,
+        accountId: verification.accountId,
         accessToken: encryptedAccessToken,
         scopes: JSON.stringify(Array.isArray(scopes) ? scopes.filter((s: unknown) => typeof s === 'string').slice(0, 100) : []),
-        // A saved token is configured, not proven connected until a live provider test succeeds.
-        status: 'configured',
-        lastSyncedAt: null,
+        // Mark active only after a live read-only identity check succeeds.
+        status: 'active',
+        lastSyncedAt: new Date(),
         companyId: payload.companyId,
       },
       select: {
-        id: true, platform: true, accountName: true, accountHandle: true, avatarUrl: true,
+        id: true, platform: true, accountName: true, accountHandle: true, accountId: true, avatarUrl: true,
         status: true, scopes: true, lastSyncedAt: true, connectedAt: true, createdAt: true, updatedAt: true,
       },
     });
