@@ -216,13 +216,14 @@ export function SocialAccountsView() {
   const [accessToken, setAccessToken] = useState("");
   const [testing, setTesting] = useState(false);
   const [connectSuccess, setConnectSuccess] = useState(false);
+  const [connectTestError, setConnectTestError] = useState<string | null>(null);
 
   // Mutations
   const connectMutation = useApiMutation<any>({
     method: "POST",
     path: "/api/social-accounts",
     onSuccess: () => {
-      toast.success("Account connected successfully!");
+      toast.success("Credential verified and saved. Publishing access depends on the platform permissions granted.");
       refetch();
       resetWizard();
     },
@@ -239,6 +240,14 @@ export function SocialAccountsView() {
     onError: (err) => toast.error(err),
   });
 
+  const testConnectionMutation = useApiMutation<
+    { platform: string; accessToken: string },
+    { verified: boolean; accountName?: string | null; accountId?: string | null; error?: string }
+  >({
+    method: "POST",
+    path: "/api/social-accounts/test",
+  });
+
   const resetWizard = () => {
     setWizardStep(0);
     setSelectedPlatform(null);
@@ -248,6 +257,7 @@ export function SocialAccountsView() {
     setAccessToken("");
     setTesting(false);
     setConnectSuccess(false);
+    setConnectTestError(null);
     setWizardOpen(false);
   };
 
@@ -289,11 +299,27 @@ export function SocialAccountsView() {
   };
 
   const simulateConnectionTest = async () => {
+    if (!selectedPlatform || !accessToken.trim()) return;
     setWizardStep(5);
     setTesting(true);
-    await new Promise((r) => setTimeout(r, 2500));
-    setTesting(false);
-    setConnectSuccess(true);
+    setConnectSuccess(false);
+    setConnectTestError(null);
+    try {
+      const result = await testConnectionMutation.mutateAsync({
+        platform: selectedPlatform,
+        accessToken: accessToken.trim(),
+      });
+      if (!result.verified) throw new Error(result.error || 'The platform did not verify this credential');
+      if (result.accountName) setAccountName(result.accountName);
+      setConnectSuccess(true);
+      toast.success('The platform accepted the credential. Publish permissions may still require app review.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Credential verification failed';
+      setConnectTestError(message);
+      toast.error(message);
+    } finally {
+      setTesting(false);
+    }
   };
 
   const requirementItems = useMemo(() => {
@@ -933,6 +959,14 @@ export function SocialAccountsView() {
                         </div>
                       </>
                     )}
+                    {!testing && connectTestError && (
+                      <div className="w-full rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-center">
+                        <AlertTriangle className="h-6 w-6 text-destructive mx-auto mb-2" />
+                        <p className="font-medium text-destructive">Credential verification failed</p>
+                        <p className="text-sm text-muted-foreground mt-1">{connectTestError}</p>
+                        <p className="text-xs text-muted-foreground mt-2">Check the token, expiry, API product access, and granted scopes, then try again.</p>
+                      </div>
+                    )}
                     {!testing && connectSuccess && (
                       <>
                         <motion.div
@@ -955,10 +989,10 @@ export function SocialAccountsView() {
                         </motion.div>
                         <div className="text-center">
                           <h3 className="font-semibold text-lg text-emerald-600 dark:text-emerald-400">
-                            Connection Successful!
+                            Credential Verified
                           </h3>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {accountName} has been connected to {selectedPlatform}
+                            The {selectedPlatform} identity endpoint accepted this token. Posting permissions may still need approval.
                           </p>
                         </div>
                       </>
@@ -996,7 +1030,7 @@ export function SocialAccountsView() {
                 size="sm"
                 className="bg-orange-600 hover:bg-orange-700 text-white gap-1"
                 onClick={simulateConnectionTest}
-                disabled={!accessToken.trim() || connectMutation.isLoading}
+                disabled={!accessToken.trim() || testConnectionMutation.isLoading}
               >
                 {connectMutation.isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
