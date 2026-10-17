@@ -149,3 +149,96 @@ export function getAiProviderConfig() {
     automaticPaidFallback: false as const,
   };
 }
+
+
+const IMAGE_SIZES: Record<string, { width: number; height: number }> = {
+  '1024x1024': { width: 1024, height: 1024 },
+  '768x1344': { width: 768, height: 1344 },
+  '1344x768': { width: 1344, height: 768 },
+  '1440x720': { width: 1440, height: 720 },
+  '720x1440': { width: 720, height: 1440 },
+  '864x1152': { width: 864, height: 1152 },
+  '1152x864': { width: 1152, height: 864 },
+};
+
+export async function generateLocalImage(prompt: string, size = '1024x1024'): Promise<{ dataUrl: string }> {
+  const dimensions = IMAGE_SIZES[size];
+  if (!dimensions) throw new Error('Unsupported image size');
+  const baseUrl = (process.env.IMAGE_GENERATION_URL || 'http://127.0.0.1:7860').replace(/\\/+$/, '');
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/sdapi/v1/txt2img`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, width: dimensions.width, height: dimensions.height, steps: 25, batch_size: 1, n_iter: 1 }),
+      signal: AbortSignal.timeout(Number(process.env.IMAGE_GENERATION_TIMEOUT_MS) || 120_000),
+      cache: 'no-store',
+    });
+  } catch {
+    throw new Error('Local image service is unavailable. Configure IMAGE_GENERATION_URL. No cloud fallback was attempted.');
+  }
+  if (!response.ok) throw new Error(`Local image service returned HTTP ${response.status}`);
+  const result = await response.json() as { images?: string[] };
+  const image = result.images?.[0];
+  if (!image) throw new Error('Local image service returned no image');
+  return { dataUrl: image.startsWith('data:') ? image : `data:image/png;base64,${image}` };
+}
+
+/**
+ * Video and speech services are self-hosted adapter contracts. Configure a
+ * local adapter that implements POST /generate and GET /status/:taskId for
+ * video, and POST /api/tts for speech. Missing services fail closed.
+ */
+export async function generateLocalVideo(prompt: string): Promise<{ videoUrl: string; taskId: string; status: string }> {
+  const baseUrl = process.env.VIDEO_GENERATION_URL?.replace(/\\/+$/, '');
+  if (!baseUrl) throw new Error('VIDEO_GENERATION_URL is not configured');
+  const response = await fetch(`${baseUrl}/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+    signal: AbortSignal.timeout(Number(process.env.VIDEO_GENERATION_TIMEOUT_MS) || 120_000),
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`Local video service returned HTTP ${response.status}`);
+  const data = await response.json() as any;
+  const taskId = data.taskId || data.id;
+  if (typeof taskId !== 'string' || !taskId) throw new Error('Local video service returned no task ID');
+  return {
+    taskId,
+    videoUrl: String(data.videoUrl || data.video_url || data.url || ''),
+    status: String(data.status || (data.completed ? 'completed' : 'processing')),
+  };
+}
+
+export async function getLocalVideoStatus(taskId: string): Promise<{ status: string; videoUrl: string }> {
+  const baseUrl = process.env.VIDEO_GENERATION_URL?.replace(/\\/+$/, '');
+  if (!baseUrl) throw new Error('VIDEO_GENERATION_URL is not configured');
+  const response = await fetch(`${baseUrl}/status/${encodeURIComponent(taskId)}`, {
+    method: 'GET',
+    signal: AbortSignal.timeout(Number(process.env.VIDEO_GENERATION_TIMEOUT_MS) || 30_000),
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`Local video service returned HTTP ${response.status}`);
+  const data = await response.json() as any;
+  return {
+    status: String(data.status || 'processing'),
+    videoUrl: String(data.videoUrl || data.video_url || data.url || ''),
+  };
+}
+
+export async function generateLocalSpeech(text: string, voice = 'default'): Promise<{ audioUrl: string }> {
+  const baseUrl = process.env.TTS_SERVICE_URL?.replace(/\\/+$/, '');
+  if (!baseUrl) throw new Error('TTS_SERVICE_URL is not configured');
+  const response = await fetch(`${baseUrl}/api/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, voice }),
+    signal: AbortSignal.timeout(Number(process.env.TTS_TIMEOUT_MS) || 60_000),
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`Local TTS service returned HTTP ${response.status}`);
+  const data = await response.json() as any;
+  const audioUrl = data.audioUrl || data.audio_url || (data.audioBase64 ? `data:audio/wav;base64,${data.audioBase64}` : '');
+  if (typeof audioUrl !== 'string' || !audioUrl) throw new Error('Local TTS service returned no audio URL or audio data');
+  return { audioUrl };
+}
