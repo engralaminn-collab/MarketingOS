@@ -12,6 +12,7 @@
  * Returns the enriched fields. Caller (API route) writes them to the Lead.
  */
 import { db } from './db';
+import { safeFetchText } from './ssrf';
 
 export interface EnrichmentResult {
   domain: string;
@@ -64,17 +65,18 @@ export async function enrichByDomain(domain: string): Promise<EnrichmentResult> 
   };
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(`https://${cleanDomain}`, {
-      signal: controller.signal,
+    if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(cleanDomain)) {
+      result.source = 'failed';
+      return result;
+    }
+    const res = await safeFetchText(`https://${cleanDomain}/`, {
+      timeoutMs: 8_000,
+      maxResponseBytes: 1_500_000,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; MarketingOS/1.0; enrichment-bot)',
+        'User-Agent': 'MarketingOS-Enrichment/1.0',
         Accept: 'text/html,application/xhtml+xml',
       },
-      redirect: 'follow',
     });
-    clearTimeout(timeout);
 
     if (!res.ok) {
       result.source = 'failed';

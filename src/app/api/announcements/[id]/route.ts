@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { emitEvent } from '@/lib/events';
 
 // PATCH /api/announcements/[id] — update announcement
@@ -11,6 +11,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const payload = await verifyToken(token);
     if (!payload || !payload.companyId) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    if (!hasPermission(payload.role, 'admin')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { id } = await params;
@@ -57,6 +61,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const payload = await verifyToken(token);
     if (!payload || !payload.companyId) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    if (!hasPermission(payload.role, 'admin')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { id } = await params;

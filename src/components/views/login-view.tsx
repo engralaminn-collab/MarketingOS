@@ -31,7 +31,7 @@ export function LoginView() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       localStorage.setItem('mos_token', data.token);
-      setUser(data.user);
+      setUser({ ...data.user, token: data.token });
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -51,7 +51,7 @@ export function LoginView() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       localStorage.setItem('mos_token', data.token);
-      setUser(data.user);
+      setUser({ ...data.user, token: data.token });
     } catch (e: any) {
       setError(e.message);
     } finally {

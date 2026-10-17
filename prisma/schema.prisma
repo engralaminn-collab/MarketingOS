@@ -74,6 +74,7 @@ model User {
   aiChatMessages AiChatMessage[]
   createdContents Content[] @relation("ContentCreator")
   sessions      UserSession[]
+  apiKeysCreated ApiKey[] @relation("ApiKeyCreator")
   notifications  Notification[]  // notifications addressed to this user
   sentMessages   Message[]  @relation("MessageSender")
   receivedMessages Message[] @relation("MessageRecipient")
@@ -810,13 +811,13 @@ model ModelConfig {
 }
 
 // ========================================================================
-// TOOL & INTEGRATION SYSTEM — 120+ External Tool Connections
+// TOOL & INTEGRATION SYSTEM — Catalog of external tool connections
 // ========================================================================
 
 // Master catalog of all available tools/integrations
 model ToolDefinition {
   id              String   @id @default(cuid())
-  toolNumber      Int      @unique           // e.g. 001, 002, ... 120
+  toolNumber      Int      @unique           // Stable catalog identifier
   name            String                     // e.g. "Google Search Console"
   url             String                     // e.g. "https://search.google.com/search-console"
   authType        String                     // oauth2, api_key, bot_token, partner, none, internal, webhook
@@ -913,26 +914,38 @@ model ToolUsageLog {
 // ==================== WEBHOOKS & API KEYS (Settings) ====================
 
 model Webhook {
-  id          String   @id @default(cuid())
-  url         String
-  events      String   @default("[]") // JSON array of event names: ["lead.created", "campaign.completed"]
-  status      String   @default("active") // active | disabled
-  secret      String?                   // for signature verification
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  url                   String
+  events                String   @default("[]") // JSON array of event names
+  status                String   @default("active") // active | disabled
+  secret                String?  // signing secret; shown only once at creation
+  lastDeliveredAt       DateTime?
+  lastDeliveryStatus    Int?
+  lastDeliveryError     String?
+  deliveryCount         Int      @default(0)
+  failureCount          Int      @default(0)
+  companyId             String
+  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([companyId, status])
 }
 
 model ApiKey {
   id          String   @id @default(cuid())
   name        String
-  keyPrefix   String                   // first 8 chars shown in UI
+  keyPrefix   String                   // partial key shown in UI and indexed for hash lookup; new keys use a random 80-bit prefix
   hashedKey   String                   // bcrypt hash of the full key
   lastUsedAt  DateTime?
   companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdById String?
+  createdBy   User?    @relation("ApiKeyCreator", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
+
+  @@index([companyId])
+  @@index([keyPrefix])
 }
 
 model UserSession {

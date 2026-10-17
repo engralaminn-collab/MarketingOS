@@ -1,94 +1,89 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
-import ZAI from 'z-ai-web-dev-sdk';
+import { createChatCompletion, type ChatMessage } from '@/lib/ai-provider';
+import { ToolCredentialsError } from '@/lib/tool-credentials';
+
+function getBearerToken(req: NextRequest): string | null {
+  return req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1] || null;
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
-    const payload = await verifyToken(token);
-    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const token = getBearerToken(req);
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const actor = await verifyToken(token);
+    if (!actor?.companyId || !actor.userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-    const { message, conversationId } = await req.json();
-    if (!message) return NextResponse.json({ error: 'Message required' }, { status: 400 });
+    const body: unknown = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: 'A JSON object is required' }, { status: 400 });
+    const rawMessage = (body as Record<string, unknown>).message;
+    const message = typeof rawMessage === 'string' ? rawMessage.trim() : '';
+    if (!message || message.length > 12_000) return NextResponse.json({ error: 'Message is required and must be at most 12,000 characters' }, { status: 400 });
 
-    // Save user message
-    await db.aiChatMessage.create({
-      data: { role: 'user', content: message, userId: payload.userId },
-    });
-
-    // Get recent conversation history
+    await db.aiChatMessage.create({ data: { role: 'user', content: message, userId: actor.userId } });
     const recentMessages = await db.aiChatMessage.findMany({
-      where: { userId: payload.userId },
+      where: { userId: actor.userId },
       orderBy: { createdAt: 'desc' },
       take: 20,
     });
-    const history = recentMessages.reverse().map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+    const history: ChatMessage[] = recentMessages.reverse().map((item) => ({
+      role: item.role === 'assistant' ? 'assistant' : 'user',
+      content: item.content,
+    }));
 
-    // Get company context for personalized responses
     const companyUser = await db.companyUser.findFirst({
-      where: { userId: payload.userId },
+      where: { userId: actor.userId, companyId: actor.companyId },
       include: { company: true },
     });
+    const systemPrompt = `You are the AI Command Center for MarketingOS, a marketing operations workspace. Help with marketing strategy, campaign planning, content drafting, SEO checklists, CRM workflows, and competitor research. Distinguish verified data from estimates and never claim a provider action happened unless the app confirms it.
+${companyUser ? `Company: ${companyUser.company.name}. Industry: ${companyUser.company.industry || 'General'}.` : ''}
+Be specific, actionable, and professional. Use Markdown where helpful.`;
 
-    const systemPrompt = `You are the AI Command Center for MarketingOS, a comprehensive AI-powered marketing operating system. You help users with:
-- Creating marketing plans and strategies
-- Generating social media content, blogs, emails, and SMS campaigns
-- SEO optimization and challenges
-- Lead generation and CRM management
-- Campaign planning and execution
-- Content scheduling and publishing
-- Analytics and performance insights
-- Competitor analysis
-- Brand strategy
-
-${companyUser ? `The user's company: ${companyUser.company.name}, Industry: ${companyUser.company.industry || 'General'}` : ''}
-
-Be specific, actionable, and provide concrete steps. Use markdown formatting when helpful. Be enthusiastic and professional.`;
-
-    const zai = await ZAI.create();
-    const messages = [{ role: 'assistant' as const, content: systemPrompt }, ...history];
-
-    // Trim if too long
-    const maxMessages = 24;
-    const trimmedMessages = messages.length > maxMessages
-      ? [messages[0], ...messages.slice(-(maxMessages - 1))]
-      : messages;
-
-    const completion = await zai.chat.completions.create({
-      messages: trimmedMessages,
-      thinking: { type: 'disabled' },
-    });
-
-    const aiResponse = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
-
-    // Save AI response
+    const promptMessages: ChatMessage[] = [
+      { role: 'system', content: systemPrompt },
+      ...history.slice(-19),
+    ];
+    const completion = await createChatCompletion(actor.companyId, promptMessages);
     await db.aiChatMessage.create({
-      data: { role: 'assistant', content: aiResponse, userId: payload.userId },
+      data: { role: 'assistant', content: completion.content, userId: actor.userId },
     });
 
-    return NextResponse.json({ response: aiResponse });
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({
+      response: completion.content,
+      provider: completion.provider,
+      model: completion.model,
+    }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to generate a response';
+    if (error instanceof ToolCredentialsError) {
+      return NextResponse.json({ error: message }, { status: 503 });
+    }
+    const safeProviderError = /OpenRouter|Ollama|AI provider|configured AI provider|Z\.A\.I/i.test(message);
+    if (safeProviderError) {
+      console.warn('[POST /api/ai/chat] configured provider failed:', message);
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
+    console.error('[POST /api/ai/chat]', error);
+    return NextResponse.json({ error: 'Unable to generate a response' }, { status: 500 });
   }
 }
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
-    const payload = await verifyToken(token);
-    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const token = getBearerToken(req);
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const actor = await verifyToken(token);
+    if (!actor?.userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-    const messages = await db.aiChatMessage.findMany({
-      where: { userId: payload.userId },
-      orderBy: { createdAt: 'asc' },
+    const recent = await db.aiChatMessage.findMany({
+      where: { userId: actor.userId },
+      orderBy: { createdAt: 'desc' },
       take: 50,
     });
-
-    return NextResponse.json({ messages });
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ messages: recent.reverse() }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (error) {
+    console.error('[GET /api/ai/chat]', error);
+    return NextResponse.json({ error: 'Unable to fetch chat history' }, { status: 500 });
   }
 }

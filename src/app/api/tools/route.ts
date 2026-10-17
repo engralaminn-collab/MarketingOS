@@ -1,24 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { encryptCredentialFields } from '@/lib/credentials';
+import { hasPermission, verifyToken } from '@/lib/auth';
+
+interface CredentialSpec {
+  key: string;
+  label?: string;
+  isSecret?: boolean;
+  optional?: boolean;
+}
+
+function parseCredentialSpecs(raw: string): CredentialSpec[] {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((field): field is CredentialSpec =>
+      typeof field === 'object' && field !== null && typeof (field as CredentialSpec).key === 'string',
+    );
+  } catch {
+    return [];
+  }
+}
+
+function safeConnection(connection: any) {
+  return {
+    id: connection.id,
+    status: connection.status === 'active' ? 'configured' : connection.status,
+    connectedAt: connection.connectedAt?.toISOString?.() || null,
+    lastSyncedAt: connection.lastSyncedAt?.toISOString?.() || null,
+    lastError: connection.lastError,
+    totalCalls: connection.totalCalls,
+    errorCount: connection.errorCount,
+    hasCredentials: Boolean(connection.credentials && connection.credentials !== '{}'),
+  };
+}
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
+    const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const payload = await verifyToken(token);
-    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-    const companyId = payload.companyId;
     const { searchParams } = new URL(req.url);
     const category = searchParams.get('category') || undefined;
     const automationLevel = searchParams.get('automationLevel') || undefined;
     const search = searchParams.get('search') || undefined;
-    const status = searchParams.get('status') || undefined;
-    const connectionStatus = searchParams.get('connectionStatus') || undefined;
-
-    // Build where for tool definitions
     const toolWhere: Record<string, unknown> = { isEnabled: true };
     if (category && category !== 'all') toolWhere.category = category;
     if (automationLevel && automationLevel !== 'all') toolWhere.automationLevel = automationLevel;
@@ -30,12 +57,11 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    // Get tools with their connection status for this company
     const tools = await db.toolDefinition.findMany({
       where: toolWhere,
       include: {
         connections: {
-          where: { companyId },
+          where: { companyId: payload.companyId },
           select: {
             id: true,
             status: true,
@@ -44,22 +70,22 @@ export async function GET(req: NextRequest) {
             lastError: true,
             totalCalls: true,
             errorCount: true,
+            credentials: true,
           },
         },
       },
       orderBy: { toolNumber: 'asc' },
     });
 
-    // Enrich with connection status
     const enriched = tools.map((tool) => {
-      const conn = tool.connections[0];
+      const connection = tool.connections[0];
       return {
         id: tool.id,
         toolNumber: tool.toolNumber,
         name: tool.name,
         url: tool.url,
         authType: tool.authType,
-        requiredCredentials: JSON.parse(tool.requiredCredentials),
+        requiredCredentials: parseCredentialSpecs(tool.requiredCredentials),
         connectionType: tool.connectionType,
         category: tool.category,
         subcategory: tool.subcategory,
@@ -68,112 +94,114 @@ export async function GET(req: NextRequest) {
         description: tool.description,
         icon: tool.icon,
         color: tool.color,
-        connection: conn || null,
+        connection: connection ? safeConnection(connection) : null,
       };
     });
 
-    // Get summary stats
     const allTools = await db.toolDefinition.findMany({
       where: { isEnabled: true },
-      include: {
-        connections: { where: { companyId }, select: { id: true, status: true } },
-      },
+      include: { connections: { where: { companyId: payload.companyId }, select: { status: true } } },
     });
-
-    const totalTools = allTools.length;
-    const connectedCount = allTools.filter(
-      (t) => t.connections.length > 0 && t.connections[0].status === 'active'
-    ).length;
-    const disconnectedCount = totalTools - connectedCount;
-
-    // Category breakdown
-    const categoryBreakdown: Record<string, { total: number; connected: number }> = {};
-    for (const t of allTools) {
-      if (!categoryBreakdown[t.category]) categoryBreakdown[t.category] = { total: 0, connected: 0 };
-      categoryBreakdown[t.category].total++;
-      if (t.connections.length > 0 && t.connections[0].status === 'active') {
-        categoryBreakdown[t.category].connected++;
-      }
-    }
-
-    // Automation level breakdown
+    const total = allTools.length;
+    const isConfigured = (status: string) => ['configured', 'active', 'error'].includes(status);
+    const configuredCount = allTools.filter((tool) => isConfigured(tool.connections[0]?.status || '')).length;
+    const categoryBreakdown: Record<string, { total: number; configured: number }> = {};
     const automationBreakdown: Record<string, number> = {};
-    for (const t of allTools) {
-      const level = t.automationLevel;
-      automationBreakdown[level] = (automationBreakdown[level] || 0) + 1;
+    for (const tool of allTools) {
+      categoryBreakdown[tool.category] ||= { total: 0, configured: 0 };
+      categoryBreakdown[tool.category].total++;
+      if (isConfigured(tool.connections[0]?.status || '')) categoryBreakdown[tool.category].configured++;
+      automationBreakdown[tool.automationLevel] = (automationBreakdown[tool.automationLevel] || 0) + 1;
     }
 
     return NextResponse.json({
       tools: enriched,
-      total: totalTools,
-      connected: connectedCount,
-      disconnected: disconnectedCount,
+      total,
+      configured: configuredCount,
+      connected: 0,
+      disconnected: total - configuredCount,
       categoryBreakdown,
       automationBreakdown,
+      liveProviderConnectionsVerified: false,
     });
-  } catch {
+  } catch (error) {
+    console.error('[GET /api/tools]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
+    const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const payload = await verifyToken(token);
-    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!hasPermission(payload.role, 'admin')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const companyId = payload.companyId;
     const body = await req.json();
-    const { toolId, credentials, config } = body;
-
+    const toolId = typeof body?.toolId === 'string' ? body.toolId : '';
     if (!toolId) return NextResponse.json({ error: 'toolId is required' }, { status: 400 });
-
-    // Verify tool exists
-    const tool = await db.toolDefinition.findUnique({ where: { id: toolId } });
-    if (!tool) return NextResponse.json({ error: 'Tool not found' }, { status: 404 });
-
-    // Validate required credentials
-    const requiredCreds = JSON.parse(tool.requiredCredentials);
-    if (credentials) {
-      for (const cred of requiredCreds) {
-        if (!credentials[cred.key] && cred.key !== 'GOOGLE_*' && cred.key !== 'META_*' && cred.key !== 'REDDIT_*' && cred.key !== 'GOOGLE_ADS_*') {
-          return NextResponse.json({ error: `Missing credential: ${cred.label}` }, { status: 400 });
-        }
-      }
+    if (!body.credentials || typeof body.credentials !== 'object' || Array.isArray(body.credentials)) {
+      return NextResponse.json({ error: 'credentials must be an object' }, { status: 400 });
     }
 
-    // Upsert connection
+    const tool = await db.toolDefinition.findUnique({ where: { id: toolId } });
+    if (!tool || !tool.isEnabled) return NextResponse.json({ error: 'Tool not found' }, { status: 404 });
+    const specs = parseCredentialSpecs(tool.requiredCredentials);
+    const supplied = body.credentials as Record<string, unknown>;
+    const entries = Object.entries(supplied);
+    if (entries.length > 50 || entries.some(([key, value]) => key.length > 120 || typeof value !== 'string' || value.length > 8192)) {
+      return NextResponse.json({ error: 'Credential values exceed the allowed size or format' }, { status: 400 });
+    }
+
+    const missing = specs.find((spec) => !spec.optional && !spec.key.includes('*') &&
+      (typeof supplied[spec.key] !== 'string' || !(supplied[spec.key] as string).trim()));
+    if (missing) return NextResponse.json({ error: `Missing credential: ${missing.label || missing.key}` }, { status: 400 });
+
+    const allowedKeys = new Set(specs.filter((spec) => !spec.key.includes('*')).map((spec) => spec.key));
+    if (entries.some(([key]) => !allowedKeys.has(key))) {
+      return NextResponse.json({ error: 'Unknown credential field supplied' }, { status: 400 });
+    }
+    const secretKeys = new Set(specs.filter((spec) => spec.isSecret).map((spec) => spec.key));
+    let credentials: Record<string, string>;
+    try {
+      credentials = encryptCredentialFields(supplied, secretKeys);
+    } catch (error) {
+      console.error('[POST /api/tools] credential encryption unavailable:', error);
+      return NextResponse.json({ error: 'Credentials cannot be stored until CREDENTIAL_ENCRYPTION_KEY is configured' }, { status: 503 });
+    }
+    const serializedCredentials = JSON.stringify(credentials);
+    if (Buffer.byteLength(serializedCredentials, 'utf8') > 32 * 1024) {
+      return NextResponse.json({ error: 'Credential data exceeds the 32 KB limit' }, { status: 413 });
+    }
+
     const connection = await db.toolConnection.upsert({
-      where: { companyId_toolId: { companyId, toolId } },
+      where: { companyId_toolId: { companyId: payload.companyId, toolId } },
       create: {
-        companyId,
+        companyId: payload.companyId,
         toolId,
-        status: 'active',
-        connectedAt: new Date(),
-        credentials: JSON.stringify(credentials || {}),
-        config: JSON.stringify(config || {}),
+        status: 'configured',
+        connectedAt: null,
+        credentials: serializedCredentials,
+        config: '{}',
       },
       update: {
-        status: 'active',
-        connectedAt: new Date(),
-        credentials: JSON.stringify(credentials || {}),
-        config: JSON.stringify(config || {}),
-        lastError: null,
+        status: 'configured',
+        connectedAt: null,
+        credentials: serializedCredentials,
+        config: '{}',
+        lastError: 'Provider connection has not been verified',
       },
     });
 
-    // Update employee tools to include this tool reference
-    await db.$executeRawUnsafe(
-      `UPDATE "Employee" SET "tools" = "tools" || ? WHERE "companyId" = ? AND "tools" NOT LIKE ?`,
-      `"${tool.id}"`,
-      companyId,
-      `"%${tool.id}%"`
-    );
-
-    return NextResponse.json({ connection, success: true });
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({
+      connection: safeConnection(connection),
+      success: true,
+      liveProviderConnectionVerified: false,
+      message: 'Credentials stored encrypted; no live provider connection was tested.',
+    }, { status: 201 });
+  } catch (error) {
+    console.error('[POST /api/tools]', error);
+    return NextResponse.json({ error: 'Unable to store tool credentials' }, { status: 500 });
   }
 }

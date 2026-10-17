@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 import { fetchAndParseFeed } from '@/lib/feed-parser';
+import { isUrlSafe } from '@/lib/ssrf';
 
 // GET /api/feeds/sources — list all feed sources
 export async function GET(req: NextRequest) {
@@ -50,8 +51,10 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const url = String(body.url || '').trim();
-    if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    const url = typeof body?.url === 'string' ? body.url.trim() : '';
+    if (!url || url.length > 2048) return NextResponse.json({ error: 'A valid HTTP or HTTPS URL is required' }, { status: 400 });
+    const validation = await isUrlSafe(url);
+    if (!validation.allowed) return NextResponse.json({ error: 'Feed URL must resolve to a public destination' }, { status: 400 });
 
     // Check if URL already exists for this company
     const existing = await db.feedSource.findFirst({

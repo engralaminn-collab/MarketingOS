@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback } from "react";
 import { motion, type Variants } from "framer-motion";
-import { useAppStore } from "@/stores/app-store";
 import { useApiQuery, useApiMutation } from "@/hooks/use-api-query";
 import {
   Card,
@@ -56,6 +55,7 @@ import {
   Clock,
   Trash2,
   Send,
+  Copy,
   Ban,
   Eye,
   Loader2,
@@ -75,8 +75,6 @@ import { toast } from "sonner";
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 const ALL_ROLES = [
-  "Super Admin",
-  "Company Owner",
   "Admin",
   "Manager",
   "Social Media Manager",
@@ -272,7 +270,7 @@ function TeamSkeleton() {
 
 // ─── Invite Dialog ───────────────────────────────────────────────────────────────
 
-function InviteDialog({ onInvite }: { onInvite: (email: string, role: string) => void }) {
+function InviteDialog({ onInvite }: { onInvite: (email: string, role: string) => Promise<void> }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<string>("");
@@ -289,6 +287,8 @@ function InviteDialog({ onInvite }: { onInvite: (email: string, role: string) =>
       setEmail("");
       setRole("");
       setOpen(false);
+    } catch {
+      // The mutation reports its API error; keep the dialog open for correction.
     } finally {
       setSending(false);
     }
@@ -309,7 +309,7 @@ function InviteDialog({ onInvite }: { onInvite: (email: string, role: string) =>
             Invite Team Member
           </DialogTitle>
           <DialogDescription>
-            Send an invitation email. They will receive a link to join your workspace.
+            Create a seven-day invitation link. Email delivery is not configured; share the link yourself.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 pt-2">
@@ -354,7 +354,7 @@ function InviteDialog({ onInvite }: { onInvite: (email: string, role: string) =>
             ) : (
               <Send className="h-4 w-4 mr-2" />
             )}
-            Send Invitation
+            Create Invitation Link
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -443,7 +443,7 @@ function MemberCard({
               <Select
                 value={member.role}
                 onValueChange={handleRoleChange}
-                disabled={changingRole || member.role === "Super Admin" || member.role === "Company Owner"}
+                disabled={changingRole}
               >
                 <SelectTrigger className="h-7 text-xs flex-1">
                   {changingRole ? (
@@ -528,23 +528,21 @@ function PendingInvitationsTable({
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    {!expired && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
-                              onClick={() => onResend(inv.id)}
-                            >
-                              <RefreshCw className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Resend invitation</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+                            onClick={() => onResend(inv.id)}
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Generate a replacement invitation link</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -617,9 +615,9 @@ function AuditLogsSection({ logs }: { logs: AuditLogEntry[] }) {
 // ─── Main Component ─────────────────────────────────────────────────────────────
 
 export function TeamView() {
-  const { user } = useAppStore();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"members" | "invitations" | "logs">("members");
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
 
   // Fetch real team data from /api/team
   const { data: apiData, isLoading, refetch } = useApiQuery<TeamData>("/api/team", { enabled: true });
@@ -632,11 +630,11 @@ export function TeamView() {
   };
 
   // Mutations — hit real /api/team endpoint with action=invite / action=update_role
-  const inviteMutation = useApiMutation({
+  const inviteMutation = useApiMutation<any, { invitation?: { inviteUrl?: string } }>({
     method: "POST",
     path: "/api/team",
-    onSuccess: () => { toast.success("Invitation sent!"); refetch(); },
-    onError: () => { toast.error("Failed to send invitation"); },
+    onSuccess: () => { toast.success("Invitation link created. Share it manually; email delivery is unavailable."); refetch(); },
+    onError: (error) => { toast.error(error || "Failed to create invitation link"); },
   });
 
   const roleMutation = useApiMutation({
@@ -653,27 +651,29 @@ export function TeamView() {
     onError: () => { toast.error("Failed to remove member"); },
   });
 
-  const resendMutation = useApiMutation({
+  const resendMutation = useApiMutation<any, { inviteUrl?: string }>({
     method: "POST",
     path: "/api/team",
-    onSuccess: () => { toast.success("Invitation resent"); refetch(); },
-    onError: () => { toast.error("Failed to resend invitation"); },
+    onSuccess: (data) => {
+      if (data?.inviteUrl) setInviteLink(new URL(data.inviteUrl, window.location.origin).toString());
+      toast.success("A new invitation link was generated. Share it manually; email delivery is unavailable.");
+      refetch();
+    },
+    onError: (error) => { toast.error(error || "Failed to generate a new invitation link"); },
   });
 
   const revokeMutation = useApiMutation({
     method: "POST",
     path: "/api/team",
-    onSuccess: () => { toast.success("Invitation revoked"); refetch(); },
+    onSuccess: () => { setInviteLink(null); toast.success("Invitation revoked"); refetch(); },
     onError: () => { toast.error("Failed to revoke invitation"); },
   });
 
   const handleInvite = useCallback(
     async (email: string, role: string) => {
-      try {
-        inviteMutation.mutate({ action: "invite", email, role });
-      } catch {
-        // handled by mutation
-      }
+      const result = await inviteMutation.mutateAsync({ action: "invite", email, role });
+      if (!result.invitation?.inviteUrl) throw new Error("Invitation link was not returned");
+      setInviteLink(new URL(result.invitation.inviteUrl, window.location.origin).toString());
     },
     [inviteMutation]
   );
@@ -750,11 +750,36 @@ export function TeamView() {
             Team Management
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Manage your team members, roles, and permissions
+            Manage workspace members and share secure invitation links. Invitation emails are not configured.
           </p>
         </div>
         <InviteDialog onInvite={handleInvite} />
       </motion.div>
+
+      {inviteLink && (
+        <motion.div variants={itemVariants}>
+          <GlassCard className="border-emerald-500/30 bg-emerald-500/5">
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Invitation link ready</p>
+                <p className="text-xs text-muted-foreground">This link is single-use and expires after seven days. It is not emailed automatically.</p>
+                <code className="mt-2 block break-all rounded bg-background/70 p-2 text-xs">{inviteLink}</code>
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <Button size="sm" variant="outline" onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(inviteLink);
+                    toast.success("Invitation link copied");
+                  } catch {
+                    toast.error("Clipboard access is unavailable; copy the link manually");
+                  }
+                }}><Copy className="mr-2 h-3.5 w-3.5" />Copy link</Button>
+                <Button size="sm" variant="ghost" onClick={() => setInviteLink(null)}>Dismiss</Button>
+              </div>
+            </CardContent>
+          </GlassCard>
+        </motion.div>
+      )}
 
       {/* Quick Stats */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-4 gap-3">

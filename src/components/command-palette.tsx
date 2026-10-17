@@ -6,7 +6,7 @@ import {
   Search, Command, CornerDownLeft, ArrowUp, ArrowDown,
   LayoutDashboard, Users, Handshake, Megaphone, FileText, BarChart3,
   Settings, UserCog, Bot, Plug, Palette, Network, Search as SearchIcon,
-  Link2, Plus, Download, Upload, Bell,
+  Link2, Plus, Download, Upload, Bell, Sparkles, Activity, Rss,
 } from "lucide-react";
 import { useAppStore, type ViewId } from "@/stores/app-store";
 import { useRouter } from "next/navigation";
@@ -79,7 +79,10 @@ export function CommandPalette({ onNavigate, onQuickAction }: CommandPaletteProp
       { id: "nav-crm", label: "CRM — Leads, Deals, Contacts, Tickets", icon: Users, group: "Navigate", action: () => go("crm"), keywords: "lead deal contact ticket sales pipeline" },
       { id: "nav-campaigns", label: "Campaigns", icon: Megaphone, group: "Navigate", action: () => go("campaigns") },
       { id: "nav-content", label: "Content", icon: FileText, group: "Navigate", action: () => go("content"), keywords: "blog post social media" },
+      { id: "nav-marketing-studio", label: "Marketing Studio — kits, diagrams and CTA buttons", icon: Sparkles, group: "Navigate", action: () => go("marketing-studio"), keywords: "campaign kit button diagram workflow" },
       { id: "nav-seo", label: "SEO Engine", icon: SearchIcon, group: "Navigate", action: () => go("seo") },
+      { id: "nav-market-intelligence", label: "Market Intelligence — competitor profiles and feed signals", icon: Activity, group: "Navigate", action: () => go("market-intelligence"), keywords: "competitor market research news radar signals" },
+      { id: "nav-news-feeds", label: "News Feeds", icon: Rss, group: "Navigate", action: () => go("feeds"), keywords: "rss news headlines media monitoring" },
       { id: "nav-analytics", label: "Analytics", icon: BarChart3, group: "Navigate", action: () => go("analytics") },
       { id: "nav-team", label: "Team", icon: UserCog, group: "Navigate", action: () => go("team") },
       { id: "nav-settings", label: "Settings", icon: Settings, group: "Navigate", action: () => go("settings") },

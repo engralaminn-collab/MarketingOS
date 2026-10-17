@@ -1,11 +1,11 @@
 /**
- * AI Agent Runtime — actually executes agent tasks via the z-ai-web-dev-sdk LLM.
+ * AI Agent Runtime — executes agent tasks through the configured server-side AI provider.
  *
  * Each agent has a "type" (lead_scorer, content_writer, seo_agent, etc.) that
  * determines its system prompt + the output format it produces. The runtime:
  *   1. Loads the agent's config from DB
  *   2. Picks the right system prompt + task template
- *   3. Calls zai.chat.completions.create() with the task input
+ *   3. Calls the configured self-hosted or explicitly selected text model
  *   4. Parses the LLM response
  *   5. Writes a TaskExecution row (audit trail) and emits an event
  *
@@ -13,7 +13,7 @@
  */
 import { db } from './db';
 import { emitEvent } from './events';
-import ZAI from 'z-ai-web-dev-sdk';
+import { createChatCompletion } from './ai-provider';
 
 export interface AgentRunInput {
   /** The lead, deal, contact, campaign, etc. that the agent should work on */
@@ -191,7 +191,7 @@ export async function runAgent(
   let promptTokens: number | undefined;
   let completionTokens: number | undefined;
   let errorMsg: string | undefined;
-  let modelUsed = 'z-ai-sdk';
+  let modelUsed = `${(process.env.AI_PROVIDER || 'ollama').trim().toLowerCase()}:pending`;
   let usedFallback = false;
 
   // Retry config: 3 attempts with exponential backoff (2s, 4s, 8s)
@@ -200,19 +200,12 @@ export async function runAgent(
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const zai = await ZAI.create();
-      const completion = await zai.chat.completions.create({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ],
-        thinking: { type: 'disabled' },
-      });
-      output = completion.choices[0]?.message?.content || '(no output)';
-      if (completion.usage) {
-        promptTokens = completion.usage.prompt_tokens;
-        completionTokens = completion.usage.completion_tokens;
-      }
+      const completion = await createChatCompletion(companyId, [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ]);
+      output = completion.content || '(no output)';
+      modelUsed = `${completion.provider}${completion.model ? `:${completion.model}` : ''}`;
       break; // success — exit retry loop
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

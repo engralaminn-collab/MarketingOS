@@ -1,17 +1,40 @@
+import { createHash, randomBytes } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken, ROLE_LABELS } from '@/lib/auth';
+import { hasPermission, ROLE_LABELS, ROLES, verifyToken } from '@/lib/auth';
 
-// GET /api/team — returns real members, pending invitations, and audit logs
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const INVITABLE_ROLES = ROLES.filter((role) => role !== 'super_admin' && role !== 'company_owner');
+
+function roleKey(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  if (INVITABLE_ROLES.includes(normalized as (typeof INVITABLE_ROLES)[number])) return normalized;
+  const labelMatch = Object.entries(ROLE_LABELS).find(([, label]) => label.toLowerCase() === value.trim().toLowerCase());
+  return labelMatch && INVITABLE_ROLES.includes(labelMatch[0] as (typeof INVITABLE_ROLES)[number]) ? labelMatch[0] : null;
+}
+
+function hashInvitationToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+function createInvitationToken(): string {
+  return randomBytes(32).toString('base64url');
+}
+
+function inviteLink(token: string): string {
+  return `/invite?token=${encodeURIComponent(token)}`;
+}
+
 export async function GET(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
+    const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const payload = await verifyToken(token);
     if (!payload || !payload.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!hasPermission(payload.role, 'manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const companyId = payload.companyId;
-
     const [members, invitations, auditLogs] = await Promise.all([
       db.companyUser.findMany({
         where: { companyId },
@@ -30,126 +53,161 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    // Transform to the shape the frontend expects
-    const transformedMembers = members.map((m) => ({
-      id: m.id,
-      userId: m.user.id,  // expose the actual User.id for messaging
-      name: m.user.name,
-      email: m.user.email,
-      role: ROLE_LABELS[m.role] || m.role,
-      roleKey: m.role,
-      joinDate: m.joinedAt.toISOString(),
-      status: m.user.isActive ? 'active' : 'inactive',
-      avatar: m.user.avatar,
-      lastLoginAt: m.user.lastLoginAt?.toISOString() || null,
-    }));
-
-    const pendingInvitations = invitations.map((inv) => {
-      const isExpired = inv.expiresAt < new Date();
-      return {
-        id: inv.id,
-        email: inv.email,
-        role: ROLE_LABELS[inv.role] || inv.role,
-        roleKey: inv.role,
-        invitedBy: 'System',
-        expiry: inv.expiresAt.toISOString(),
-        status: isExpired ? 'expired' : 'pending',
-      };
-    });
-
-    const transformedLogs = auditLogs.map((log) => ({
-      id: log.id,
-      timestamp: log.createdAt.toISOString(),
-      user: log.user?.name || 'System',
-      action: prettyAction(log.action),
-      resource: log.resource,
-      details: log.details || '',
-    }));
-
     return NextResponse.json({
-      members: transformedMembers,
-      pendingInvitations,
-      auditLogs: transformedLogs,
-      roles: ROLE_LABELS,
+      members: members.map((member) => ({
+        id: member.id,
+        userId: member.user.id,
+        name: member.user.name,
+        email: member.user.email,
+        role: ROLE_LABELS[member.role] || member.role,
+        roleKey: member.role,
+        joinDate: member.joinedAt.toISOString(),
+        status: member.user.isActive ? 'active' : 'inactive',
+        avatar: member.user.avatar,
+        lastLoginAt: member.user.lastLoginAt?.toISOString() || null,
+      })),
+      pendingInvitations: invitations.map((invitation) => ({
+        id: invitation.id,
+        email: invitation.email,
+        role: ROLE_LABELS[invitation.role] || invitation.role,
+        roleKey: invitation.role,
+        invitedBy: 'Workspace admin',
+        expiry: invitation.expiresAt.toISOString(),
+        status: invitation.expiresAt < new Date() ? 'expired' : 'pending',
+      })),
+      auditLogs: auditLogs.map((log) => ({
+        id: log.id,
+        timestamp: log.createdAt.toISOString(),
+        user: log.user?.name || 'System',
+        action: prettyAction(log.action),
+        resource: log.resource,
+        details: log.details || '',
+      })),
+      roles: Object.fromEntries(INVITABLE_ROLES.map((role) => [role, ROLE_LABELS[role] || role])),
     });
-  } catch (err) {
-    console.error('[GET /api/team]', err);
+  } catch (error) {
+    console.error('[GET /api/team]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// POST /api/team — multi-action endpoint
-// Body: { action: 'invite' | 'update_role' | 'remove_member' | 'resend_invitation' | 'revoke_invitation', ... }
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
+    const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const payload = await verifyToken(token);
     if (!payload || !payload.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!hasPermission(payload.role, 'admin')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const companyId = payload.companyId;
     const body = await req.json();
-    const action = body.action;
+    const action = typeof body?.action === 'string' ? body.action : '';
 
     if (action === 'invite') {
-      const { email, role } = body;
-      if (!email) return NextResponse.json({ error: 'Email is required' }, { status: 400 });
-      const inviteToken = crypto.randomUUID().replace(/-/g, '');
+      const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+      const role = roleKey(body.role || 'team_member');
+      if (!email || !EMAIL_PATTERN.test(email) || email.length > 254) {
+        return NextResponse.json({ error: 'A valid email address is required' }, { status: 400 });
+      }
+      if (!role) return NextResponse.json({ error: 'Unsupported team role' }, { status: 400 });
+
+      const [existingMember, pendingInvitation] = await Promise.all([
+        db.companyUser.findFirst({ where: { companyId, user: { email } }, select: { id: true } }),
+        db.invitation.findFirst({ where: { companyId, email, acceptedAt: null }, select: { id: true } }),
+      ]);
+      if (existingMember) return NextResponse.json({ error: 'This person is already a member' }, { status: 409 });
+      if (pendingInvitation) return NextResponse.json({ error: 'An invitation is already pending for this email' }, { status: 409 });
+
+      const rawToken = createInvitationToken();
       const invitation = await db.invitation.create({
         data: {
-          email: String(email),
-          role: role || 'team_member',
-          token: inviteToken,
-          expiresAt: new Date(Date.now() + 7 * 86400000),
+          email,
+          role,
+          token: hashInvitationToken(rawToken),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60_000),
           companyId,
         },
+        select: { id: true, email: true, role: true, expiresAt: true },
       });
       await db.auditLog.create({
         data: {
           action: 'invite',
           resource: `Invitation: ${email}`,
-          details: `Invited as ${ROLE_LABELS[role] || role}`,
+          details: `Created a ${ROLE_LABELS[role] || role} invitation`,
           userId: payload.userId,
           companyId,
         },
       });
-      return NextResponse.json({ invitation });
+      return NextResponse.json({
+        invitation: {
+          ...invitation,
+          roleKey: invitation.role,
+          role: ROLE_LABELS[invitation.role] || invitation.role,
+          expiresAt: invitation.expiresAt.toISOString(),
+          inviteUrl: inviteLink(rawToken),
+        },
+      }, { status: 201 });
     }
 
     if (action === 'update_role') {
-      const { companyUserId, role } = body;
-      if (!companyUserId || !role) return NextResponse.json({ error: 'companyUserId and role are required' }, { status: 400 });
-      const target = await db.companyUser.findFirst({ where: { id: companyUserId, companyId } });
-      if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
-      const updated = await db.companyUser.update({
-        where: { id: companyUserId },
-        data: { role },
+      const { companyUserId } = body;
+      const newRole = roleKey(body.role);
+      if (!companyUserId || !newRole) {
+        return NextResponse.json({ error: 'A valid member ID and role are required' }, { status: 400 });
+      }
+      if (newRole === 'company_owner' || newRole === 'super_admin') {
+        return NextResponse.json({ error: 'Owner and super-admin roles cannot be assigned here' }, { status: 403 });
+      }
+
+      const target = await db.companyUser.findFirst({
+        where: { id: companyUserId, companyId },
+        include: { user: { select: { id: true } } },
       });
+      if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+      if (target.user.id === payload.userId || ['company_owner', 'super_admin'].includes(target.role)) {
+        return NextResponse.json({ error: 'This member role cannot be changed here' }, { status: 403 });
+      }
+      if (!hasPermission(payload.role, 'company_owner') && target.role === 'admin') {
+        return NextResponse.json({ error: 'Only an owner can change another admin role' }, { status: 403 });
+      }
+
+      const updated = await db.companyUser.update({ where: { id: target.id }, data: { role: newRole } });
       await db.auditLog.create({
         data: {
           action: 'update_role',
-          resource: `Member: ${companyUserId}`,
-          details: `Role changed to ${ROLE_LABELS[role] || role}`,
+          resource: `Member: ${target.id}`,
+          details: `Role changed to ${ROLE_LABELS[newRole] || newRole}`,
           userId: payload.userId,
           companyId,
         },
       });
-      return NextResponse.json({ updated });
+      return NextResponse.json({ updated: { id: updated.id, role: updated.role } });
     }
 
     if (action === 'remove_member') {
       const { companyUserId } = body;
       if (!companyUserId) return NextResponse.json({ error: 'companyUserId is required' }, { status: 400 });
-      const target = await db.companyUser.findFirst({ where: { id: companyUserId, companyId } });
+      const target = await db.companyUser.findFirst({
+        where: { id: companyUserId, companyId },
+        include: { user: { select: { id: true } } },
+      });
       if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
-      // Unlink assigned leads/tickets first
-      await db.lead.updateMany({ where: { assignedToId: companyUserId }, data: { assignedToId: null } });
-      await db.ticket.updateMany({ where: { assignedToId: companyUserId }, data: { assignedToId: null } });
-      await db.companyUser.delete({ where: { id: companyUserId } });
+      if (target.user.id === payload.userId || ['company_owner', 'super_admin'].includes(target.role)) {
+        return NextResponse.json({ error: 'This member cannot be removed here' }, { status: 403 });
+      }
+      if (!hasPermission(payload.role, 'company_owner') && target.role === 'admin') {
+        return NextResponse.json({ error: 'Only an owner can remove another admin' }, { status: 403 });
+      }
+
+      await db.$transaction(async (tx) => {
+        await tx.lead.updateMany({ where: { assignedToId: target.id, companyId }, data: { assignedToId: null } });
+        await tx.ticket.updateMany({ where: { assignedToId: target.id, companyId }, data: { assignedToId: null } });
+        await tx.companyUser.delete({ where: { id: target.id } });
+      });
       await db.auditLog.create({
         data: {
           action: 'remove_member',
-          resource: `Member: ${companyUserId}`,
+          resource: `Member: ${target.id}`,
           details: 'Removed from company',
           userId: payload.userId,
           companyId,
@@ -161,34 +219,37 @@ export async function POST(req: NextRequest) {
     if (action === 'resend_invitation') {
       const { invitationId } = body;
       if (!invitationId) return NextResponse.json({ error: 'invitationId is required' }, { status: 400 });
-      const inv = await db.invitation.findFirst({ where: { id: invitationId, companyId } });
-      if (!inv) return NextResponse.json({ error: 'Invitation not found' }, { status: 404 });
-      await db.invitation.update({
-        where: { id: invitationId },
-        data: { expiresAt: new Date(Date.now() + 7 * 86400000) },
+      const existing = await db.invitation.findFirst({ where: { id: invitationId, companyId, acceptedAt: null } });
+      if (!existing) return NextResponse.json({ error: 'Pending invitation not found' }, { status: 404 });
+
+      const rawToken = createInvitationToken();
+      const invitation = await db.invitation.update({
+        where: { id: existing.id },
+        data: { token: hashInvitationToken(rawToken), expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60_000) },
+        select: { id: true, email: true, role: true, expiresAt: true },
       });
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ inviteUrl: inviteLink(rawToken), expiresAt: invitation.expiresAt.toISOString() });
     }
 
     if (action === 'revoke_invitation') {
       const { invitationId } = body;
       if (!invitationId) return NextResponse.json({ error: 'invitationId is required' }, { status: 400 });
-      const inv = await db.invitation.findFirst({ where: { id: invitationId, companyId } });
-      if (!inv) return NextResponse.json({ error: 'Invitation not found' }, { status: 404 });
+      const invitation = await db.invitation.findFirst({ where: { id: invitationId, companyId, acceptedAt: null } });
+      if (!invitation) return NextResponse.json({ error: 'Pending invitation not found' }, { status: 404 });
       await db.invitation.delete({ where: { id: invitationId } });
       return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
-  } catch (err) {
-    console.error('[POST /api/team]', err);
+    return NextResponse.json({ error: 'Unknown team action' }, { status: 400 });
+  } catch (error) {
+    console.error('[POST /api/team]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 function prettyAction(action: string): string {
   const map: Record<string, string> = {
-    invite: 'Invited Member',
+    invite: 'Created Invitation',
     update_role: 'Updated Role',
     remove_member: 'Removed Member',
     create: 'Created',
@@ -197,5 +258,5 @@ function prettyAction(action: string): string {
     login: 'Logged In',
     logout: 'Logged Out',
   };
-  return map[action] || action.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  return map[action] || action.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }

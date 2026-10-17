@@ -111,9 +111,8 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      - name: Run tests (if present)
+      - name: Run tests
         run: bun run test
-        continue-on-error: true   # no test suite yet — don't block on this
 
   build:
     name: Production build

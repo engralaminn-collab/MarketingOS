@@ -1,29 +1,19 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-  type ReactNode,
-} from "react";
-import { api, setToken, clearToken } from "@/lib/api-client";
+import { useCallback, useEffect, type ReactNode } from "react";
+import { api, clearToken, setToken } from "@/lib/api-client";
+import { useAppStore, type AuthUser as AppAuthUser } from "@/stores/app-store";
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
+export interface AuthUser extends Omit<AppAuthUser, "avatar"> {
   avatar: string | null;
   isSuperAdmin: boolean;
-  role: string;
   institutionId: string;
   institutionName: string;
 }
 
 interface LoginResponse {
   token: string;
-  user: AuthUser;
+  user: Omit<AuthUser, "token">;
 }
 
 interface AuthContextType {
@@ -35,100 +25,66 @@ interface AuthContextType {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
-
-const STORAGE_USER_KEY = "alo_user";
-
-function persistUser(user: AuthUser): void {
-  localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
-}
-
-function loadPersistedUser(): AuthUser | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(STORAGE_USER_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as AuthUser;
-  } catch {
-    return null;
-  }
-}
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const initial = loadPersistedUser();
-  const [user, setUser] = useState<AuthUser | null>(initial);
-  const [isLoading] = useState(false);
-
-  const applyAuth = useCallback(
-    (res: LoginResponse) => {
-      setToken(res.token);
-      persistUser(res.user);
-      setUser(res.user);
-    },
-    []
-  );
-
-  const login = useCallback(
-    async (email: string, password: string) => {
-      const res = await api.post<LoginResponse>("/api/auth/login", { email, password });
-      applyAuth(res);
-    },
-    [applyAuth]
-  );
-
-  const register = useCallback(
-    async (name: string, email: string, password: string) => {
-      const res = await api.post<LoginResponse>("/api/auth/register", { name, email, password });
-      applyAuth(res);
-    },
-    [applyAuth]
-  );
+/**
+ * The app uses a single Zustand-backed session store. This keeps academic
+ * views that still call useAuth in sync with MarketingOS login/logout rather
+ * than maintaining an unmounted, divergent React context.
+ */
+export function useAuth(): AuthContextType {
+  const appUser = useAppStore((state) => state.user);
+  const institution = useAppStore((state) => state.institution);
+  const isLoading = useAppStore((state) => state.isLoading);
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const setAppUser = useAppStore((state) => state.setUser);
+  const storeLogout = useAppStore((state) => state.logout);
 
   const logout = useCallback(() => {
     clearToken();
-    localStorage.removeItem(STORAGE_USER_KEY);
-    setUser(null);
-    window.location.reload();
-  }, []);
-
-  // Verify token on mount
-  useEffect(() => {
-    if (initial) {
-      api.get<AuthUser>("/api/auth/me").then((data) => {
-        if (data) {
-          persistUser(data);
-          setUser(data);
-        } else {
-          clearToken();
-          localStorage.removeItem(STORAGE_USER_KEY);
-          setUser(null);
-        }
-      }).catch(() => {
-        clearToken();
-        localStorage.removeItem(STORAGE_USER_KEY);
-        setUser(null);
-      });
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("alo_user");
+      localStorage.removeItem("mos_user");
     }
-  }, []);
+    storeLogout();
+  }, [storeLogout]);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        login,
-        register,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  useEffect(() => {
+    const onUnauthorized = () => logout();
+    window.addEventListener("auth:logout", onUnauthorized);
+    return () => window.removeEventListener("auth:logout", onUnauthorized);
+  }, [logout]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    const result = await api.post<LoginResponse>("/api/auth/login", { email, password });
+    setToken(result.token);
+    setAppUser({
+      ...result.user,
+      avatar: result.user.avatar ?? undefined,
+      token: result.token,
+    });
+  }, [setAppUser]);
+
+  const register = useCallback(async (name: string, email: string, password: string) => {
+    const result = await api.post<LoginResponse>("/api/auth/register", { name, email, password });
+    setToken(result.token);
+    setAppUser({
+      ...result.user,
+      avatar: result.user.avatar ?? undefined,
+      token: result.token,
+    });
+  }, [setAppUser]);
+
+  const user: AuthUser | null = appUser ? {
+    ...appUser,
+    avatar: appUser.avatar ?? null,
+    isSuperAdmin: appUser.role === "super_admin",
+    institutionId: institution?.id ?? "",
+    institutionName: institution?.name ?? "",
+  } : null;
+
+  return { user, isLoading, isAuthenticated, login, register, logout };
 }
 
-export function useAuth(): AuthContextType {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
-  return ctx;
+/** Backwards-compatible wrapper; state is owned by the shared app store. */
+export function AuthProvider({ children }: { children: ReactNode }) {
+  return <>{children}</>;
 }

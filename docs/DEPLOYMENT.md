@@ -1,7 +1,13 @@
 # MarketingOS — deployment and database operations
 
 How a commit reaches `marketing.alolabs.net`, and how the database is kept alive
-while it does.
+while it does. This is a repository-level reference; the VPS configuration is
+outside Git and must be checked against the running host before deployment.
+
+> **Safety note:** the former `deploy.sh` one-click script is intentionally
+> disabled. It targeted an unrelated hard-coded GitHub repository/`main` branch
+> and used `prisma db push --accept-data-loss`. Use the reviewed CI/deploy
+> workflow and verify the live host configuration instead.
 
 ---
 

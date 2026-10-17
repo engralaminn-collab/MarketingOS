@@ -26,7 +26,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -54,7 +53,6 @@ import {
   EyeOff,
   Copy,
   RefreshCw,
-  Smartphone,
   Globe,
   Palette,
   Target,
@@ -570,79 +568,53 @@ function CompanyTab() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function SubscriptionTab() {
-  const currentPlan = "professional";
-  const [upgrading, setUpgrading] = useState<string | null>(null);
-
-  const handleUpgrade = useCallback((planId: string) => {
-    setUpgrading(planId);
-    setTimeout(() => {
-      toast.success(`Upgraded to ${planId} plan! (Demo mode)`);
-      setUpgrading(null);
-    }, 1500);
-  }, []);
+  const { data: companyData } = useApiQuery<{ company: { plan?: string; name?: string } }>("/api/settings/company");
+  const currentPlanId = (companyData?.company?.plan || "free").toLowerCase();
+  const currentPlan = PRICING_PLANS.find((plan) => plan.id === currentPlanId);
+  const currentPlanName = currentPlan?.name || currentPlanId.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-      {/* Current Plan */}
       <motion.div variants={itemVariants}>
         <GlassCard className="overflow-hidden">
           <div className="bg-gradient-to-r from-orange-500 to-blue-500 p-4">
             <div className="flex items-center justify-between">
               <div className="text-white">
-                <p className="text-sm font-medium opacity-80">Current Plan</p>
-                <p className="text-2xl font-bold">Professional</p>
-                <p className="text-sm opacity-70 mt-1">$99/month · Renews on Feb 15, 2025</p>
+                <p className="text-sm font-medium opacity-80">Workspace Plan</p>
+                <p className="text-2xl font-bold">{currentPlanName}</p>
+                <p className="text-sm opacity-80 mt-1">Plan is read from the workspace record. No renewal date is available.</p>
               </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 -sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
                 <Star className="h-6 w-6 text-white" />
               </div>
             </div>
           </div>
           <CardContent className="p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { label: "AI Credits", value: "1,847 / 2,500" },
-                { label: "Storage Used", value: "8.2 GB / 25 GB" },
-                { label: "Team Members", value: "6 / 10" },
-                { label: "Social Accounts", value: "12 / 15" },
-              ].map((usage) => (
-                <div key={usage.label} className="text-center p-2 rounded-lg bg-muted/50">
-                  <p className="text-[10px] text-muted-foreground">{usage.label}</p>
-                  <p className="text-xs font-semibold mt-0.5">{usage.value}</p>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Billing is not connected in this deployment. The catalog below is informational; upgrades, charges, usage quotas, and renewals are not processed or represented as active.
+            </p>
           </CardContent>
         </GlassCard>
       </motion.div>
 
-      {/* Pricing Grid */}
       <motion.div variants={itemVariants}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PRICING_PLANS.map((plan) => {
-            const isCurrentPlan = plan.id === currentPlan;
+            const isCurrentPlan = plan.id === currentPlanId;
             const PlanIcon = plan.icon;
             return (
               <GlassCard
                 key={plan.id}
-                className={`relative overflow-hidden flex flex-col ${
-                  plan.highlight ? "ring-2 ring-orange-500/50" : ""
-                }`}
+                className={`relative overflow-hidden flex flex-col ${plan.highlight ? "ring-2 ring-orange-500/50" : ""}`}
               >
                 {plan.badge && (
                   <div className="absolute top-3 right-3">
-                    <Badge className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] px-2">
-                      {plan.badge}
-                    </Badge>
+                    <Badge className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] px-2">{plan.badge}</Badge>
                   </div>
                 )}
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2">
-                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-                      plan.highlight
-                        ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white"
-                        : "bg-muted text-muted-foreground"
-                    }`}>
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${plan.highlight ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white" : "bg-muted text-muted-foreground"}`}>
                       <PlanIcon className="h-4 w-4" />
                     </div>
                     <div>
@@ -652,55 +624,21 @@ function SubscriptionTab() {
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col">
-                  {/* Price */}
                   <div className="mb-4">
                     <span className="text-3xl font-bold">{plan.price}</span>
-                    {plan.period && (
-                      <span className="text-sm text-muted-foreground ml-1">{plan.period}</span>
-                    )}
+                    {plan.period && <span className="text-sm text-muted-foreground ml-1">{plan.period}</span>}
+                    <p className="mt-1 text-[10px] text-muted-foreground">Displayed for information only</p>
                   </div>
-
-                  {/* Features */}
                   <div className="space-y-2 flex-1">
                     {plan.features.map((feature) => (
                       <div key={feature.name} className="flex items-center gap-2 text-xs">
-                        {feature.included ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                        ) : (
-                          <XCircle className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
-                        )}
-                        <span className={feature.included ? "" : "text-muted-foreground/50"}>
-                          {feature.name}
-                        </span>
+                        {feature.included ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />}
+                        <span className={feature.included ? "" : "text-muted-foreground/50"}>{feature.name}</span>
                       </div>
                     ))}
                   </div>
-
-                  {/* Action */}
-                  <Button
-                    className={`mt-4 w-full ${
-                      isCurrentPlan
-                        ? "bg-muted text-muted-foreground cursor-default"
-                        : plan.highlight
-                          ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/25"
-                          : ""
-                    }`}
-                    variant={isCurrentPlan || plan.highlight ? undefined : "outline"}
-                    disabled={isCurrentPlan || upgrading === plan.id}
-                    onClick={() => !isCurrentPlan && handleUpgrade(plan.id)}
-                  >
-                    {isCurrentPlan ? (
-                      <>
-                        <Check className="h-4 w-4 mr-2" />
-                        Current Plan
-                      </>
-                    ) : upgrading === plan.id ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : plan.price === "Custom" ? (
-                      "Contact Sales"
-                    ) : (
-                      "Upgrade"
-                    )}
+                  <Button className="mt-4 w-full" variant={isCurrentPlan ? "default" : "outline"} disabled>
+                    {isCurrentPlan ? "Current Workspace Plan" : "Billing Not Configured"}
                   </Button>
                 </CardContent>
               </GlassCard>
@@ -723,7 +661,6 @@ function SecurityTab() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
   // Real data: sessions, webhooks, api-keys
@@ -749,13 +686,13 @@ function SecurityTab() {
     },
   });
 
-  const handleChangePassword = useCallback(() => {
+  const handleChangePassword = useCallback(async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast.error("Please fill in all password fields");
       return;
     }
-    if (newPassword.length < 8) {
-      toast.error("New password must be at least 8 characters");
+    if (newPassword.length < 12 || newPassword.length > 128) {
+      toast.error("New password must be between 12 and 128 characters");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -764,19 +701,13 @@ function SecurityTab() {
     }
     setChangingPassword(true);
     try {
-      passwordMutation.mutate({
-        currentPassword,
-        newPassword,
-      });
+      await passwordMutation.mutateAsync({ currentPassword, newPassword });
+    } catch {
+      // The mutation reports a user-facing error.
     } finally {
-      setTimeout(() => setChangingPassword(false), 1000);
+      setChangingPassword(false);
     }
   }, [currentPassword, newPassword, confirmPassword, passwordMutation]);
-
-  const handleToggle2FA = useCallback((enabled: boolean) => {
-    setTwoFactorEnabled(enabled);
-    toast.success(enabled ? "2FA preference saved" : "2FA disabled");
-  }, []);
 
   const handleRevokeSession = useCallback(async (sessionId: string) => {
     try {
@@ -835,7 +766,7 @@ function SecurityTab() {
                     type={showNew ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Min 8 characters"
+                    placeholder="At least 12 characters"
                   />
                   <button
                     type="button"
@@ -883,7 +814,7 @@ function SecurityTab() {
         </GlassCard>
       </motion.div>
 
-      {/* 2FA */}
+      {/* Two-factor authentication is not implemented yet; do not present a fake toggle. */}
       <motion.div variants={itemVariants}>
         <GlassCard>
           <CardHeader>
@@ -891,27 +822,12 @@ function SecurityTab() {
               <Shield className="h-4 w-4 text-blue-500" />
               Two-Factor Authentication
             </CardTitle>
-            <CardDescription>Add an extra layer of security to your account</CardDescription>
+            <CardDescription>Authenticator-based verification is not configured for this deployment.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/15">
-                  <Smartphone className="h-5 w-5 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Authenticator App</p>
-                  <p className="text-xs text-muted-foreground">
-                    Use an authenticator app to generate verification codes
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={twoFactorEnabled}
-                onCheckedChange={handleToggle2FA}
-                className="data-[state=checked]:bg-blue-500"
-              />
-            </div>
+            <p className="text-sm text-muted-foreground">
+              No two-factor preference is saved and sign-in does not request a second factor. Use a unique password and revoke sessions you do not recognize.
+            </p>
           </CardContent>
         </GlassCard>
       </motion.div>
@@ -981,20 +897,22 @@ function SecurityTab() {
 
 function ApiTab() {
   const [newWebhookUrl, setNewWebhookUrl] = useState("");
-  const [showKey, setShowKey] = useState<string | null>(null);
   const [newKeyName, setNewKeyName] = useState("");
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
-
-  // Real data: webhooks + api-keys
+  const [newWebhookSecret, setNewWebhookSecret] = useState<string | null>(null);
+  const [newWebhookSignature, setNewWebhookSignature] = useState<string | null>(null);
   const { data: webhooksData, refetch: refetchWebhooks } = useApiQuery<{ webhooks: any[] }>("/api/settings/webhooks");
   const { data: apiKeysData, refetch: refetchApiKeys } = useApiQuery<{ apiKeys: any[] }>("/api/settings/api-keys");
-
   const webhooks = webhooksData?.webhooks ?? [];
   const apiKeys = apiKeysData?.apiKeys ?? [];
 
-  const handleCopyKey = useCallback((key: string) => {
-    navigator.clipboard.writeText(key.replace(/\*/g, "a")).catch(() => {});
-    toast.success("API key copied to clipboard");
+  const handleCopySecret = useCallback(async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copied to clipboard`);
+    } catch {
+      toast.error("Clipboard access is unavailable; copy the value manually");
+    }
   }, []);
 
   const handleAddWebhook = useCallback(async () => {
@@ -1009,12 +927,15 @@ function ApiTab() {
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ url: newWebhookUrl, events: ["lead.created", "campaign.completed"] }),
       });
-      if (!res.ok) throw new Error("Failed");
-      toast.success("Webhook added");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Failed to add webhook");
+      setNewWebhookSecret(json.webhook.secret);
+      setNewWebhookSignature(json.webhook.signatureHeader);
       setNewWebhookUrl("");
+      toast.success("Webhook created. Copy the signing secret now; it is shown only once.");
       refetchWebhooks();
-    } catch {
-      toast.error("Failed to add webhook");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to add webhook");
     }
   }, [newWebhookUrl, refetchWebhooks]);
 
@@ -1025,11 +946,12 @@ function ApiTab() {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (!res.ok) throw new Error("Failed");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Failed to delete webhook");
       toast.success("Webhook deleted");
       refetchWebhooks();
-    } catch {
-      toast.error("Failed to delete webhook");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete webhook");
     }
   }, [refetchWebhooks]);
 
@@ -1045,14 +967,14 @@ function ApiTab() {
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ name: newKeyName }),
       });
-      if (!res.ok) throw new Error("Failed");
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Failed to create API key");
       setNewlyCreatedKey(json.apiKey.key);
       setNewKeyName("");
-      toast.success("API key created — copy it now, you won't see it again");
+      toast.success("API key created — copy it now; it cannot be retrieved again");
       refetchApiKeys();
-    } catch {
-      toast.error("Failed to create API key");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create API key");
     }
   }, [newKeyName, refetchApiKeys]);
 
@@ -1063,44 +985,27 @@ function ApiTab() {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (!res.ok) throw new Error("Failed");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Failed to revoke API key");
       toast.success("API key revoked");
       refetchApiKeys();
-    } catch {
-      toast.error("Failed to revoke API key");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to revoke API key");
     }
   }, [refetchApiKeys]);
 
-  const handleRegenerateKey = useCallback(async (id: string) => {
-    // For regenerate: delete + create new
-    await handleDeleteApiKey(id);
-    toast.info("Old key revoked. Click 'Generate Key' to create a new one.");
-  }, [handleDeleteApiKey]);
-
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-      {/* API Keys */}
       <motion.div variants={itemVariants}>
         <GlassCard>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Key className="h-4 w-4 text-orange-500" />
-                  API Keys
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  Manage your API keys for integrations
-                </CardDescription>
+                <CardTitle className="text-base flex items-center gap-2"><Key className="h-4 w-4 text-orange-500" />API Keys</CardTitle>
+                <CardDescription className="mt-1">Bearer keys authenticate as their creator and use that member's current company role.</CardDescription>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={handleCreateApiKey}
-              >
-                <Key className="h-3.5 w-3.5 mr-1.5" />
-                Generate Key
+              <Button variant="outline" size="sm" className="text-xs" onClick={handleCreateApiKey}>
+                <Key className="h-3.5 w-3.5 mr-1.5" />Generate Key
               </Button>
             </div>
           </CardHeader>
@@ -1108,91 +1013,32 @@ function ApiTab() {
             <div className="space-y-3">
               {newlyCreatedKey && (
                 <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs">
-                  <p className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">New API key (copy now — shown only once):</p>
+                  <p className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">New API key — copy now; it will not be shown again:</p>
                   <code className="block bg-muted/60 rounded p-2 break-all">{newlyCreatedKey}</code>
-                  <Button variant="ghost" size="sm" className="mt-2 h-6 text-[10px]" onClick={() => setNewlyCreatedKey(null)}>Dismiss</Button>
+                  <div className="mt-2 flex gap-2">
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => void handleCopySecret(newlyCreatedKey, "API key")}><Copy className="h-3 w-3 mr-1" />Copy</Button>
+                    <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => setNewlyCreatedKey(null)}>Dismiss</Button>
+                  </div>
                 </div>
               )}
               <div className="flex gap-2 mb-2">
-                <Input
-                  placeholder="New API key name (e.g. Production)"
-                  value={newKeyName}
-                  onChange={(e) => setNewKeyName(e.target.value)}
-                  className="h-8 text-xs"
-                />
+                <Input placeholder="New API key name (e.g. Production)" value={newKeyName} onChange={(event) => setNewKeyName(event.target.value)} className="h-8 text-xs" />
                 <Button size="sm" className="h-8 text-xs" onClick={handleCreateApiKey}>Create</Button>
               </div>
               {apiKeys.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-4">No API keys yet — create one above</p>
               ) : apiKeys.map((apiKey: any) => (
-                <div
-                  key={apiKey.id}
-                  className="rounded-lg border border-border dark:border-white/5 p-3 space-y-2"
-                >
+                <div key={apiKey.id} className="rounded-lg border border-border dark:border-white/5 p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">{apiKey.name}</p>
-                    <div className="flex items-center gap-1">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                              onClick={() => setShowKey(showKey === apiKey.id ? null : apiKey.id)}
-                            >
-                              {showKey === apiKey.id ? (
-                                <EyeOff className="h-3.5 w-3.5" />
-                              ) : (
-                                <Eye className="h-3.5 w-3.5" />
-                              )}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {showKey === apiKey.id ? "Hide key" : "Show key"}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                              onClick={() => handleCopyKey(apiKey.key)}
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Copy key</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-muted-foreground hover:text-amber-500"
-                              onClick={() => handleRegenerateKey(apiKey.id)}
-                            >
-                              <RefreshCw className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Regenerate key</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-red-500 hover:text-red-600" onClick={() => handleDeleteApiKey(apiKey.id)}>Revoke</Button>
                   </div>
                   <div className="flex items-center gap-2 bg-muted/50 rounded px-3 py-1.5">
-                    <code className="text-xs font-mono text-muted-foreground flex-1 truncate">
-                      {apiKey.key}
-                    </code>
+                    <code className="text-xs font-mono text-muted-foreground flex-1 truncate">{apiKey.keyPrefix}••••••••••••••••</code>
                   </div>
                   <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                    <span>Created: {apiKey.created}</span>
-                    <span>Last used: {apiKey.lastUsed}</span>
+                    <span>Created: {new Date(apiKey.createdAt).toLocaleDateString()}</span>
+                    <span>Last used: {apiKey.lastUsedAt ? new Date(apiKey.lastUsedAt).toLocaleString() : "Never"}</span>
                   </div>
                 </div>
               ))}
@@ -1201,46 +1047,33 @@ function ApiTab() {
         </GlassCard>
       </motion.div>
 
-      {/* Webhooks */}
       <motion.div variants={itemVariants}>
         <GlassCard>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Webhook className="h-4 w-4 text-blue-500" />
-              Webhooks
-            </CardTitle>
-            <CardDescription>
-              Configure webhook endpoints to receive real-time event notifications
-            </CardDescription>
+            <CardTitle className="text-base flex items-center gap-2"><Webhook className="h-4 w-4 text-blue-500" />Webhooks</CardTitle>
+            <CardDescription>HTTPS-only event delivery, signed with a timestamped HMAC-SHA256 header. Delivery is best-effort, not queued.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Add Webhook */}
+            {newWebhookSecret && (
+              <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-3 text-xs space-y-2">
+                <p className="font-semibold text-blue-700 dark:text-blue-400">Webhook signing secret — copy now; it will not be shown again:</p>
+                <code className="block bg-muted/60 rounded p-2 break-all">{newWebhookSecret}</code>
+                <p className="text-muted-foreground">{newWebhookSignature}</p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => void handleCopySecret(newWebhookSecret, "Webhook secret")}><Copy className="h-3 w-3 mr-1" />Copy secret</Button>
+                  <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => { setNewWebhookSecret(null); setNewWebhookSignature(null); }}>Dismiss</Button>
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-2">
-              <Input
-                value={newWebhookUrl}
-                onChange={(e) => setNewWebhookUrl(e.target.value)}
-                placeholder="https://your-app.com/api/webhooks/mos"
-                className="flex-1"
-              />
-              <Button
-                onClick={handleAddWebhook}
-                disabled={!newWebhookUrl.trim()}
-                size="sm"
-                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shrink-0"
-              >
-                Add
-              </Button>
+              <Input value={newWebhookUrl} onChange={(event) => setNewWebhookUrl(event.target.value)} placeholder="https://your-app.com/api/webhooks/mos" className="flex-1" />
+              <Button onClick={handleAddWebhook} disabled={!newWebhookUrl.trim()} size="sm" className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shrink-0">Add</Button>
             </div>
-
-            {/* Webhook List */}
             <div className="space-y-3">
               {webhooks.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-4">No webhooks configured</p>
               ) : webhooks.map((webhook: any) => (
-                <div
-                  key={webhook.id}
-                  className="rounded-lg border border-border dark:border-white/5 p-3"
-                >
+                <div key={webhook.id} className="rounded-lg border border-border dark:border-white/5 p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -1248,19 +1081,15 @@ function ApiTab() {
                         <code className="text-xs font-mono truncate">{webhook.url}</code>
                       </div>
                       <div className="flex items-center gap-1 flex-wrap">
-                        {webhook.events.map((event) => (
-                          <Badge key={event} variant="outline" className="text-[9px] px-1.5 py-0">
-                            {event}
-                          </Badge>
-                        ))}
+                        {(webhook.events || []).map((event: string) => <Badge key={event} variant="outline" className="text-[9px] px-1.5 py-0">{event}</Badge>)}
+                        {(webhook.events || []).length === 0 && <Badge variant="outline" className="text-[9px] px-1.5 py-0">All events</Badge>}
                       </div>
+                      <p className="mt-2 text-[10px] text-muted-foreground">
+                        {webhook.deliveryCount || 0} delivered · {webhook.failureCount || 0} failed · Last HTTP: {webhook.lastDeliveryStatus ?? "—"}
+                      </p>
+                      {webhook.lastDeliveryError && <p className="mt-1 text-[10px] text-amber-600">Last error: {webhook.lastDeliveryError}</p>}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-500/10 shrink-0"
-                      onClick={() => handleDeleteWebhook(webhook.id)}
-                    >
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-500/10 shrink-0" onClick={() => handleDeleteWebhook(webhook.id)}>
                       <XCircle className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -1271,43 +1100,16 @@ function ApiTab() {
         </GlassCard>
       </motion.div>
 
-      {/* Integration Settings */}
       <motion.div variants={itemVariants}>
         <GlassCard>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Globe className="h-4 w-4 text-emerald-500" />
-              Integration Settings
-            </CardTitle>
-            <CardDescription>Configure third-party integrations</CardDescription>
+            <CardTitle className="text-base flex items-center gap-2"><Globe className="h-4 w-4 text-emerald-500" />Integration Settings</CardTitle>
+            <CardDescription>Provider sync is not enabled by a preference toggle.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                { name: "Slack Integration", desc: "Send notifications to Slack channels", enabled: true },
-                { name: "Zapier Integration", desc: "Connect with 5000+ apps via Zapier", enabled: false },
-                { name: "Google Analytics", desc: "Sync data with GA4 properties", enabled: true },
-                { name: "HubSpot CRM", desc: "Sync leads and contacts", enabled: false },
-              ].map((integration) => (
-                <div
-                  key={integration.name}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border dark:border-white/5 p-3"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{integration.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{integration.desc}</p>
-                  </div>
-                  <Switch
-                    checked={integration.enabled}
-                    onCheckedChange={() =>
-                      toast.success(
-                        `${integration.name} ${integration.enabled ? "disabled" : "enabled"}! (Demo mode)`
-                      )
-                    }
-                  />
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Configure credentials in Integration Hub. Saving credentials does not verify a provider connection or start live sync unless a provider-specific adapter is implemented and confirmed.
+            </p>
           </CardContent>
         </GlassCard>
       </motion.div>

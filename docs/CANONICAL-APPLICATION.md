@@ -1,161 +1,45 @@
-# Canonical Application Decision
+# Canonical application and scope
 
-> **Honest scope note**: This document is produced from a **local sandbox** at `/home/z/my-project/`, not from your real GitHub repository. The audit facts you cited (`6276ae6`, `english-aloeducation/`, `db/custom.db` in git) describe your *actual* production repo, which I have no network access to. Apply the decisions documented here to your real repo using the runbook in `DEPLOYMENT-RUNBOOK.md`.
+> This replaces the older sandbox-specific memo in this file. It describes the current MarketingOS checkout; it is an architecture note, not a production verification. For current findings and validation limits see [the consolidated audit](REFERENCE-AND-PROJECT-AUDIT.md).
 
-## Decision
+## Application
 
-**Canonical application**: The Next.js 16 + Prisma + SQLite CRM application located at the repository root (`/`).
+The canonical application is the Next.js App Router product at the repository root. There is no nested `english-aloeducation/` application in this checkout.
 
-**Reason**: This is the only application in the sandbox that actually contains the CRM domain models (Lead, Deal, Contact, Ticket, Campaign, Content, Subscription, CompanyUser, AuditLog, Notification, Message, Announcement, Activity, Webhook, ApiKey, etc.) and the only one wired to the production login flow (`admin@marketingos.com` → JWT → `verifyToken()` in `src/lib/auth.ts`).
+- `src/app/` — app pages and API routes
+- `src/components/` — UI primitives, layout, and product views
+- `src/hooks/` and `src/stores/` — client hooks and Zustand app state
+- `src/lib/` — authentication, provider adapters, API helpers, validation, and domain services
+- `prisma/schema.prisma` — current data model; SQLite is the configured provider
+- `prisma/seed*.ts` — seed/bootstrap scripts
 
-## Path
+The codebase contains CRM, campaigns/content, analytics, feeds/market intelligence, integrations, AI workflows, and education/workforce areas. Presence in the repository does not by itself prove a feature is end-to-end complete, tenant-safe, provider-connected, or production tested.
 
-```
-/                              ← canonical application root
-├── src/
-│   ├── app/                   ← Next.js 16 App Router
-│   │   ├── api/               ← 30+ API routes (CRM, Settings, Notifications, etc.)
-│   │   ├── layout.tsx         ← root layout with ThemeProvider
-│   │   └── page.tsx           ← main CRM dashboard shell + sidebar
-│   ├── components/            ← shadcn/ui + custom views
-│   │   ├── ui/                ← shadcn/ui primitives
-│   │   ├── views/             ← CRM, Campaigns, Analytics, Team, Settings, etc.
-│   │   ├── notifications-bell.tsx
-│   │   └── command-palette.tsx
-│   ├── hooks/                 ← use-api-query, use-auth, use-mobile, use-toast
-│   ├── lib/                   ← auth, db, events, ssrf, enrichment, feed-parser
-│   └── stores/                ← Zustand stores (app-store)
-├── prisma/
-│   ├── schema.prisma          ← 30+ models
-│   ├── seed.ts                ← admin user + company + team members
-│   ├── seed-crm.ts            ← 50 leads, 25 deals, 30 contacts, 15 tickets
-│   ├── seed-tools.ts          ← 120 integration tools
-│   ├── seed-workforce.ts      ← 2000 AI employees
-│   ├── seed-ai-agents.ts      ← 9 AI agents
-│   └── seed-engagement.ts     ← announcements + activities + notifications
-├── package.json               ← bun + Next.js 16
-├── next.config.ts             ← allowedDevOrigins, standalone output
-├── .env                       ← DATABASE_URL, JWT_SECRET (NOT tracked)
-├── .env.example
-└── .gitignore
-```
+## Runtime and persistence
 
-## Framework
+- Package/runtime requirements are declared in `package.json`, `.nvmrc`, `.node-version`, and `Dockerfile` (Node 22.23.2 for production; Bun for package/scripts).
+- The checked-in production Compose reference uses SQLite at `/app/db/custom.db` and mounts `./db:/app/db`.
+- `docker-compose.prod.yml` is explicitly a reviewed reference. The deployment workflow says the live server Compose file is outside version control; reconcile and verify it on the target host before deployment.
+- Database schema changes use the repository's `db push` workflow and backup/schema-sync scripts; inspect `docs/DEPLOYMENT.md` for the safeguards. This is not a claim that a deployment or restore has been tested in the current session.
 
-- **Next.js 16.1.3** (App Router, Turbopack)
-- **React 19.0.0**
-- **TypeScript 5**
-- **Tailwind CSS 4** + **shadcn/ui** (New York style)
+## Authentication and data boundaries
 
-## Database
+- API authentication uses JWT session tokens signed with `jose`; password hashing uses `bcryptjs`.
+- The browser stores the bearer token in `localStorage` (`mos_token`). Treat this as an XSS exposure risk; an HttpOnly-cookie migration has not been done.
+- `useAuth` now adapts the shared Zustand session state so views no longer depend on an unmounted, divergent auth context.
+- CRM and some other APIs apply company scoping. Education/workforce route coverage and cross-tenant access need a dedicated full review before production use; see the audit.
 
-- **Provider**: SQLite (via `@prisma/client`)
-- **Development database**: `file:./db/custom.db` (local file, NOT tracked in git)
-- **Production database**: SQLite on the VPS filesystem. For higher scale, swap `datasource db` in `prisma/schema.prisma` to `postgresql` and run `prisma migrate deploy` — Prisma abstracts this cleanly.
-- **Migration strategy**: `prisma db push --accept-data-loss` for schema changes in development. Production should use `prisma migrate deploy` once migrations are checked in.
+## AI and integrations
 
-## Authentication
+- Text generation defaults to self-hosted Ollama; OpenRouter and hosted Z.AI text require explicit selection. There is no intended automatic paid-provider fallback.
+- An optional self-hosted ComfyUI checkpoint workflow is wired for image generation, and a configurable ComfyUI API-workflow adapter can render 3–10 second AI clips. An OpenAI-compatible local TTS adapter can synthesize voiceovers. No ComfyUI server, workflow, model, TTS service, or weights are bundled or live-tested; local video/audio outputs are session-only, and configured local failures do not fall back to hosted services. Avatar generation and voice cloning are not implemented. Browser-only PNG and silent WebM templates use no API/model and are not AI-generated art or footage. Hosted Z.AI media is disabled by default; optional Mureka music may incur charges.
+- The seed catalog has **116 unique tool-number entries**, with gaps at 16, 17, 18, and 115. These are catalog definitions, not 116 verified/live integrations. Music is tool #120, leaving identifier gaps rather than a continuous 1–120 list.
+- Social publishing/sync, a unified external inbox, live rank/traffic/backlink SEO data, and production-ready end-to-end video generation are not implemented. The local video adapter is a configurable workflow hook, not a bundled or verified model pipeline. A silent browser-generated WebM text-card template is available for download.
 
-- **JWT** signed with `jose` library using `HS256`
-- **Password hashing**: bcryptjs (12 rounds)
-- **Secret**: `JWT_SECRET` environment variable (must be set in production — throws on startup if missing in `NODE_ENV=production`)
-- **Token lifetime**: 7 days
-- **Storage**: client-side `localStorage.mos_token`
-- **Verification**: `verifyToken()` in `src/lib/auth.ts`, called by every protected API route
-- **Roles**: 12 roles with hierarchy (`super_admin` → `viewer`)
+## Source of truth
 
-## CRM routes (verified)
+- Setup and local-AI limits: [SELF-HOSTED-AI.md](SELF-HOSTED-AI.md)
+- Deployment and persistence: [DEPLOYMENT.md](DEPLOYMENT.md), `docker-compose.prod.yml`, `.github/workflows/`
+- Reference and project audit: [REFERENCE-AND-PROJECT-AUDIT.md](REFERENCE-AND-PROJECT-AUDIT.md)
 
-| Method | Route | Purpose |
-|--------|-------|---------|
-| GET/POST | `/api/crm/leads` | List + create leads |
-| GET/PATCH/DELETE | `/api/crm/leads/[id]` | Read + update + delete lead |
-| POST | `/api/leads/[id]/enrich` | Auto-enrich lead from email domain |
-| POST/GET | `/api/leads/enrich` | Lookup enrichment without saving |
-| POST | `/api/leads/import` | Bulk CSV import |
-| GET | `/api/leads/export` | CSV export with formula-injection protection |
-| GET/POST | `/api/crm/deals` | List + create deals |
-| PATCH/DELETE | `/api/crm/deals/[id]` | Update + delete (kanban DnD hits PATCH) |
-| GET/POST | `/api/crm/contacts` | List + create contacts |
-| PATCH/DELETE | `/api/crm/contacts/[id]` | Update + delete contact |
-| GET/POST | `/api/crm/tickets` | List + create tickets |
-| PATCH/DELETE | `/api/crm/tickets/[id]` | Update + delete ticket |
-| GET/POST | `/api/notifications` | List + (POST creates) notifications |
-| POST | `/api/notifications/read-all` | Mark all as read |
-| POST | `/api/notifications/[id]/read` | Mark one as read |
-| GET/POST | `/api/messages` | List threads + send message |
-| GET | `/api/messages/[id]` | Fetch thread between me + other user |
-| GET/POST | `/api/announcements` | List + create announcements |
-| PATCH/DELETE | `/api/announcements/[id]` | Update + delete announcement |
-| GET | `/api/audit-logs` | Paginated audit log (admin+) |
-| GET | `/api/activity-feed` | Company-wide activity stream |
-| GET/POST | `/api/users` | List + create users (admin+) |
-| GET/POST | `/api/settings/company` | Company info + update |
-| GET/POST | `/api/settings/webhooks` | List + create webhooks (SSRF-protected) |
-| DELETE | `/api/settings/webhooks/[id]` | Delete webhook |
-| GET/POST | `/api/settings/api-keys` | List + create API keys (bcrypt-hashed) |
-| DELETE | `/api/settings/api-keys/[id]` | Revoke API key |
-| GET | `/api/settings/sessions` | List user sessions |
-| DELETE | `/api/settings/sessions/[id]` | Revoke session |
-| POST | `/api/settings/security/password` | Change password (verify + rehash) |
-| GET/POST | `/api/feeds/sources` | RSS feed sources |
-| GET | `/api/feeds/items` | RSS feed items |
-| POST | `/api/feeds/refresh` | Refresh feeds |
-| POST | `/api/feeds/import` | Convert feed item → Content row |
-| GET/POST | `/api/competitors` | Market intel competitors |
-| GET/POST | `/api/keywords` | Tracked keywords |
-| GET | `/api/market-intelligence` | Radar overview |
-| POST | `/api/scraper` | Web scraper (firecrawl pattern) |
-| POST | `/api/sms/send` | Send SMS (httpsms pattern) |
-| GET | `/api/sms/messages` | List SMS messages |
-
-## CRM UI (verified)
-
-All accessible from the sidebar at `/`:
-
-- **CEO Dashboard** — KPIs + revenue trend + lead funnel + deal pipeline
-- **CRM** — Leads (table with inline status, search, filter, CSV import/export, enrich, SMS), Deals (kanban DnD), Contacts (cards), Tickets (list)
-- **Campaigns** — Cards with metrics
-- **Content** — Calendar + list
-- **RSS Feeds** — Source sidebar + items list + import-to-content
-- **Market Intel** — Competitors + keywords + opportunities
-- **Analytics** — Real DB aggregations + 4 charts
-- **Messages** — Chatwoot-style inbox (thread list + conversation view)
-- **Announcements** — Cards + create/edit/delete
-- **Audit Logs** — Paginated table with filters
-- **Team** — Members + invitations + audit trail
-- **Settings** — Company, Security, API (webhooks + API keys + sessions)
-- **AI Agents** — Toggle agents on/off
-- **Integrations** — 120 tools across 27 categories
-- **AI Workforce** — 2000 employees + 54 departments
-
-## Production entry point
-
-```bash
-# Development (auto-runs in sandbox)
-bun run dev
-
-# Production
-bun run build              # prisma generate + next build + standalone output
-NODE_ENV=production bun .next/standalone/server.js
-```
-
-## What the nested application is
-
-**In this sandbox**: there is no nested application. The `english-aloeducation/` directory you cited does not exist here.
-
-**In your real repo**: if you have an `english-aloeducation/` directory with its own `package.json` and `prisma/schema.prisma` containing models like `Account`, `Teacher`, `MockTest`, `Certificate`, `Voucher`, `Class` — that is a **separate application**, likely an English-language learning platform. It is **NOT the canonical CRM**.
-
-## Disposition of the nested application
-
-You must determine on your real repo which of these is true:
-
-| Option | Action |
-|--------|--------|
-| (A) Legacy code, not in use | `git rm -r english-aloeducation/` — delete it |
-| (B) Required English application, separately deployed | Move to its own repository (`git filter-repo --path english-aloeducation/`) |
-| (C) Independent application, both products share one repo | Document both in `docs/CANONICAL-APPLICATION.md`, mark `english-aloeducation/` as out-of-scope for CRM work |
-| (D) Duplicated implementation | Consolidate into the root app, delete the duplicate |
-| (E) Required dependency | Keep as-is, document why |
-
-**Do NOT delete it without verification.** The audit must be based on reading its `package.json`, `README`, and `prisma/schema.prisma`, plus asking the owner whether it's still in use.
+The old `docs/DEPLOYMENT-RUNBOOK.md` and `docs/FINAL-PRODUCTION-VERIFICATION-REPORT.md` refer to a different sandbox path/repository snapshot. They are marked as historical and must not be treated as current deployment instructions or evidence.

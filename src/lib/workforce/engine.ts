@@ -1,11 +1,11 @@
 // ============================================================================
-// AI WORKFORCE ENGINE — Core Orchestration System for 2,000 AI Employees
-// MarketingOS — The single most critical module in the system
+// AI WORKFORCE ENGINE — Orchestration for seeded workforce profiles
+// MarketingOS — execution still requires configured provider/model capacity
 // ============================================================================
 
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
-import ZAI from 'z-ai-web-dev-sdk';
+import { createChatCompletion } from '@/lib/ai-provider';
 
 // ============================================================================
 // TYPES
@@ -1266,31 +1266,24 @@ export async function executeSop(
 
 export async function classifyComplexity(
   title: string,
-  description: string
+  description: string,
+  companyId: string,
 ): Promise<string> {
   try {
-    const zai = await ZAI.create();
-    const response = await zai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a task complexity classifier. Respond with ONLY one word: simple, standard, complex, or enterprise.\n\n' +
-            '- simple: Quick factual lookups, single-step tasks, basic formatting\n' +
-            '- standard: Multi-step tasks, moderate analysis, content creation, standard reports\n' +
-            '- complex: Multi-agent coordination, deep analysis, strategy planning, multi-department tasks\n' +
-            '- enterprise: Organizational strategy, cross-functional orchestration, executive decisions, large-scale campaigns',
-        },
-        {
-          role: 'user',
-          content: `Task: ${title}\nDescription: ${description}`,
-        },
-      ],
-      thinking: { type: 'disabled' },
-    });
+    const response = await createChatCompletion(companyId, [
+      {
+        role: 'system',
+        content:
+          'You are a task complexity classifier. Respond with ONLY one word: simple, standard, complex, or enterprise.\n\n' +
+          '- simple: Quick factual lookups, single-step tasks, basic formatting\n' +
+          '- standard: Multi-step tasks, moderate analysis, content creation, standard reports\n' +
+          '- complex: Multi-agent coordination, deep analysis, strategy planning, multi-department tasks\n' +
+          '- enterprise: Organizational strategy, cross-functional orchestration, executive decisions, large-scale campaigns',
+      },
+      { role: 'user', content: `Task: ${title}\nDescription: ${description}` },
+    ]);
 
-    const result =
-      response.choices[0]?.message?.content?.trim().toLowerCase() || 'standard';
+    const result = response.content.trim().toLowerCase() || 'standard';
     const validComplexities = ['simple', 'standard', 'complex', 'enterprise'];
     return validComplexities.includes(result) ? result : 'standard';
   } catch (error) {
@@ -1309,7 +1302,7 @@ export async function routeTask(
     // 1. Classify complexity if not provided
     let complexity = task.complexity || 'standard';
     if (!task.complexity) {
-      complexity = await classifyComplexity(task.title, task.description);
+      complexity = await classifyComplexity(task.title, task.description, task.companyId);
     }
 
     // 2. Select execution path based on complexity
@@ -1329,10 +1322,9 @@ export async function routeTask(
       throw new Error('No suitable AI employee found for this task');
     }
 
-    // 4. Select model via ModelRouter
+    // 4. Preserve the complexity tier as metadata. Actual inference is routed
+    // by AI_PROVIDER and OLLAMA_MODEL (or another explicitly selected provider).
     const tier = resolveTier(complexity);
-    const modelConfig = await selectModel(tier);
-    const modelName = employee.preferredModel || modelConfig?.name || 'default';
 
     // 5. Load employee context in parallel
     const [sops, knowledge, memories] = await Promise.all([
@@ -1406,7 +1398,7 @@ export async function routeTask(
           type: task.type,
           userId: task.userId,
         }),
-        modelUsed: modelName,
+        modelUsed: `${(process.env.AI_PROVIDER || 'ollama').trim().toLowerCase()}:pending`,
         modelTier: tier,
         skillsUsed: JSON.stringify(skillsUsed),
         sopsUsed: JSON.stringify(sopsUsed),
@@ -1421,18 +1413,13 @@ export async function routeTask(
     // 8. Execute via LLM
     const userMessage = `Please complete the following task:\n\n**Task:** ${task.title}\n**Description:** ${task.description}\n**Type:** ${task.type}\n**Complexity:** ${complexity}\n\nProvide a thorough, professional response based on your expertise and the provided context.`;
 
-    const zai = await ZAI.create();
-    const completion = await zai.chat.completions.create({
-      messages: [
-        { role: 'system', content: fullSystemPrompt },
-        { role: 'user', content: userMessage },
-      ],
-      thinking: { type: 'disabled' },
-    });
+    const completion = await createChatCompletion(task.companyId, [
+      { role: 'system', content: fullSystemPrompt },
+      { role: 'user', content: userMessage },
+    ]);
 
-    const result =
-      completion.choices[0]?.message?.content ||
-      'Task execution completed but no output was generated.';
+    const result = completion.content || 'Task execution completed but no output was generated.';
+    const actualModel = `${completion.provider}${completion.model ? `:${completion.model}` : ''}`;
     const latencyMs = Date.now() - startTime;
 
     // 9. Update TaskExecution with results
@@ -1441,6 +1428,7 @@ export async function routeTask(
       data: {
         status: 'completed',
         output: JSON.stringify({ result }),
+        modelUsed: actualModel,
         latencyMs,
         completedAt: new Date(),
       },
@@ -1467,13 +1455,13 @@ export async function routeTask(
     await addMemory(employee.employeeId, {
       memoryType: 'episodic',
       title: `Completed task: ${task.title}`,
-      content: `Successfully executed ${task.type} task with complexity ${complexity} using ${modelName}. Latency: ${latencyMs}ms.`,
+      content: `Successfully executed ${task.type} task with complexity ${complexity} using ${actualModel}. Latency: ${latencyMs}ms.`,
       category: 'task_execution',
       metadata: {
         taskId: executionId,
         taskType: task.type,
         complexity,
-        modelUsed: modelName,
+        modelUsed: actualModel,
         latencyMs,
       },
       relevance: 0.7,
@@ -1489,7 +1477,7 @@ export async function routeTask(
       employeeName: employee.name,
       employeeId: employee.employeeId,
       departmentName: employee.department.name,
-      modelUsed: modelName,
+      modelUsed: actualModel,
       modelTier: tier,
       latencyMs,
       skillsUsed,
@@ -1624,21 +1612,9 @@ export async function executeWithEmployee(
     // Add current user message
     messages.push({ role: 'user', content: message });
 
-    // 7. Select model
-    const tier = employee.modelTier || 'balanced';
-    const modelConfig = await selectModel(tier);
-    const modelName = employee.preferredModel || modelConfig?.name || 'default';
-
-    // 8. Execute via LLM
-    const zai = await ZAI.create();
-    const completion = await zai.chat.completions.create({
-      messages,
-      thinking: { type: 'disabled' },
-    });
-
-    const aiResponse =
-      completion.choices[0]?.message?.content ||
-      'I was unable to generate a response. Please try again.';
+    // 7. Execute through the configured self-hosted or explicitly selected model
+    const completion = await createChatCompletion(companyId || employee.companyId, messages);
+    const aiResponse = completion.content || 'I was unable to generate a response. Please try again.';
 
     // 9. Update conversation with new messages
     const updatedMessages: ConversationMessage[] = [
