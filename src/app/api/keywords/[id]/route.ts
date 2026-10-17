@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -10,6 +10,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (!payload || !payload.companyId) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
+    if (!hasPermission(payload.role, 'seo_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { id } = await params;
     const existing = await db.keywordTracker.findFirst({ where: { id, companyId: payload.companyId } });

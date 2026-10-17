@@ -5,6 +5,12 @@
  */
 import { db } from './db';
 import ZAI from 'z-ai-web-dev-sdk';
+import { createChatCompletion } from './ai-provider';
+
+/** Paid/hosted media generation is opt-in; self-hosted Ollama remains the default for text. */
+function isZaiMediaEnabled(): boolean {
+  return process.env.ZAI_MEDIA_ENABLED === 'true';
+}
 
 // ─── AI Memory (akitaonrails/ai-memory) ──────────────────────────
 export async function storeMemory(companyId: string, agentType: string, category: string, content: string, metadata?: any): Promise<void> {
@@ -29,19 +35,19 @@ export async function retrieveMemories(companyId: string, agentType: string, cat
 }
 
 // ─── Text Humanizer (blader/humanizer) ──────────────────────────
-export async function humanizeText(text: string, tone: 'casual' | 'professional' | 'friendly' | 'persuasive' = 'casual'): Promise<string> {
+export async function humanizeText(
+  text: string,
+  tone: 'casual' | 'professional' | 'friendly' | 'persuasive' = 'casual',
+  companyId = '',
+): Promise<{ text: string; provider: string | null; source: 'ai' | 'rules' }> {
   try {
-    const zai = await ZAI.create();
-    const completion = await zai.chat.completions.create({
-      messages: [
-        { role: 'system', content: `Rewrite this text to sound more natural and human. Use ${tone} tone. Remove AI-typical phrases. Return ONLY the rewritten text.` },
-        { role: 'user', content: text },
-      ],
-      thinking: { type: 'disabled' },
-    });
-    return completion.choices[0]?.message?.content || text;
+    const completion = await createChatCompletion(companyId, [
+      { role: 'system', content: `Rewrite this text to sound more natural and human. Use ${tone} tone. Remove AI-typical phrases. Return ONLY the rewritten text.` },
+      { role: 'user', content: text },
+    ]);
+    return { text: completion.content || text, provider: completion.provider, source: 'ai' };
   } catch {
-    return humanizeFallback(text, tone);
+    return { text: humanizeFallback(text, tone), provider: null, source: 'rules' };
   }
 }
 
@@ -62,6 +68,7 @@ function humanizeFallback(text: string, tone: string): string {
 // base64 data URIs, not remote URLs. We convert to a data URL so the UI can
 // render them without a separate hosting step.
 export async function generateImage(prompt: string, size: string = '1024x1024'): Promise<{ url: string; prompt: string } | null> {
+  if (!isZaiMediaEnabled()) return null;
   try {
     const zai = await ZAI.create();
     const result = await zai.images.generations.create({ prompt, size: size as '1024x1024' });
@@ -77,6 +84,7 @@ export async function generateImage(prompt: string, size: string = '1024x1024'):
 // The actual video URL is retrieved later via zai.async.result.query(taskId).
 // This function initiates the generation and returns the task ID for polling.
 export async function generateVideo(prompt: string): Promise<{ videoUrl: string; taskId: string; status: string } | null> {
+  if (!isZaiMediaEnabled()) return null;
   try {
     const zai = await ZAI.create();
     const result = await zai.video.generations.create({ prompt });
@@ -92,6 +100,7 @@ export async function generateVideo(prompt: string): Promise<{ videoUrl: string;
 // ─── AI Video Status Polling ────────────────────────────────────
 // Poll the async result endpoint to get the final video URL.
 export async function getVideoStatus(taskId: string): Promise<{ status: string; videoUrl: string } | null> {
+  if (!isZaiMediaEnabled()) return null;
   try {
     const zai = await ZAI.create();
     const result = await zai.async.result.query(taskId);
@@ -105,6 +114,7 @@ export async function getVideoStatus(taskId: string): Promise<{ status: string; 
 
 // ─── AI Voice/TTS (debpalash/VoiceStudio) ──────────────────────
 export async function generateSpeech(text: string, voice: string = 'default'): Promise<{ audioUrl: string } | null> {
+  if (!isZaiMediaEnabled()) return null;
   try {
     const zai = await ZAI.create();
     const result = await zai.audio.tts.create({ input: text, voice }) as Record<string, unknown>;

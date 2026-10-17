@@ -1,48 +1,21 @@
-/**
- * Event bus — central place to fire notifications, audit logs, activities, and webhooks.
- *
- * Every CRUD action in the app should call `emitEvent(...)` so the system can:
- *   1. Create a Notification for the relevant user(s)
- *   2. Write an AuditLog row
- *   3. Write an Activity row (for the company-wide activity feed)
- *   4. Fire any registered Webhooks (HTTP POST to external URLs)
- *
- * Inspired by Chatwoot's event bus, Frappe's webhook system, and OroCRM's audit trail.
- */
+import { createHmac, randomBytes } from 'node:crypto';
 import { db } from './db';
+import { decryptSecret, isEncryptedSecret } from './credentials';
+import { SafeFetchError, safeFetchText } from './ssrf';
 
 export interface EventPayload {
-  /** Company this event belongs to */
   companyId: string;
-  /** User who triggered the event (null for system-generated events) */
   userId?: string | null;
-  /** Event type — dot-namespaced, e.g. "lead.created", "deal.won", "ticket.assigned" */
   type: string;
-  /** Human-readable title for notifications */
   title: string;
-  /** Longer description for activity feed + audit log */
   description: string;
-  /** Resource type: lead | deal | contact | ticket | campaign | content | ... */
   resourceType?: string;
-  /** Resource ID for deep-linking */
   resourceId?: string;
-  /** Frontend route to navigate to when notification is clicked */
   link?: string;
-  /** Recipient user IDs (defaults to all company users if empty) */
   recipientIds?: string[];
-  /** Extra metadata as JSON */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
-/**
- * Emit a single event. Performs all four side-effects:
- * 1. Notification for each recipient
- * 2. AuditLog row
- * 3. Activity row
- * 4. Webhook fire (async, fire-and-forget — does not block the caller)
- *
- * Safe to call from any API route. Never throws — logs errors and continues.
- */
 export async function emitEvent(payload: EventPayload): Promise<void> {
   try {
     const {
@@ -58,64 +31,51 @@ export async function emitEvent(payload: EventPayload): Promise<void> {
       metadata = {},
     } = payload;
 
-    // Determine recipients if not specified: all users in the company
     let recipients: string[] = recipientIds || [];
     if (recipients.length === 0) {
-      const members = await db.companyUser.findMany({
-        where: { companyId },
-        select: { userId: true },
-      });
-      recipients = members.map((m) => m.userId);
+      const members = await db.companyUser.findMany({ where: { companyId }, select: { userId: true } });
+      recipients = members.map((member) => member.userId);
     }
 
-    // 1. Create notifications for each recipient (skip the actor if they triggered it)
-    const notifData = recipients
-      .filter((id) => id !== userId)
-      .map((recipientId) => ({
-        userId: recipientId,
-        type,
-        title,
-        message: description,
-        link: link || null,
-        metadata: JSON.stringify(metadata),
-      }));
-    if (notifData.length > 0) {
-      await db.notification.createMany({ data: notifData }).catch((e) =>
-        console.error('[emitEvent] notification createMany failed:', e),
+    const notificationData = recipients.filter((id) => id !== userId).map((recipientId) => ({
+      userId: recipientId,
+      type,
+      title,
+      message: description,
+      link: link || null,
+      metadata: JSON.stringify(metadata),
+    }));
+    if (notificationData.length > 0) {
+      await db.notification.createMany({ data: notificationData }).catch((error) =>
+        console.error('[emitEvent] notification createMany failed:', error),
       );
     }
 
-    // 2. Audit log
-    await db.auditLog
-      .create({
-        data: {
-          action: type,
-          resource: resourceType || 'unknown',
-          resourceId: resourceId || null,
-          details: description,
-          userId: userId || null,
-          companyId,
-        },
-      })
-      .catch((e) => console.error('[emitEvent] auditLog create failed:', e));
+    await db.auditLog.create({
+      data: {
+        action: type,
+        resource: resourceType || 'unknown',
+        resourceId: resourceId || null,
+        details: description,
+        userId: userId || null,
+        companyId,
+      },
+    }).catch((error) => console.error('[emitEvent] auditLog create failed:', error));
 
-    // 3. Activity feed entry
-    await db.activity
-      .create({
-        data: {
-          companyId,
-          userId: userId || null,
-          type,
-          description,
-          resourceType: resourceType || null,
-          resourceId: resourceId || null,
-          metadata: JSON.stringify(metadata),
-        },
-      })
-      .catch((e) => console.error('[emitEvent] activity create failed:', e));
+    await db.activity.create({
+      data: {
+        companyId,
+        userId: userId || null,
+        type,
+        description,
+        resourceType: resourceType || null,
+        resourceId: resourceId || null,
+        metadata: JSON.stringify(metadata),
+      },
+    }).catch((error) => console.error('[emitEvent] activity create failed:', error));
 
-    // 4. Fire webhooks (async, fire-and-forget)
-    fireWebhooksForCompany(companyId, type, {
+    void fireWebhooksForCompany(companyId, type, {
+      id: randomBytes(16).toString('hex'),
       type,
       title,
       description,
@@ -125,85 +85,112 @@ export async function emitEvent(payload: EventPayload): Promise<void> {
       companyId,
       actorUserId: userId,
       timestamp: new Date().toISOString(),
-    }).catch((e) => console.error('[emitEvent] fireWebhooks failed:', e));
-  } catch (err) {
-    console.error('[emitEvent] overall failure:', err);
+    }).catch((error) => console.error('[emitEvent] webhook dispatch failed:', error));
+  } catch (error) {
+    console.error('[emitEvent] overall failure:', error);
   }
 }
 
-/**
- * Fetch all active webhooks for a company, filter by event subscription,
- * and POST the payload to each URL. Uses fetch with a 10-second timeout.
- *
- * Failures are logged but do not propagate — webhook delivery is best-effort.
- */
+export function computeWebhookSignature(secret: string, timestamp: number, body: string): string {
+  return createHmac('sha256', secret).update(`${timestamp}.${body}`, 'utf8').digest('hex');
+}
+
 async function fireWebhooksForCompany(
   companyId: string,
   eventType: string,
-  payload: Record<string, any>,
+  payload: Record<string, unknown>,
 ): Promise<void> {
-  const webhooks = await db.webhook
-    .findMany({ where: { companyId, status: 'active' } })
-    .catch(() => []);
+  const webhooks = await db.webhook.findMany({ where: { companyId, status: 'active' } }).catch(() => []);
   if (webhooks.length === 0) return;
 
-  await Promise.all(
-    webhooks.map(async (webhook) => {
-      try {
-        let events: string[] = [];
-        try {
-          events = JSON.parse(webhook.events || '[]');
-        } catch {
-          events = [];
-        }
-        // If webhook has no events filter (empty array), it gets all events
-        if (events.length > 0 && !events.includes(eventType)) return;
+  let body: string;
+  try {
+    body = JSON.stringify(payload);
+  } catch {
+    return;
+  }
+  if (Buffer.byteLength(body, 'utf8') > 256 * 1024) {
+    await Promise.all(webhooks.map((webhook) => recordDeliveryFailure(webhook.id, 'Webhook payload exceeds the 256 KB limit')));
+    return;
+  }
 
-        const signature = webhook.secret
-          ? await hmacSha256(webhook.secret, JSON.stringify(payload))
-          : null;
+  await Promise.all(webhooks.map(async (webhook) => {
+    let subscribedEvents: unknown;
+    try {
+      subscribedEvents = JSON.parse(webhook.events || '[]');
+    } catch {
+      subscribedEvents = [];
+    }
+    if (Array.isArray(subscribedEvents) && subscribedEvents.length > 0 && !subscribedEvents.includes(eventType)) return;
+    if (!webhook.secret) {
+      await recordDeliveryFailure(webhook.id, 'Signing secret is missing');
+      return;
+    }
 
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-
-        const res = await fetch(webhook.url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-MarketingOS-Event': eventType,
-            'X-MarketingOS-Signature': signature || '',
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeout);
-        if (!res.ok) {
-          console.warn(
-            `[webhook] ${webhook.url} returned HTTP ${res.status} for event ${eventType}`,
-          );
-        }
-      } catch (err) {
-        console.warn(
-          `[webhook] failed to deliver ${eventType} to ${webhook.url}:`,
-          err instanceof Error ? err.message : err,
-        );
+    try {
+      if (new URL(webhook.url).protocol !== 'https:') {
+        await recordDeliveryFailure(webhook.id, 'Webhook destinations must use HTTPS');
+        return;
       }
-    }),
-  );
+      const signingSecret = isEncryptedSecret(webhook.secret) ? decryptSecret(webhook.secret) : webhook.secret;
+      const timestamp = Math.floor(Date.now() / 1000);
+      const signature = computeWebhookSignature(signingSecret, timestamp, body);
+      const response = await safeFetchText(webhook.url, {
+        method: 'POST',
+        timeoutMs: 10_000,
+        maxResponseBytes: 64 * 1024,
+        headers: {
+          'content-type': 'application/json',
+          accept: 'application/json, */*',
+          'x-marketingos-event': eventType,
+          'x-marketingos-event-id': String(payload.id || ''),
+          'x-marketingos-timestamp': String(timestamp),
+          'x-marketingos-signature': `t=${timestamp},v1=${signature}`,
+        },
+        body,
+      });
+
+      if (!response.ok) {
+        await recordDeliveryFailure(webhook.id, `Endpoint returned HTTP ${response.status}`, response.status);
+        console.warn(`[webhook] event ${eventType} failed with HTTP ${response.status}`);
+        return;
+      }
+      await db.webhook.update({
+        where: { id: webhook.id },
+        data: {
+          deliveryCount: { increment: 1 },
+          lastDeliveredAt: new Date(),
+          lastDeliveryStatus: response.status,
+          lastDeliveryError: null,
+        },
+      }).catch((error) => console.error('[webhook] could not record successful delivery:', error));
+    } catch (error) {
+      const message = error instanceof SafeFetchError
+        ? safeDeliveryError(error)
+        : 'Network delivery failed';
+      await recordDeliveryFailure(webhook.id, message);
+      console.warn(`[webhook] event ${eventType} delivery failed: ${message}`);
+    }
+  }));
 }
 
-async function hmacSha256(secret: string, payload: string): Promise<string> {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(payload));
-  return Array.from(new Uint8Array(sig))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+async function recordDeliveryFailure(webhookId: string, error: string, status?: number): Promise<void> {
+  await db.webhook.update({
+    where: { id: webhookId },
+    data: {
+      failureCount: { increment: 1 },
+      lastDeliveryStatus: status ?? null,
+      lastDeliveryError: error.slice(0, 500),
+    },
+  }).catch((updateError) => console.error('[webhook] could not record failed delivery:', updateError));
+}
+
+function safeDeliveryError(error: SafeFetchError): string {
+  switch (error.code) {
+    case 'SSRF_BLOCKED': return 'Blocked unsafe webhook destination';
+    case 'TIMEOUT': return 'Webhook delivery timed out';
+    case 'TOO_LARGE': return 'Webhook payload or response exceeded the configured size limit';
+    case 'REDIRECT': return 'Webhook redirects are not followed';
+    default: return 'Network delivery failed';
+  }
 }

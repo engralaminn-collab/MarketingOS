@@ -3,6 +3,8 @@ Task ID: marketingos-real-1
 Agent: Main Orchestrator
 Task: Convert MarketingOS from DEMO/MOCK data to real Prisma-backed CRUD across all views
 
+> Historical log from an earlier sandbox checkout. Paths, test/deployment claims, environment details, and service counts recorded below are not current verification. See `docs/REFERENCE-AND-PROJECT-AUDIT.md` for the current audit.
+
 Work Log:
 - Extracted uploaded MarketingOS-FULL-PROJECT.zip to /home/z/my-project/marketingos
 - Installed deps via `bun install` (803 packages)

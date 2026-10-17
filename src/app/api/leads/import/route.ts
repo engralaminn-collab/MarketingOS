@@ -2,122 +2,127 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 import { emitEvent } from '@/lib/events';
+import { MAX_CSV_BYTES, parseCsv, sanitizeImportedCsvValue } from '@/lib/csv';
 
-// POST /api/leads/import — bulk import leads from CSV text
-// Body: { csv: "Name,Email,Phone,Company,Source\n..." }
-// OR multipart/form-data with file=leads.csv
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
+    const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const payload = await verifyToken(token);
-    if (!payload || !payload.companyId) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+
+    const contentLength = Number(req.headers.get('content-length') || 0);
+    if (contentLength > MAX_CSV_BYTES + 16 * 1024) {
+      return NextResponse.json({ error: 'CSV upload exceeds the 5 MB limit' }, { status: 413 });
     }
 
-    let csvText = '';
+    let csvText: string;
     const contentType = req.headers.get('content-type') || '';
-
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
-      const file = formData.get('file') as File | null;
-      if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+      const file = formData.get('file');
+      if (!(file instanceof File)) return NextResponse.json({ error: 'CSV file is required' }, { status: 400 });
+      if (file.size > MAX_CSV_BYTES) return NextResponse.json({ error: 'CSV upload exceeds the 5 MB limit' }, { status: 413 });
       csvText = await file.text();
+    } else if (contentType.includes('application/json')) {
+      const rawBody = await req.text();
+      if (Buffer.byteLength(rawBody, 'utf8') > MAX_CSV_BYTES + 16 * 1024) {
+        return NextResponse.json({ error: 'CSV upload exceeds the 5 MB limit' }, { status: 413 });
+      }
+      let body: { csv?: unknown };
+      try {
+        body = JSON.parse(rawBody);
+      } catch {
+        return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+      }
+      csvText = typeof body.csv === 'string' ? body.csv : '';
     } else {
-      const body = await req.json();
-      csvText = String(body.csv || '');
+      return NextResponse.json({ error: 'Upload CSV as multipart/form-data or JSON' }, { status: 415 });
     }
 
-    if (!csvText.trim()) {
-      return NextResponse.json({ error: 'CSV content is empty' }, { status: 400 });
+    if (!csvText.trim()) return NextResponse.json({ error: 'CSV content is empty' }, { status: 400 });
+
+    let parsed: string[][];
+    try {
+      parsed = parseCsv(csvText.replace(/^\uFEFF/, ''));
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : 'Malformed CSV' }, { status: 400 });
     }
+    if (parsed.length < 2) return NextResponse.json({ error: 'CSV must include a header and at least one data row' }, { status: 400 });
 
-    // Parse CSV — supports quoted fields and escaped quotes ("")
-    const parsed = parseCsv(csvText);
-    if (parsed.length === 0) {
-      return NextResponse.json({ error: 'No rows found in CSV' }, { status: 400 });
-    }
+    const header = parsed[0].map((value) => value.toLowerCase().trim());
+    const findColumn = (names: string[]) => header.findIndex((value) => names.some((name) => value === name || value.startsWith(`${name} `)));
+    const nameIndex = findColumn(['name', 'full name', 'lead name']);
+    const emailIndex = findColumn(['email', 'email address']);
+    const phoneIndex = findColumn(['phone', 'phone number']);
+    const companyIndex = findColumn(['company', 'company name', 'organization']);
+    const sourceIndex = findColumn(['source', 'lead source']);
+    const statusIndex = findColumn(['status', 'lead status']);
+    const scoreIndex = findColumn(['score', 'lead score']);
+    const notesIndex = findColumn(['notes', 'comment', 'description']);
 
-    const header = parsed[0].map((h) => h.toLowerCase().trim());
-    const findCol = (names: string[]) =>
-      header.findIndex((h) => names.some((n) => h === n || h.startsWith(n)));
+    if (nameIndex === -1) return NextResponse.json({ error: 'CSV must have a "Name" column' }, { status: 400 });
 
-    const nameIdx = findCol(['name', 'full name', 'lead name']);
-    const emailIdx = findCol(['email', 'email address']);
-    const phoneIdx = findCol(['phone', 'phone number']);
-    const companyIdx = findCol(['company', 'company name', 'organization']);
-    const sourceIdx = findCol(['source', 'lead source']);
-    const statusIdx = findCol(['status', 'lead status']);
-    const scoreIdx = findCol(['score', 'lead score']);
-    const notesIdx = findCol(['notes', 'comment', 'description']);
-
-    if (nameIdx === -1) {
-      return NextResponse.json(
-        { error: 'CSV must have a "Name" column (case-insensitive)' },
-        { status: 400 },
-      );
-    }
-
-    const validStatuses = ['new', 'contacted', 'qualified', 'unqualified', 'lost'];
-    const validSources = ['Website', 'Referral', 'LinkedIn', 'Conference', 'Cold Email', 'Webinar', 'Partner'];
-
+    const validStatuses = new Set(['new', 'contacted', 'qualified', 'unqualified', 'lost']);
+    const validSources = new Set(['Website', 'Referral', 'LinkedIn', 'Conference', 'Cold Email', 'Webinar', 'Partner']);
     let created = 0;
     let skipped = 0;
     const errors: string[] = [];
 
-    for (let i = 1; i < parsed.length; i++) {
-      const row = parsed[i];
-      if (!row || row.length === 0) continue;
-      const name = (row[nameIdx] || '').trim();
-      if (!name) {
+    for (let rowIndex = 1; rowIndex < parsed.length; rowIndex++) {
+      const row = parsed[rowIndex];
+      if (!row || row.every((cell) => !cell.trim())) continue;
+      const value = (index: number) => index >= 0 ? sanitizeImportedCsvValue((row[index] || '').trim()) : '';
+      const name = value(nameIndex);
+      const email = value(emailIndex);
+      const phone = value(phoneIndex);
+      const company = value(companyIndex);
+      const notes = value(notesIndex);
+      if (!name || name.length > 160 || email.length > 254 || phone.length > 80 || company.length > 160 || (notes?.length || 0) > 5000) {
         skipped++;
-        errors.push(`Row ${i + 1}: empty name, skipped`);
+        errors.push(`Row ${rowIndex + 1}: invalid or overlong field`);
+        continue;
+      }
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        skipped++;
+        errors.push(`Row ${rowIndex + 1}: invalid email`);
         continue;
       }
 
-      const email = emailIdx >= 0 ? (row[emailIdx] || '').trim() : '';
-      const phone = phoneIdx >= 0 ? (row[phoneIdx] || '').trim() : '';
-      const company = companyIdx >= 0 ? (row[companyIdx] || '').trim() : '';
-      let source = sourceIdx >= 0 ? (row[sourceIdx] || '').trim() : 'Website';
-      let status = statusIdx >= 0 ? (row[statusIdx] || '').trim().toLowerCase() : 'new';
-      if (!validSources.includes(source)) source = 'Website';
-      if (!validStatuses.includes(status)) status = 'new';
-
-      let score = 50;
-      if (scoreIdx >= 0) {
-        const parsed = parseInt(row[scoreIdx] || '50', 10);
-        if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) score = parsed;
-      }
-
-      const notes = notesIdx >= 0 ? (row[notesIdx] || '').trim() : null;
+      const rawSource = value(sourceIndex);
+      const rawStatus = value(statusIndex).toLowerCase();
+      const source = validSources.has(rawSource) ? rawSource : 'Website';
+      const status = validStatuses.has(rawStatus) ? rawStatus : 'new';
+      const parsedScore = Number.parseInt(value(scoreIndex), 10);
+      const score = Number.isInteger(parsedScore) && parsedScore >= 0 && parsedScore <= 100 ? parsedScore : 50;
 
       try {
-        const lead = await db.lead.create({
-          data: {
-            name,
-            email: email || null,
-            phone: phone || null,
-            companyName: company || null,
-            source,
-            status,
-            score,
-            notes,
-            companyId: payload.companyId,
-          },
+        await db.$transaction(async (tx) => {
+          const lead = await tx.lead.create({
+            data: {
+              name,
+              email: email || null,
+              phone: phone || null,
+              companyName: company || null,
+              source,
+              status,
+              score,
+              notes: notes || null,
+              companyId: payload.companyId,
+            },
+          });
+          await tx.leadActivity.create({
+            data: { type: 'created', content: 'Imported via CSV', leadId: lead.id },
+          });
         });
-
-        await db.leadActivity.create({
-          data: { type: 'created', content: 'Imported via CSV', leadId: lead.id },
-        });
-
         created++;
-      } catch (err) {
+      } catch (error) {
+        console.error(`[POST /api/leads/import] failed importing row ${rowIndex + 1}:`, error);
         skipped++;
-        errors.push(`Row ${i + 1}: ${err instanceof Error ? err.message : 'failed'}`);
+        errors.push(`Row ${rowIndex + 1}: could not be imported`);
       }
     }
 
-    // Fire single event for the bulk import
     await emitEvent({
       companyId: payload.companyId,
       userId: payload.userId,
@@ -129,60 +134,9 @@ export async function POST(req: NextRequest) {
       metadata: { created, skipped, total: parsed.length - 1 },
     });
 
-    return NextResponse.json({
-      data: { created, skipped, errors: errors.slice(0, 10) },
-    });
-  } catch (err) {
-    console.error('[POST /api/leads/import]', err);
+    return NextResponse.json({ data: { created, skipped, errors: errors.slice(0, 10) } });
+  } catch (error) {
+    console.error('[POST /api/leads/import]', error);
     return NextResponse.json({ error: 'Failed to import leads' }, { status: 500 });
   }
-}
-
-/**
- * Minimal RFC-4180-compliant CSV parser.
- * Handles quoted fields with embedded commas, quotes (""), and newlines.
- */
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cell = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (inQuotes) {
-      if (ch === '"') {
-        if (text[i + 1] === '"') {
-          cell += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        cell += ch;
-      }
-    } else {
-      if (ch === '"') {
-        inQuotes = true;
-      } else if (ch === ',') {
-        row.push(cell);
-        cell = '';
-      } else if (ch === '\n' || ch === '\r') {
-        if (ch === '\r' && text[i + 1] === '\n') i++;
-        row.push(cell);
-        rows.push(row);
-        row = [];
-        cell = '';
-      } else {
-        cell += ch;
-      }
-    }
-  }
-  // Last cell + last row
-  if (cell.length > 0 || row.length > 0) {
-    row.push(cell);
-    rows.push(row);
-  }
-
-  return rows;
 }

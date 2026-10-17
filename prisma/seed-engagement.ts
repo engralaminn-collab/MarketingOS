@@ -131,7 +131,7 @@ async function main() {
       companyId,
       userId: adminUser.id,
       type: 'system',
-      description: 'Kexsio MarketingOS platform initialized — 120 integrations, 2000 AI employees, 9 AI agents ready',
+      description: 'Kexsio MarketingOS platform initialized — 116 cataloged integrations, 2000 AI workforce profiles, 9 AI agents ready',
       resourceType: null,
       resourceId: null,
       metadata: JSON.stringify({ version: '1.0.0' }),

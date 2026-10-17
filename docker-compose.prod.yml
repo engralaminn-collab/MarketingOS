@@ -48,6 +48,33 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set on the host}
       CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:-}
 
+      # Self-hosted Ollama is the default text provider; no paid API fallback.
+      # docker-compose.local-ai.yml supplies the private `ollama` service.
+      AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY:-}
+
+      # Optional private ComfyUI endpoint for self-hosted image generation.
+      # The ComfyUI service/model is operated separately; no model is bundled.
+      COMFYUI_BASE_URL: ${COMFYUI_BASE_URL:-}
+      COMFYUI_IMAGE_CHECKPOINT: ${COMFYUI_IMAGE_CHECKPOINT:-}
+      COMFYUI_API_KEY: ${COMFYUI_API_KEY:-}
+      COMFYUI_VIDEO_WORKFLOW_FILE: ${COMFYUI_VIDEO_WORKFLOW_FILE:-}
+      COMFYUI_VIDEO_FPS: ${COMFYUI_VIDEO_FPS:-12}
+      COMFYUI_VIDEO_WIDTH: ${COMFYUI_VIDEO_WIDTH:-768}
+      COMFYUI_VIDEO_HEIGHT: ${COMFYUI_VIDEO_HEIGHT:-512}
+
+      # Optional OpenAI-compatible self-hosted TTS. No automatic paid fallback.
+      LOCAL_TTS_BASE_URL: ${LOCAL_TTS_BASE_URL:-}
+      LOCAL_TTS_MODEL: ${LOCAL_TTS_MODEL:-tts-1}
+      LOCAL_TTS_VOICE: ${LOCAL_TTS_VOICE:-default}
+      LOCAL_TTS_API_KEY: ${LOCAL_TTS_API_KEY:-}
+
+      # Hosted image/video/avatar/speech generation is explicitly opt-in.
+      ZAI_MEDIA_ENABLED: ${ZAI_MEDIA_ENABLED:-false}
+      ZAI_API_KEY: ${ZAI_API_KEY:-}
+
       # Optional provider credentials. Absent means the relevant feature
       # reports itself as unconfigured — it must never fake success.
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
@@ -59,6 +86,8 @@ services:
       - ./db:/app/db
       # Written by scripts/db-backup.sh during deployment.
       - ./backups:/app/backups
+      # Operator-provided ComfyUI API-format workflow files (optional, read-only).
+      - ./comfy-workflows:/app/comfy-workflows:ro
 
     ports:
       # Bound to loopback only; the reverse proxy terminates TLS for

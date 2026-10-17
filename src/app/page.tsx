@@ -35,6 +35,9 @@ import {
   Bell,
   Network,
   Plug,
+  Sparkles,
+  Rss,
+  Activity,
 } from 'lucide-react';
 
 // Lazy load views
@@ -44,8 +47,11 @@ const AiCommandView = lazy(() => import('@/components/views/ai-command-view').th
 const MediaStudioView = lazy(() => import('@/components/views/media-studio-view').then(m => ({ default: m.MediaStudioView })));
 const CrmView = lazy(() => import('@/components/views/crm-view').then(m => ({ default: m.CrmView })));
 const SeoView = lazy(() => import('@/components/views/seo-view').then(m => ({ default: m.SeoView })));
+const MarketIntelligenceView = lazy(() => import('@/components/views/market-intelligence-view'));
 const CampaignsView = lazy(() => import('@/components/views/campaigns-view').then(m => ({ default: m.CampaignsView })));
 const ContentView = lazy(() => import('@/components/views/content-view').then(m => ({ default: m.ContentView })));
+const FeedsView = lazy(() => import('@/components/views/feeds-view'));
+const MarketingStudioView = lazy(() => import('@/components/views/marketing-studio-view').then(m => ({ default: m.MarketingStudioView })));
 const AnalyticsView = lazy(() => import('@/components/views/analytics-view').then(m => ({ default: m.AnalyticsView })));
 const TeamView = lazy(() => import('@/components/views/team-view').then(m => ({ default: m.TeamView })));
 const WorkforceView = lazy(() => import('@/components/views/workforce-view').then(m => ({ default: m.WorkforceView })));
@@ -78,8 +84,11 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   'media-studio': MediaStudioView,
   crm: CrmView,
   seo: SeoView,
+  'market-intelligence': MarketIntelligenceView,
   campaigns: CampaignsView,
   content: ContentView,
+  feeds: FeedsView,
+  'marketing-studio': MarketingStudioView,
   analytics: AnalyticsView,
   team: TeamView,
   messages: MessagesView,
@@ -116,15 +125,18 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: 'dashboard', label: 'CEO Dashboard', icon: <LayoutDashboard className="w-4 h-4" />, section: 'Main' },
   { id: 'workforce', label: 'AI Workforce', icon: <Network className="w-4 h-4" />, badge: '2,000', section: 'Workforce' },
-  { id: 'integrations', label: 'Integrations', icon: <Plug className="w-4 h-4" />, badge: '120', section: 'Connect' },
+  { id: 'integrations', label: 'Integrations', icon: <Plug className="w-4 h-4" />, badge: '116', section: 'Connect' },
   { id: 'social-accounts', label: 'Social Accounts', icon: <Link2 className="w-4 h-4" />, badge: 'OAuth', section: 'Connect' },
   { id: 'ai-command', label: 'AI Command', icon: <Bot className="w-4 h-4" />, section: 'AI' },
   { id: 'media-studio', label: 'Media Studio', icon: <Palette className="w-4 h-4" />, section: 'AI' },
   { id: 'ai-agents', label: 'AI Agents', icon: <Cpu className="w-4 h-4" />, section: 'AI' },
   { id: 'crm', label: 'CRM', icon: <Users className="w-4 h-4" />, section: 'Marketing' },
   { id: 'seo', label: 'SEO Engine', icon: <Search className="w-4 h-4" />, section: 'Marketing' },
+  { id: 'market-intelligence', label: 'Market Intelligence', icon: <Activity className="w-4 h-4" />, section: 'Marketing' },
   { id: 'campaigns', label: 'Campaigns', icon: <Megaphone className="w-4 h-4" />, section: 'Marketing' },
   { id: 'content', label: 'Content', icon: <FileText className="w-4 h-4" />, section: 'Marketing' },
+  { id: 'feeds', label: 'News Feeds', icon: <Rss className="w-4 h-4" />, section: 'Marketing' },
+  { id: 'marketing-studio', label: 'Marketing Studio', icon: <Sparkles className="w-4 h-4" />, section: 'Marketing' },
   { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" />, section: 'Reports' },
   { id: 'messages', label: 'Messages', icon: <Bell className="w-4 h-4" />, section: 'Reports' },
   { id: 'announcements', label: 'Announcements', icon: <Megaphone className="w-4 h-4" />, section: 'Reports' },

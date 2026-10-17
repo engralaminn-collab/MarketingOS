@@ -19,11 +19,12 @@ import {
 } from "@/components/ui/select";
 import {
   Shield, Target, TrendingUp, Plus, Trash2, RefreshCw, Loader2,
-  AlertTriangle, Globe, Activity, ExternalLink, Search,
+  AlertTriangle, Globe, Activity, ExternalLink, Search, Rss,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { useAppStore } from "@/stores/app-store";
 
 interface Competitor {
   id: string;
@@ -48,6 +49,18 @@ interface Keyword {
   updatedAt: string;
 }
 
+interface IntelligenceSignal {
+  id: string;
+  title: string;
+  description: string;
+  link: string | null;
+  sourceName: string;
+  publishedAt: string;
+  isRead: boolean;
+  isStarred: boolean;
+  matchedEntities: { name: string; kind: "competitor" | "CRM company" }[];
+}
+
 interface MarketIntelData {
   summary: {
     totalCompetitors: number;
@@ -57,11 +70,15 @@ interface MarketIntelData {
     totalKeywords: number;
     totalSearchVolume: number;
     avgDifficulty: number;
+    totalFeedSignals: number;
+    matchedFeedSignals: number;
   };
   competitors: Competitor[];
   keywords: Keyword[];
   opportunities: any[];
   recentEvents: any[];
+  signals: IntelligenceSignal[];
+  signalMatching: string;
 }
 
 const THREAT_STYLES: Record<string, string> = {
@@ -77,6 +94,7 @@ const TREND_ICONS: Record<string, string> = {
 };
 
 export default function MarketIntelligenceView() {
+  const { setActiveView } = useAppStore();
   const { data, isLoading, refetch } = useApiQuery<MarketIntelData>("/api/market-intelligence");
   const [addCompetitorOpen, setAddCompetitorOpen] = useState(false);
   const [addKeywordOpen, setAddKeywordOpen] = useState(false);
@@ -86,7 +104,7 @@ export default function MarketIntelligenceView() {
     strengths: "", weaknesses: "", pricing: "", marketShare: "",
   });
   const [keywordForm, setKeywordForm] = useState({
-    keyword: "", searchVolume: "1000", difficulty: "30", trend: "stable",
+    keyword: "", searchVolume: "", difficulty: "", trend: "stable",
   });
 
   const addCompetitorMut = useApiMutation({
@@ -99,7 +117,12 @@ export default function MarketIntelligenceView() {
   const addKeywordMut = useApiMutation({
     method: "POST",
     path: "/api/keywords",
-    onSuccess: () => { toast.success("Keyword tracked"); setAddKeywordOpen(false); refetch(); },
+    onSuccess: () => {
+      toast.success("Keyword plan saved");
+      setAddKeywordOpen(false);
+      setKeywordForm({ keyword: "", searchVolume: "", difficulty: "", trend: "stable" });
+      refetch();
+    },
     onError: (e) => toast.error(e),
   });
 
@@ -151,12 +174,13 @@ export default function MarketIntelligenceView() {
   const intel = (data as unknown as { data?: MarketIntelData })?.data ?? data;
   const summary = intel?.summary || {
     totalCompetitors: 0, highThreatCompetitors: 0, mediumThreatCompetitors: 0, lowThreatCompetitors: 0,
-    totalKeywords: 0, totalSearchVolume: 0, avgDifficulty: 0,
+    totalKeywords: 0, totalSearchVolume: 0, avgDifficulty: 0, totalFeedSignals: 0, matchedFeedSignals: 0,
   };
   const competitors = intel?.competitors || [];
   const keywords = intel?.keywords || [];
   const opportunities = intel?.opportunities || [];
   const recentEvents = intel?.recentEvents || [];
+  const signals = intel?.signals || [];
 
   return (
     <div className="space-y-6">
@@ -167,7 +191,7 @@ export default function MarketIntelligenceView() {
             Market Intelligence Radar
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Track competitors, monitor keywords, and spot opportunities
+            Manual competitor and keyword tracking, plus name-matched headlines from your feeds
           </p>
         </div>
         <div className="flex gap-2">
@@ -177,7 +201,7 @@ export default function MarketIntelligenceView() {
           </Button>
           <Button size="sm" onClick={() => setAddKeywordOpen(true)}>
             <Plus className="h-4 w-4 mr-1.5" />
-            Track Keyword
+            Add Keyword Plan
           </Button>
           <Button size="sm" onClick={() => setAddCompetitorOpen(true)} className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
             <Plus className="h-4 w-4 mr-1.5" />
@@ -209,13 +233,13 @@ export default function MarketIntelligenceView() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Keywords tracked</p>
+                <p className="text-xs text-muted-foreground">Keyword plans (manual)</p>
                 <p className="text-2xl font-bold">{summary.totalKeywords}</p>
               </div>
               <Target className="h-8 w-8 text-blue-500/40" />
             </div>
             <p className="text-[10px] text-muted-foreground mt-2">
-              Total volume: {summary.totalSearchVolume.toLocaleString()}/mo
+              Entered volume estimates: {summary.totalSearchVolume.toLocaleString()}/mo
             </p>
           </CardContent>
         </Card>
@@ -224,13 +248,13 @@ export default function MarketIntelligenceView() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Avg keyword difficulty</p>
+                <p className="text-xs text-muted-foreground">Avg entered difficulty</p>
                 <p className="text-2xl font-bold">{summary.avgDifficulty}/100</p>
               </div>
               <TrendingUp className="h-8 w-8 text-emerald-500/40" />
             </div>
             <p className="text-[10px] text-muted-foreground mt-2">
-              {summary.avgDifficulty < 30 ? "Easy to rank" : summary.avgDifficulty < 60 ? "Moderate competition" : "Hard to rank"}
+              Manual estimate only — no rank data provider connected
             </p>
           </CardContent>
         </Card>
@@ -239,12 +263,12 @@ export default function MarketIntelligenceView() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Recent alerts</p>
+                <p className="text-xs text-muted-foreground">Recent manual updates</p>
                 <p className="text-2xl font-bold">{recentEvents.length}</p>
               </div>
               <Activity className="h-8 w-8 text-purple-500/40" />
             </div>
-            <p className="text-[10px] text-muted-foreground mt-2">Last 10 radar events</p>
+            <p className="text-[10px] text-muted-foreground mt-2">Recent competitor and keyword edits</p>
           </CardContent>
         </Card>
       </div>
@@ -257,12 +281,12 @@ export default function MarketIntelligenceView() {
               <Shield className="h-4 w-4 text-orange-500" />
               Competitors ({competitors.length})
             </CardTitle>
-            <CardDescription>Track what your competitors are doing</CardDescription>
+            <CardDescription>Manually maintained competitor profiles and threat ratings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {competitors.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">
-                No competitors yet. Click "Add Competitor" to start tracking.
+                No competitor profiles yet. Click "Add Competitor" to add one manually.
               </p>
             ) : competitors.map((c) => (
               <motion.div
@@ -344,14 +368,14 @@ export default function MarketIntelligenceView() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Target className="h-4 w-4 text-blue-500" />
-              Tracked Keywords ({keywords.length})
+              Keyword Plans ({keywords.length})
             </CardTitle>
-            <CardDescription>Monitor search volume + difficulty trends</CardDescription>
+            <CardDescription>Store manually entered estimates; live SEO/rank tracking is not connected</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {keywords.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">
-                No keywords tracked yet. Click "Track Keyword" to start.
+                No keyword plans yet. Add keywords and estimates manually.
               </p>
             ) : keywords.map((k) => (
               <motion.div
@@ -363,13 +387,13 @@ export default function MarketIntelligenceView() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{k.keyword}</p>
                   <div className="flex gap-3 text-[10px] text-muted-foreground mt-0.5">
-                    <span>Vol: <span className="font-medium text-foreground">{k.searchVolume.toLocaleString()}</span>/mo</span>
-                    <span>Diff: <span className="font-medium text-foreground">{k.difficulty}/100</span></span>
+                    <span>Vol estimate: <span className="font-medium text-foreground">{k.searchVolume.toLocaleString()}</span>/mo</span>
+                    <span>Difficulty estimate: <span className="font-medium text-foreground">{k.difficulty}/100</span></span>
                     {k.lastPosition !== null && (
-                      <span>Pos: <span className="font-medium text-foreground">#{k.lastPosition}</span></span>
+                      <span>Entered position: <span className="font-medium text-foreground">#{k.lastPosition}</span></span>
                     )}
                     <span className={k.trend === "up" ? "text-emerald-500" : k.trend === "down" ? "text-red-500" : ""}>
-                      {TREND_ICONS[k.trend]} {k.trend}
+                      Entered trend {TREND_ICONS[k.trend]} {k.trend}
                     </span>
                   </div>
                 </div>
@@ -387,8 +411,9 @@ export default function MarketIntelligenceView() {
               <div className="mt-4 pt-3 border-t border-border/60">
                 <p className="text-xs font-semibold mb-2 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3 text-emerald-500" />
-                  Top Opportunities (high volume / low difficulty)
+                  Heuristic shortlist from entered values
                 </p>
+                <p className="text-[10px] text-muted-foreground mb-2">Not verified against a live SEO provider.</p>
                 <div className="space-y-1">
                   {opportunities.map((o: any) => (
                     <div key={o.id} className="flex items-center justify-between text-xs">
@@ -405,13 +430,76 @@ export default function MarketIntelligenceView() {
         </Card>
       </div>
 
-      {/* Recent Events */}
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Rss className="h-4 w-4 text-orange-500" />
+              News & CRM signals ({signals.length})
+            </CardTitle>
+            <CardDescription>
+              {summary.matchedFeedSignals} of {summary.totalFeedSignals} recent feed items mention a tracked competitor or CRM company.
+            </CardDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setActiveView("feeds")}>
+            Manage feeds
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-[11px] text-muted-foreground">
+            Headline matching is literal name-based matching only. Feed items are not AI-analyzed, fact-checked, or sentiment-scored.
+          </p>
+          {signals.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-6 text-center">
+              <p className="text-sm font-medium">No recent feed items</p>
+              <p className="text-xs text-muted-foreground mt-1">Add a news feed and refresh it to see company mentions here.</p>
+              <Button variant="outline" size="sm" className="mt-3" onClick={() => setActiveView("feeds")}>
+                <Rss className="h-3.5 w-3.5 mr-1.5" />
+                Open News Feeds
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {signals.slice(0, 12).map((signal) => (
+                <article key={signal.id} className="rounded-lg border border-border/60 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      {signal.link ? (
+                        <a href={signal.link} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:text-primary inline-flex items-start gap-1">
+                          <span className="line-clamp-2">{signal.title}</span>
+                          <ExternalLink className="h-3 w-3 mt-0.5 shrink-0" />
+                        </a>
+                      ) : (
+                        <h3 className="text-sm font-semibold line-clamp-2">{signal.title}</h3>
+                      )}
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {signal.sourceName} · {formatDistanceToNow(new Date(signal.publishedAt), { addSuffix: true })}
+                      </p>
+                    </div>
+                    {signal.isStarred && <Badge variant="outline" className="shrink-0">Starred</Badge>}
+                  </div>
+                  {signal.description && <p className="text-xs text-muted-foreground mt-2 line-clamp-3">{signal.description}</p>}
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {signal.matchedEntities.length > 0 ? signal.matchedEntities.map((entity) => (
+                      <Badge key={`${signal.id}-${entity.kind}-${entity.name}`} variant="secondary" className="text-[10px]">
+                        {entity.kind}: {entity.name}
+                      </Badge>
+                    )) : <span className="text-[10px] text-muted-foreground">No tracked company name found</span>}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent manual updates */}
       {recentEvents.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Activity className="h-4 w-4 text-purple-500" />
-              Recent Radar Events
+              Recent Manual Updates
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -514,8 +602,8 @@ export default function MarketIntelligenceView() {
       <Dialog open={addKeywordOpen} onOpenChange={setAddKeywordOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Track Keyword</DialogTitle>
-            <DialogDescription>Monitor a keyword&apos;s search volume and difficulty</DialogDescription>
+            <DialogTitle>Add Keyword Plan</DialogTitle>
+            <DialogDescription>Record manually sourced estimates. Live volume, position, and trend data are not connected.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
@@ -524,16 +612,16 @@ export default function MarketIntelligenceView() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="kw-vol">Monthly search volume</Label>
-                <Input id="kw-vol" type="number" min="0" value={keywordForm.searchVolume} onChange={(e) => setKeywordForm({ ...keywordForm, searchVolume: e.target.value })} />
+                <Label htmlFor="kw-vol">Estimated monthly volume</Label>
+                <Input id="kw-vol" type="number" min="0" placeholder="Optional — enter a source-backed estimate" value={keywordForm.searchVolume} onChange={(e) => setKeywordForm({ ...keywordForm, searchVolume: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="kw-diff">Difficulty (0-100)</Label>
-                <Input id="kw-diff" type="number" min="0" max="100" value={keywordForm.difficulty} onChange={(e) => setKeywordForm({ ...keywordForm, difficulty: e.target.value })} />
+                <Label htmlFor="kw-diff">Estimated difficulty (0-100)</Label>
+                <Input id="kw-diff" type="number" min="0" max="100" placeholder="Optional" value={keywordForm.difficulty} onChange={(e) => setKeywordForm({ ...keywordForm, difficulty: e.target.value })} />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="kw-trend">Trend</Label>
+              <Label htmlFor="kw-trend">Manually assessed trend</Label>
               <Select value={keywordForm.trend} onValueChange={(v) => setKeywordForm({ ...keywordForm, trend: v })}>
                 <SelectTrigger id="kw-trend"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -558,7 +646,7 @@ export default function MarketIntelligenceView() {
               disabled={!keywordForm.keyword.trim() || addKeywordMut.isLoading}
             >
               {addKeywordMut.isLoading && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
-              Track Keyword
+              Save Keyword Plan
             </Button>
           </DialogFooter>
         </DialogContent>

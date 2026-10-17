@@ -52,6 +52,8 @@ export function AppHeader() {
     messages: "Messages",
     partners: "Partners",
     "ai-command": "AI Assistant",
+    "market-intelligence": "Market Intelligence",
+    feeds: "News Feeds",
     "audit-logs": "Audit Logs",
     settings: "Settings",
   };

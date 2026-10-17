@@ -1,6 +1,8 @@
-# Final Production Verification Report
+# Historical Production Verification Snapshot — Superseded
 
-> **HONEST STATUS: PRODUCTION NOT VERIFIED**
+> **This is an old report for a different sandbox/repository snapshot, not evidence for the current MarketingOS checkout.** Its old branch, filesystem path, route test results, and tool count are not current. See [REFERENCE-AND-PROJECT-AUDIT.md](REFERENCE-AND-PROJECT-AUDIT.md) for the current audit and remaining verification gates.
+>
+> **HONEST STATUS OF THIS HISTORICAL SNAPSHOT: PRODUCTION NOT VERIFIED**
 >
 > This report was produced from a **local sandbox** at `/home/z/my-project/`. I cannot push to your GitHub repository, cannot SSH to your VPS, and cannot test your HTTPS production domain. The "verified" claims below apply only to the local codebase. To convert these into real production verifications, follow `docs/DEPLOYMENT-RUNBOOK.md` against your actual infrastructure.
 

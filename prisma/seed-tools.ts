@@ -1,5 +1,5 @@
 /**
- * Seed 120 Tool Definitions into the database.
+ * Seed the cataloged tool definitions into the database.
  * Idempotent — uses upsert so it can be run multiple times safely.
  *
  * Usage: npx tsx prisma/seed-tools.ts
@@ -15,6 +15,7 @@ interface CredentialField {
   key: string
   label: string
   isSecret: boolean
+  optional?: boolean
 }
 
 interface ToolSeed {
@@ -1621,13 +1622,14 @@ const TOOLS: ToolSeed[] = [
     authType: 'api_key',
     requiredCredentials: creds([
       { key: 'OPENROUTER_API_KEY', label: 'OpenRouter API Key', isSecret: true },
+      { key: 'OPENROUTER_MODEL', label: 'Model ID (optional, defaults to openrouter/auto)', isSecret: false, optional: true },
     ]),
     connectionType: 'rest_api',
     category: 'ai_provider',
     subcategory: 'ai_routing',
     capabilities: 'AI model routing/multi-provider/chat completions/embeddings',
     automationLevel: 'AUTO',
-    description: 'Route AI requests to multiple LLM providers through OpenRouter.',
+    description: 'Optional BYO-key model provider. To use it for MarketingOS text generation, explicitly set AI_PROVIDER=openrouter on the server; Ollama remains the default. Save a model ID to choose a route; otherwise uses OpenRouter auto routing.',
     icon: 'Cpu',
     color: '#000000',
     sortOrder: 83,
@@ -2269,7 +2271,7 @@ const TOOLS: ToolSeed[] = [
     sortOrder: 114,
   },
 
-  // ALO INTERNAL (5 tools, 116–120)
+  // ALO INTERNAL (4 tools, 116–119)
   // ═══════════════════════════════════════════════════════════════════════════
   {
     toolNumber: 116,
@@ -2334,6 +2336,24 @@ const TOOLS: ToolSeed[] = [
     icon: 'CheckCircle',
     color: '#F97316',
     sortOrder: 119,
+  },
+  {
+    toolNumber: 120,
+    name: 'Mureka Instrumental Music',
+    url: 'https://platform.mureka.ai/docs',
+    authType: 'api_key',
+    requiredCredentials: creds([
+      { key: 'MUREKA_API_KEY', label: 'Mureka API Key', isSecret: true },
+    ]),
+    connectionType: 'rest_api',
+    category: 'audio',
+    subcategory: 'music_generation',
+    capabilities: 'Instrumental soundtrack generation/asynchronous task status',
+    automationLevel: 'LIMITED',
+    description: 'MarketingOS can generate one Mureka instrumental output and poll its task. API key required; requests may incur provider charges.',
+    icon: 'Music2',
+    color: '#7C3AED',
+    sortOrder: 120,
   },
 ]
 

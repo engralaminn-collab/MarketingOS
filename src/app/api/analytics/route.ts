@@ -23,7 +23,6 @@ export async function GET(req: NextRequest) {
       deals,
       contactsCount,
       tickets,
-      socialAccounts,
     ] = await Promise.all([
       db.content.findMany({ where: { companyId }, orderBy: { createdAt: 'desc' } }),
       db.campaign.findMany({ where: { companyId } }),
@@ -31,7 +30,6 @@ export async function GET(req: NextRequest) {
       db.deal.findMany({ where: { companyId } }),
       db.contact.count({ where: { companyId } }),
       db.ticket.findMany({ where: { companyId, createdAt: { gte: since } } }),
-      db.socialAccount.findMany({ where: { companyId } }),
     ]);
 
     // ─── Overview ──────────────────────────────────────────────────────────
@@ -108,11 +106,6 @@ export async function GET(req: NextRequest) {
         platformMap[p].engagement += (e.likes || 0) + (e.comments || 0) + (e.shares || 0);
       } catch { /* skip */ }
       platformMap[p].reach += 1;
-    }
-    for (const acct of socialAccounts) {
-      const p = acct.platform;
-      if (!platformMap[p]) platformMap[p] = { reach: 0, engagement: 0, conversions: 0 };
-      platformMap[p].reach += 100;
     }
     const platformComparison = Object.entries(platformMap).map(([platform, v]) => ({ platform, ...v }));
 

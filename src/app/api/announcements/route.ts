@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken, ROLE_LABELS } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { emitEvent } from '@/lib/events';
 
 // GET /api/announcements — list all active announcements for the company
@@ -59,10 +59,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // Only admins+ can post
-    const adminRoles = ['super_admin', 'company_owner', 'admin', 'manager'];
-    if (!adminRoles.includes(payload.role)) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    if (!hasPermission(payload.role, 'admin')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await req.json();

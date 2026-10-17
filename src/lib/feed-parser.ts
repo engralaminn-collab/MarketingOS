@@ -5,6 +5,7 @@
  * Inspired by DIYgod/RSSHub but simpler: just fetch + parse XML, no route generation.
  */
 import { db } from './db';
+import { safeFetchText } from './ssrf';
 
 export interface ParsedFeed {
   title: string;
@@ -27,23 +28,19 @@ export interface ParsedFeedItem {
  */
 export async function fetchAndParseFeed(feedUrl: string): Promise<ParsedFeed | null> {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(feedUrl, {
-      signal: controller.signal,
+    const res = await safeFetchText(feedUrl, {
+      timeoutMs: 10_000,
+      maxResponseBytes: 1_500_000,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; MarketingOS/1.0; rss-reader)',
+        'User-Agent': 'MarketingOS-RSSReader/1.0',
         Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
       },
-      redirect: 'follow',
     });
-    clearTimeout(timeout);
     if (!res.ok) return null;
-
     const xml = await res.text();
     return parseFeedXml(xml, feedUrl);
-  } catch (err) {
-    console.error('[fetchAndParseFeed] failed:', feedUrl, err);
+  } catch (error) {
+    console.warn('[fetchAndParseFeed] request failed:', error instanceof Error ? error.message : 'unknown error');
     return null;
   }
 }

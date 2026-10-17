@@ -41,7 +41,7 @@ export function withAuth(
     if (!user || !user.userId) {
       if (options?.allowPublic) {
         return handler(request, {
-          user: { userId: "", email: "", isSuperAdmin: false, companyId: "", role: "" },
+          user: { userId: "", email: "", isSuperAdmin: false, companyId: "", institutionId: "", sessionId: null, role: "" },
           params,
         });
       }
