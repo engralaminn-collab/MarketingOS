@@ -424,6 +424,9 @@ export function IntegrationsView() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [connectTool, setConnectTool] = useState<Tool | null>(null);
   const [showCategories, setShowCategories] = useState(true);
+  const [aiStatus, setAiStatus] = useState<any>(null);
+  const [aiStatusLoading, setAiStatusLoading] = useState(true);
+  const [aiStatusError, setAiStatusError] = useState<string | null>(null);
 
   // Read the token out of the store once, so the callback below closes over a
   // plain string instead of the whole `user` object. That makes the inferred
@@ -473,6 +476,31 @@ export function IntegrationsView() {
     return () => controller.abort();
   }, [fetchTools]);
 
+  const fetchAiStatus = useCallback(async () => {
+    if (!authToken) {
+      setAiStatusLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch('/api/ai/provider-status', {
+        headers: { Authorization: `Bearer ${authToken}` },
+        cache: 'no-store',
+      });
+      const json = await res.json();
+      if (json.data) setAiStatus(json.data);
+      if (!json.data) throw new Error(json.error || 'Could not read AI service status');
+      setAiStatusError(null);
+    } catch (error) {
+      setAiStatusError(error instanceof Error ? error.message : 'Could not read AI service status');
+    } finally {
+      setAiStatusLoading(false);
+    }
+  }, [authToken]);
+
+  React.useEffect(() => {
+    void fetchAiStatus();
+  }, [fetchAiStatus]);
+
   const filteredTools = useMemo(() => {
     if (!data?.tools) return [];
     let tools = data.tools;
@@ -521,6 +549,59 @@ export function IntegrationsView() {
 
   return (
     <div className="space-y-4">
+      {/* Self-hosted AI health is distinct from the integration catalog count. */}
+      <Card className="bg-card/50 border-border/50">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
+          <div>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Bot className="w-4 h-4 text-primary" />
+              Self-hosted AI services
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Runtime checks, not just catalog entries. No automatic paid AI fallback.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={aiStatusLoading}
+            onClick={() => {
+              setAiStatusLoading(true);
+              void fetchAiStatus();
+            }}
+          >
+            <TestTube2 className="w-3.5 h-3.5 mr-1.5" />
+            {aiStatusLoading ? 'Checking…' : 'Check again'}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {aiStatusError && <p className="text-sm text-destructive mb-3">{aiStatusError}</p>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            {[
+              { key: 'text', label: 'Text / Agents', provider: aiStatus?.text?.provider, model: aiStatus?.text?.model, reachable: aiStatus?.text?.reachable, configured: true },
+              { key: 'image', label: 'Image generation', provider: aiStatus?.image?.provider, model: null, reachable: aiStatus?.image?.reachable, configured: aiStatus?.image?.configured },
+              { key: 'video', label: 'Video generation', provider: aiStatus?.video?.provider, model: null, reachable: null, configured: aiStatus?.video?.configured },
+              { key: 'speech', label: 'Speech / TTS', provider: aiStatus?.speech?.provider, model: null, reachable: null, configured: aiStatus?.speech?.configured },
+            ].map((service) => {
+              const healthy = service.reachable === true;
+              const offline = service.reachable === false;
+              const statusLabel = service.reachable === true ? 'Online' : service.reachable === false ? 'Offline' : service.configured ? 'Configured · not probed' : 'Not configured';
+              return (
+                <div key={service.key} className="rounded-lg border border-border/60 p-3 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <p className="text-sm font-medium">{service.label}</p>
+                    {healthy ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> : offline ? <XCircle className="w-4 h-4 text-destructive shrink-0" /> : <Bot className="w-4 h-4 text-muted-foreground shrink-0" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground break-words">{service.provider || (aiStatusLoading ? 'Checking…' : 'Unavailable')}</p>
+                  {service.model && <p className="text-xs mt-1 break-words">Model: {service.model}</p>}
+                  <Badge variant={healthy ? 'default' : offline ? 'destructive' : 'secondary'} className="mt-2">{statusLabel}</Badge>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="Total Integrations" value={data?.total ?? '-'} />
