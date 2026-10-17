@@ -91,10 +91,11 @@ export async function verifySocialCredential(
   }
 
   const accountId = data?.id || data?.open_id || data?.user_id || null;
+  if (!accountId) throw new Error(`${platform} did not return an account identity for this credential`);
   const accountName = data?.name
     || data?.username
     || data?.display_name
-    || [data?.localizedFirstName, data?.localizedLastName].filter(Boolean).join(' ')
+    || [data?.localizedFirstName || data?.firstName?.localized?.en_US, data?.localizedLastName || data?.lastName?.localized?.en_US].filter(Boolean).join(' ')
     || data?.snippet?.title
     || [data?.first_name, data?.last_name].filter(Boolean).join(' ')
     || null;
