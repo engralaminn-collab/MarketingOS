@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
         },
         image: {
           provider: 'self-hosted-stable-diffusion',
-          configured: Boolean(process.env.IMAGE_GENERATION_URL || config.provider),
+          configured: Boolean(process.env.IMAGE_GENERATION_URL),
           ...image,
         },
         video: {
