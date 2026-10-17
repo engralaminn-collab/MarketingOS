@@ -1,11 +1,11 @@
 /**
- * AI Agent Runtime — actually executes agent tasks via the z-ai-web-dev-sdk LLM.
+ * AI Agent Runtime — executes agent tasks through the configured self-hosted AI gateway.
  *
  * Each agent has a "type" (lead_scorer, content_writer, seo_agent, etc.) that
  * determines its system prompt + the output format it produces. The runtime:
  *   1. Loads the agent's config from DB
  *   2. Picks the right system prompt + task template
- *   3. Calls zai.chat.completions.create() with the task input
+ *   3. Calls the configured local model endpoint with the task input
  *   4. Parses the LLM response
  *   5. Writes a TaskExecution row (audit trail) and emits an event
  *
