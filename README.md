@@ -11,6 +11,7 @@ bun install
 cp .env.example .env
 # Set JWT_SECRET to a fresh secret and set ADMIN_SEED_PASSWORD for seeding.
 openssl rand -hex 32
+mkdir -p db
 bunx prisma generate
 bunx prisma db push
 bunx tsx prisma/seed.ts
