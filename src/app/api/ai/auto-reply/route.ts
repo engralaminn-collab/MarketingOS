@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
-import ZAI from 'z-ai-web-dev-sdk';
+import { generateChatCompletion } from '@/lib/ai-provider';
 
 // POST /api/ai/auto-reply — generate AI auto-reply for a message
 // Body: { message: string, leadId?: string, contactId?: string, tone?: string }
@@ -40,23 +40,19 @@ export async function POST(req: NextRequest) {
     // Generate AI reply
     let reply = '';
     try {
-      const zai = await ZAI.create();
-      const completion = await zai.chat.completions.create({
-        messages: [
-          {
-            role: 'system',
-            content: `You are an AI auto-reply assistant for ${company?.name || 'ALO Labs MarketingOS'}. 
+      const completion = await generateChatCompletion([
+        {
+          role: 'system',
+          content: `You are an AI auto-reply assistant for ${company?.name || 'ALO Labs MarketingOS'}.
 Industry: ${company?.industry || 'Marketing'}.
-Respond to the incoming message with a ${tone} tone. Keep it concise (under 160 characters for SMS). 
-Be helpful, friendly, and action-oriented. If the message requires human attention, say "I'll have our team reach out to you shortly."
+Respond with a ${tone} tone. Keep it concise (under 160 characters for SMS).
+Be helpful and action-oriented. If the message requires human attention, say "I'll have our team reach out to you shortly."
 
 ${leadContext}`,
-          },
-          { role: 'user', content: incomingMessage },
-        ],
-        thinking: { type: 'disabled' },
-      });
-      reply = completion.choices[0]?.message?.content || '';
+        },
+        { role: 'user', content: incomingMessage },
+      ]);
+      reply = completion.content;
     } catch {
       // Fallback replies based on message content
       const lower = incomingMessage.toLowerCase();
