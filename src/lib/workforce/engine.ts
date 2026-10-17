@@ -1322,7 +1322,6 @@ export async function routeTask(
 
     // 4. Select model via ModelRouter
     const tier = resolveTier(complexity);
-    const modelConfig = await selectModel(tier);
     const modelName = getAiProviderConfig().model || 'local-model';
 
     // 5. Load employee context in parallel
