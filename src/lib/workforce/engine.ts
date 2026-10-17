@@ -5,7 +5,7 @@
 
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
-import { generateChatCompletion } from '@/lib/ai-provider';
+import { generateChatCompletion, getAiProviderConfig } from '@/lib/ai-provider';
 
 // ============================================================================
 // TYPES
@@ -1323,7 +1323,7 @@ export async function routeTask(
     // 4. Select model via ModelRouter
     const tier = resolveTier(complexity);
     const modelConfig = await selectModel(tier);
-    const modelName = employee.preferredModel || modelConfig?.name || 'default';
+    const modelName = getAiProviderConfig().model || 'local-model';
 
     // 5. Load employee context in parallel
     const [sops, knowledge, memories] = await Promise.all([
@@ -1609,10 +1609,8 @@ export async function executeWithEmployee(
     messages.push({ role: 'user', content: message });
 
     // 7. Select model
-    const tier = employee.modelTier || 'balanced';
-    // Database model preferences remain useful for routing metadata, but the
-    // actual inference model is the configured local model, never a cloud model.
-    const modelName = process.env.OLLAMA_CHAT_MODEL || 'qwen2.5:7b';
+    // The actual inference model is the configured local/private model.
+    const modelName = getAiProviderConfig().model || 'local-model';
 
     // 8. Execute via the self-hosted AI gateway
     const completion = await generateChatCompletion(messages);
