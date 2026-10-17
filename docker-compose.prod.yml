@@ -74,6 +74,11 @@ services:
       # Written by scripts/db-backup.sh during deployment.
       - ./backups:/app/backups
 
+    # Linux Docker does not provide host.docker.internal by default.
+    # This lets the app reach Ollama / image services installed on the host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
     ports:
       # Bound to loopback only; the reverse proxy terminates TLS for
       # marketing.alolabs.net and forwards to this port.
