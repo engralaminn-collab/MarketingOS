@@ -31,7 +31,11 @@ function getTimeoutMs(): number {
 }
 
 function providerName(): string {
-  return (process.env.AI_PROVIDER || 'ollama').trim().toLowerCase();
+  const provider = (process.env.AI_PROVIDER || 'ollama').trim().toLowerCase();
+  if (provider !== 'ollama' && provider !== 'openai-compatible') {
+    throw new Error(`Unsupported AI_PROVIDER "${provider}". Supported providers: ollama, openai-compatible.`);
+  }
+  return provider;
 }
 
 function baseUrl(): string {
