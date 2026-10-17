@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import ZAI from 'z-ai-web-dev-sdk';
+import { generateChatCompletion } from '@/lib/ai-provider';
 
 // POST /api/ai/grammar-check — check grammar + spelling via LLM
 // Inspired by languagetool/languagetool pattern
@@ -18,15 +18,12 @@ export async function POST(req: NextRequest) {
 
     let result;
     try {
-      const zai = await ZAI.create();
-      const completion = await zai.chat.completions.create({
-        messages: [
-          { role: 'system', content: 'You are a grammar and spell checker. Check the text for errors. Return JSON: {"errors":[{"type":"grammar|spelling|punctuation|style","original":"...","suggestion":"...","message":"..."}],"correctedText":"..."}' },
-          { role: 'user', content: text },
-        ],
-        thinking: { type: 'disabled' },
-      });
-      result = JSON.parse(completion.choices[0]?.message?.content || '{}');
+      const completion = await generateChatCompletion([
+        { role: 'system', content: 'You are a grammar and spell checker. Check the text for errors. Return JSON: {"errors":[{"type":"grammar|spelling|punctuation|style","original":"...","suggestion":"...","message":"..."}],"correctedText":"..."}' },
+        { role: 'user', content: text },
+      ], { temperature: 0 });
+      const jsonText = completion.content.replace(/^\`\`\`(?:json)?\s*/i, '').replace(/\s*\`\`\`$/, '');
+      result = JSON.parse(jsonText);
     } catch {
       // Fallback: basic rule-based check
       result = grammarCheckFallback(text);
