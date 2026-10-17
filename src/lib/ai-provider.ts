@@ -189,13 +189,13 @@ export async function generateLocalImage(prompt: string, size = '1024x1024'): Pr
  * local adapter that implements POST /generate and GET /status/:taskId for
  * video, and POST /api/tts for speech. Missing services fail closed.
  */
-export async function generateLocalVideo(prompt: string): Promise<{ videoUrl: string; taskId: string; status: string }> {
+export async function generateLocalVideo(prompt: string, options: { duration?: number; referenceImageUrl?: string } = {}): Promise<{ videoUrl: string; taskId: string; status: string }> {
   const baseUrl = process.env.VIDEO_GENERATION_URL?.replace(/\\/+$/, '');
   if (!baseUrl) throw new Error('VIDEO_GENERATION_URL is not configured');
   const response = await fetch(`${baseUrl}/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, ...options }),
     signal: AbortSignal.timeout(Number(process.env.VIDEO_GENERATION_TIMEOUT_MS) || 120_000),
     cache: 'no-store',
   });
