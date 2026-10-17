@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
 
     // Generate AI reply
     let reply = '';
+    let generationMode: 'local-model' | 'rule-based-fallback' = 'rule-based-fallback';
     try {
       const completion = await generateChatCompletion([
         {
@@ -53,6 +54,7 @@ ${leadContext}`,
         { role: 'user', content: incomingMessage },
       ]);
       reply = completion.content;
+      generationMode = 'local-model';
     } catch {
       // Fallback replies based on message content
       const lower = incomingMessage.toLowerCase();
@@ -81,6 +83,8 @@ ${leadContext}`,
         tone,
         leadContext: leadContext || null,
         autoSend: body.autoSend === true,
+        generationMode,
+        degraded: generationMode !== 'local-model',
       },
     });
   } catch (err) {
