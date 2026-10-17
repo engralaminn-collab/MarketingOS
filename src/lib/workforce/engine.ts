@@ -5,7 +5,7 @@
 
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
-import ZAI from 'z-ai-web-dev-sdk';
+import { generateChatCompletion } from '@/lib/ai-provider';
 
 // ============================================================================
 // TYPES
@@ -1269,28 +1269,19 @@ export async function classifyComplexity(
   description: string
 ): Promise<string> {
   try {
-    const zai = await ZAI.create();
-    const response = await zai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a task complexity classifier. Respond with ONLY one word: simple, standard, complex, or enterprise.\n\n' +
-            '- simple: Quick factual lookups, single-step tasks, basic formatting\n' +
-            '- standard: Multi-step tasks, moderate analysis, content creation, standard reports\n' +
-            '- complex: Multi-agent coordination, deep analysis, strategy planning, multi-department tasks\n' +
-            '- enterprise: Organizational strategy, cross-functional orchestration, executive decisions, large-scale campaigns',
-        },
-        {
-          role: 'user',
-          content: `Task: ${title}\nDescription: ${description}`,
-        },
-      ],
-      thinking: { type: 'disabled' },
-    });
-
-    const result =
-      response.choices[0]?.message?.content?.trim().toLowerCase() || 'standard';
+    const response = await generateChatCompletion([
+      {
+        role: 'system',
+        content:
+          'You are a task complexity classifier. Respond with ONLY one word: simple, standard, complex, or enterprise.\n\n' +
+          '- simple: Quick factual lookups, single-step tasks, basic formatting\n' +
+          '- standard: Multi-step tasks, moderate analysis, content creation, standard reports\n' +
+          '- complex: Multi-agent coordination, deep analysis, strategy planning, multi-department tasks\n' +
+          '- enterprise: Organizational strategy, cross-functional orchestration, executive decisions, large-scale campaigns',
+      },
+      { role: 'user', content: `Task: ${title}\nDescription: ${description}` },
+    ], { temperature: 0 });
+    const result = response.content.trim().toLowerCase();
     const validComplexities = ['simple', 'standard', 'complex', 'enterprise'];
     return validComplexities.includes(result) ? result : 'standard';
   } catch (error) {
@@ -1421,18 +1412,11 @@ export async function routeTask(
     // 8. Execute via LLM
     const userMessage = `Please complete the following task:\n\n**Task:** ${task.title}\n**Description:** ${task.description}\n**Type:** ${task.type}\n**Complexity:** ${complexity}\n\nProvide a thorough, professional response based on your expertise and the provided context.`;
 
-    const zai = await ZAI.create();
-    const completion = await zai.chat.completions.create({
-      messages: [
-        { role: 'system', content: fullSystemPrompt },
-        { role: 'user', content: userMessage },
-      ],
-      thinking: { type: 'disabled' },
-    });
-
-    const result =
-      completion.choices[0]?.message?.content ||
-      'Task execution completed but no output was generated.';
+    const completion = await generateChatCompletion([
+      { role: 'system', content: fullSystemPrompt },
+      { role: 'user', content: userMessage },
+    ]);
+    const result = completion.content;
     const latencyMs = Date.now() - startTime;
 
     // 9. Update TaskExecution with results
@@ -1626,19 +1610,13 @@ export async function executeWithEmployee(
 
     // 7. Select model
     const tier = employee.modelTier || 'balanced';
-    const modelConfig = await selectModel(tier);
-    const modelName = employee.preferredModel || modelConfig?.name || 'default';
+    // Database model preferences remain useful for routing metadata, but the
+    // actual inference model is the configured local model, never a cloud model.
+    const modelName = process.env.OLLAMA_CHAT_MODEL || 'qwen2.5:7b';
 
-    // 8. Execute via LLM
-    const zai = await ZAI.create();
-    const completion = await zai.chat.completions.create({
-      messages,
-      thinking: { type: 'disabled' },
-    });
-
-    const aiResponse =
-      completion.choices[0]?.message?.content ||
-      'I was unable to generate a response. Please try again.';
+    // 8. Execute via the self-hosted AI gateway
+    const completion = await generateChatCompletion(messages);
+    const aiResponse = completion.content;
 
     // 9. Update conversation with new messages
     const updatedMessages: ConversationMessage[] = [
