@@ -13,7 +13,7 @@
  */
 import { db } from './db';
 import { emitEvent } from './events';
-import ZAI from 'z-ai-web-dev-sdk';
+import { generateChatCompletion } from './ai-provider';
 
 export interface AgentRunInput {
   /** The lead, deal, contact, campaign, etc. that the agent should work on */
@@ -191,7 +191,7 @@ export async function runAgent(
   let promptTokens: number | undefined;
   let completionTokens: number | undefined;
   let errorMsg: string | undefined;
-  let modelUsed = 'z-ai-sdk';
+  let modelUsed = process.env.OLLAMA_CHAT_MODEL || 'qwen2.5:7b';
   let usedFallback = false;
 
   // Retry config: 3 attempts with exponential backoff (2s, 4s, 8s)
@@ -200,19 +200,14 @@ export async function runAgent(
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const zai = await ZAI.create();
-      const completion = await zai.chat.completions.create({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ],
-        thinking: { type: 'disabled' },
-      });
-      output = completion.choices[0]?.message?.content || '(no output)';
-      if (completion.usage) {
-        promptTokens = completion.usage.prompt_tokens;
-        completionTokens = completion.usage.completion_tokens;
-      }
+      const completion = await generateChatCompletion([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ]);
+      output = completion.content;
+      modelUsed = completion.model;
+      promptTokens = completion.promptTokens;
+      completionTokens = completion.completionTokens;
       break; // success — exit retry loop
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
