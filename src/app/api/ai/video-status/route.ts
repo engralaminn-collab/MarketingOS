@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import ZAI from 'z-ai-web-dev-sdk';
+import { getLocalVideoStatus } from '@/lib/ai-provider';
 
 // GET /api/ai/video-status?taskId=xxx — check video generation status
 export async function GET(req: NextRequest) {
@@ -15,19 +15,18 @@ export async function GET(req: NextRequest) {
     if (!taskId) return NextResponse.json({ error: 'taskId required' }, { status: 400 });
 
     try {
-      const zai = await ZAI.create();
-      const result = await zai.async.result.query(taskId);
-
-      const videoUrl = result.video_result?.[0]?.url || result.video_url || result.url || result.video || null;
-
+      const result = await getLocalVideoStatus(taskId);
+      const status = result.status.toLowerCase();
+      const isReady = ['success', 'completed', 'complete', 'done'].includes(status) && !!result.videoUrl;
+      const isFailed = ['fail', 'failed', 'error'].includes(status);
       return NextResponse.json({
         data: {
           taskId,
-          status: result.task_status,
-          videoUrl,
-          isReady: result.task_status === 'SUCCESS' && !!videoUrl,
-          isProcessing: result.task_status === 'PROCESSING',
-          isFailed: result.task_status === 'FAIL',
+          status: result.status,
+          videoUrl: result.videoUrl || null,
+          isReady,
+          isProcessing: !isReady && !isFailed,
+          isFailed,
         },
       });
     } catch (err) {
