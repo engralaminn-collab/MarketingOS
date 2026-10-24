@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { LeadEnrichmentPanel } from "@/components/studio/lead-enrichment-panel";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCorners,
   type DragStartEvent, type DragEndEvent, useDraggable, useDroppable,
@@ -1507,6 +1508,8 @@ export function CrmView() {
         <TabsContent value="contacts"><ContactsTab contacts={contacts} isLoading={isLoading} reload={reloadAllData} /></TabsContent>
         <TabsContent value="tickets"><TicketsTab tickets={tickets} isLoading={isLoading} reload={reloadAllData} /></TabsContent>
       </Tabs>
+
+      <LeadEnrichmentPanel leads={leads} onReload={reloadAllData} />
     </div>
   );
 }

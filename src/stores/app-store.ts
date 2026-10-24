@@ -22,6 +22,11 @@ export type ViewId =
   | 'subscriptions'
   | 'settings'
   | 'ai-agents'
+  | 'free-ai-hub'
+  | 'knowledge-wiki'
+  | 'outreach-hub'
+  | 'workflow-studio'
+  | 'ukvi-hub'
   // Academic & HRM. The views and API routes for these already existed but
   // were unreachable because they were never added to this union.
   | 'students'

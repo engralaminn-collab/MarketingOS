@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { encryptCredential, isEncryptedCredential } from '@/lib/credential-vault';
 import { verifySocialCredential } from '@/lib/social-provider';
 
@@ -17,7 +17,30 @@ const PLATFORM_REQUIREMENTS: Record<string, { oauthUrl?: string; scopes: string[
   Telegram: { oauthUrl: 'https://my.telegram.org', scopes: [], needsBusinessVerification: false, setupGuide: ['Create a Telegram bot via @BotFather', 'Copy its token', 'Add the bot to the channel or group with appropriate access'] },
 };
 
-function accountDto(account: { id: string; platform: string; accountName: string; accountHandle: string | null; status: string; lastSyncedAt: Date | null; connectedAt: Date }) {
+const SAFE_ACCOUNT_SELECT = {
+  id: true,
+  platform: true,
+  accountName: true,
+  accountHandle: true,
+  accountId: true,
+  avatarUrl: true,
+  status: true,
+  scopes: true,
+  lastSyncedAt: true,
+  connectedAt: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
+function accountDto(account: {
+  id: string;
+  platform: string;
+  accountName: string;
+  accountHandle: string | null;
+  status: string;
+  lastSyncedAt: Date | null;
+  connectedAt: Date;
+}) {
   return {
     id: account.id,
     platform: account.platform,
@@ -36,14 +59,20 @@ export async function GET(req: NextRequest) {
     const payload = await verifyToken(token);
     if (!payload?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-    if (!payload.companyId) return NextResponse.json({ error: 'No company associated' }, { status: 400 });
-
-    // Read tokens only server-side to detect legacy plaintext/base64 credentials.
-    // Never serialize accessToken or refreshToken into the browser response.
     const records = await db.socialAccount.findMany({
       where: { companyId: payload.companyId },
       orderBy: { connectedAt: 'desc' },
-      select: { id: true, platform: true, accountName: true, accountHandle: true, status: true, lastSyncedAt: true, connectedAt: true, accessToken: true },
+      select: {
+        id: true,
+        platform: true,
+        accountName: true,
+        accountHandle: true,
+        status: true,
+        lastSyncedAt: true,
+        connectedAt: true,
+        accessToken: true,
+        refreshToken: true,
+      },
     });
     const accounts = records.map(({ accessToken, refreshToken, ...account }) => ({
       ...account,
@@ -52,8 +81,8 @@ export async function GET(req: NextRequest) {
       hasRefreshToken: Boolean(refreshToken),
     }));
 
-    const connectedPlatforms = accounts.filter(a => a.status === 'active').map(a => a.platform);
-    const missingPlatforms = PLATFORMS.filter(p => !connectedPlatforms.includes(p));
+    const connectedPlatforms = accounts.filter((a) => a.status === 'active').map((a) => a.platform);
+    const missingPlatforms = PLATFORMS.filter((p) => !connectedPlatforms.includes(p));
 
     return NextResponse.json({
       accounts: accounts.map(accountDto),
@@ -78,52 +107,72 @@ export async function POST(req: NextRequest) {
     if (!payload?.companyId || !payload.userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     if (!hasPermission(payload.role, 'social_media_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const body = await req.json();
-    const platform = typeof body?.platform === 'string' ? body.platform : '';
-    const accessToken = typeof body?.accessToken === 'string' ? body.accessToken.trim() : '';
+    const body: unknown = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'A JSON object is required' }, { status: 400 });
+    }
+    const input = body as Record<string, unknown>;
+    const platform = typeof input.platform === 'string' ? input.platform.trim() : '';
+    const accessToken = typeof input.accessToken === 'string' ? input.accessToken.trim() : '';
+    const accountName = typeof input.accountName === 'string' ? input.accountName.trim() : '';
+    const accountHandle = typeof input.accountHandle === 'string' ? input.accountHandle.trim() : '';
+    const rawScopes = input.scopes;
+
     if (!PLATFORMS.includes(platform) || !accessToken) {
       return NextResponse.json({ error: 'A supported platform and access token are required' }, { status: 400 });
     }
-
-    if (!payload.companyId) return NextResponse.json({ error: 'No company associated' }, { status: 400 });
-    const { platform, accountName, accountHandle, accessToken, scopes } = await req.json();
-    if (!PLATFORMS.includes(platform) || typeof accessToken !== 'string' || !accessToken.trim()) {
-      return NextResponse.json({ error: 'A supported platform and access token are required' }, { status: 400 });
+    if (accessToken.length > 10_000) {
+      return NextResponse.json({ error: 'Access token is too long' }, { status: 400 });
     }
-    if (accessToken.length > 10000) return NextResponse.json({ error: 'Access token is too long' }, { status: 400 });
+    if (rawScopes !== undefined && !Array.isArray(rawScopes)) {
+      return NextResponse.json({ error: 'Scopes must be an array of strings' }, { status: 400 });
+    }
 
     let verification: Awaited<ReturnType<typeof verifySocialCredential>>;
     try {
-      verification = await verifySocialCredential(platform, accessToken.trim());
+      verification = await verifySocialCredential(platform, accessToken);
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : 'Platform rejected the credential' }, { status: 502 });
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Platform rejected the credential' },
+        { status: 502 },
+      );
     }
 
     let encryptedAccessToken: string;
     try {
-      encryptedAccessToken = encryptCredential(accessToken.trim());
+      encryptedAccessToken = encryptCredential(accessToken);
     } catch (error) {
-      console.error('[social-accounts] credential encryption is not configured:', error instanceof Error ? error.message : 'unknown error');
-      return NextResponse.json({ error: 'Secure credential storage is not configured. Set CREDENTIAL_ENCRYPTION_KEY before connecting social accounts.' }, { status: 503 });
+      console.error(
+        '[social-accounts] credential encryption is not configured:',
+        error instanceof Error ? error.message : 'unknown error',
+      );
+      return NextResponse.json(
+        { error: 'Secure credential storage is not configured. Set CREDENTIAL_ENCRYPTION_KEY before connecting social accounts.' },
+        { status: 503 },
+      );
     }
+
+    const sanitizedScopes = Array.isArray(rawScopes)
+      ? rawScopes.filter((s: unknown): s is string => typeof s === 'string' && s.trim().length > 0).map((s) => s.trim().slice(0, 120)).slice(0, 100)
+      : [];
 
     const account = await db.socialAccount.create({
       data: {
         platform,
-        accountName: typeof accountName === 'string' && accountName.trim() && !accountName.startsWith('My ') ? accountName.trim().slice(0, 160) : (verification.accountName || `My ${platform}`).slice(0, 160),
-        accountHandle: typeof accountHandle === 'string' && accountHandle.trim() ? accountHandle.slice(0, 160) : null,
+        accountName:
+          accountName && !accountName.startsWith('My ')
+            ? accountName.slice(0, 160)
+            : (verification.accountName || `My ${platform}`).slice(0, 160),
+        accountHandle: accountHandle ? accountHandle.slice(0, 160) : null,
         accountId: verification.accountId,
         accessToken: encryptedAccessToken,
-        scopes: JSON.stringify(Array.isArray(scopes) ? scopes.filter((s: unknown) => typeof s === 'string').slice(0, 100) : []),
+        scopes: JSON.stringify(sanitizedScopes),
         // Mark active only after a live read-only identity check succeeds.
         status: 'active',
         lastSyncedAt: new Date(),
         companyId: payload.companyId,
       },
-      select: {
-        id: true, platform: true, accountName: true, accountHandle: true, accountId: true, avatarUrl: true,
-        status: true, scopes: true, lastSyncedAt: true, connectedAt: true, createdAt: true, updatedAt: true,
-      },
+      select: SAFE_ACCOUNT_SELECT,
     });
 
     return NextResponse.json({ account }, { status: 201 });
@@ -132,26 +181,134 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const payload = await verifyToken(token);
+    if (!payload?.companyId || !payload.userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!hasPermission(payload.role, 'social_media_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    const body: unknown = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'A JSON object is required' }, { status: 400 });
+    }
+    const input = body as Record<string, unknown>;
+    const accountIdToUpdate = typeof input.id === 'string' ? input.id.trim() : '';
+    if (!accountIdToUpdate) {
+      return NextResponse.json({ error: 'Account ID is required' }, { status: 400 });
+    }
+
+    const existing = await db.socialAccount.findFirst({
+      where: { id: accountIdToUpdate, companyId: payload.companyId },
+      select: { id: true, platform: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (typeof input.accountName === 'string' && input.accountName.trim()) {
+      updateData.accountName = input.accountName.trim().slice(0, 160);
+    }
+    if (input.accountHandle !== undefined) {
+      if (input.accountHandle === null || input.accountHandle === '') {
+        updateData.accountHandle = null;
+      } else if (typeof input.accountHandle === 'string') {
+        updateData.accountHandle = input.accountHandle.trim().slice(0, 160);
+      } else {
+        return NextResponse.json({ error: 'Invalid accountHandle' }, { status: 400 });
+      }
+    }
+    if (input.scopes !== undefined) {
+      if (!Array.isArray(input.scopes)) {
+        return NextResponse.json({ error: 'Scopes must be an array of strings' }, { status: 400 });
+      }
+      updateData.scopes = JSON.stringify(
+        input.scopes.filter((s: unknown): s is string => typeof s === 'string' && s.trim().length > 0).map((s) => s.trim().slice(0, 120)).slice(0, 100),
+      );
+    }
+    if (input.accessToken !== undefined) {
+      const nextToken = typeof input.accessToken === 'string' ? input.accessToken.trim() : '';
+      if (!nextToken || nextToken.length > 10_000) {
+        return NextResponse.json({ error: 'Invalid access token' }, { status: 400 });
+      }
+      let verification: Awaited<ReturnType<typeof verifySocialCredential>>;
+      try {
+        verification = await verifySocialCredential(existing.platform, nextToken);
+      } catch (error) {
+        return NextResponse.json(
+          { error: error instanceof Error ? error.message : 'Platform rejected the credential' },
+          { status: 502 },
+        );
+      }
+      try {
+        updateData.accessToken = encryptCredential(nextToken);
+      } catch {
+        return NextResponse.json(
+          { error: 'Secure credential storage is not configured. Set CREDENTIAL_ENCRYPTION_KEY before updating credentials.' },
+          { status: 503 },
+        );
+      }
+      updateData.accountId = verification.accountId;
+      updateData.status = 'active';
+      updateData.lastSyncedAt = new Date();
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'No valid update fields provided' }, { status: 400 });
+    }
+
+    const updated = await db.$transaction(async (tx) => {
+      const owned = await tx.socialAccount.findFirst({
+        where: { id: existing.id, companyId: payload.companyId },
+        select: { id: true },
+      });
+      if (!owned) return null;
+      return tx.socialAccount.update({
+        where: { id: owned.id },
+        data: updateData,
+        select: SAFE_ACCOUNT_SELECT,
+      });
+    });
+
+    if (!updated) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ account: updated });
+  } catch (error) {
+    console.error('[PATCH /api/social-accounts]', error);
+    return NextResponse.json({ error: 'Unable to update social account' }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const payload = await verifyToken(token);
-    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!payload?.companyId || !payload.userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!hasPermission(payload.role, 'social_media_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    if (!payload.companyId) return NextResponse.json({ error: 'No company associated' }, { status: 400 });
-    const body = await req.json();
-    const id = typeof body.id === 'string' ? body.id : '';
-    if (!id) return NextResponse.json({ error: 'Account ID required' }, { status: 400 });
-    const result = await db.socialAccount.deleteMany({ where: { id, companyId: payload.companyId } });
-    if (result.count === 0) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
-
-    const body = await req.json();
-    const id = typeof body?.id === 'string' ? body.id : '';
+    const body: unknown = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'A JSON object is required' }, { status: 400 });
+    }
+    const id = typeof (body as Record<string, unknown>).id === 'string' ? ((body as Record<string, unknown>).id as string).trim() : '';
     if (!id) return NextResponse.json({ error: 'Account ID is required' }, { status: 400 });
-    const account = await db.socialAccount.findFirst({ where: { id, companyId: payload.companyId }, select: { id: true } });
-    if (!account) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
-    await db.socialAccount.delete({ where: { id: account.id } });
+
+    const deleted = await db.$transaction(async (tx) => {
+      const account = await tx.socialAccount.findFirst({
+        where: { id, companyId: payload.companyId },
+        select: { id: true },
+      });
+      if (!account) return false;
+      await tx.socialAccount.delete({ where: { id: account.id } });
+      return true;
+    });
+
+    if (!deleted) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[DELETE /api/social-accounts]', error);

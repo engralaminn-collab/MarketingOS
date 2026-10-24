@@ -1418,6 +1418,7 @@ export async function routeTask(
       { role: 'user', content: userMessage },
     ]);
     const result = completion.content;
+    const actualModel = completion.model;
     const latencyMs = Date.now() - startTime;
 
     // 9. Update TaskExecution with results

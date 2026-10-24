@@ -25,6 +25,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { useAppStore } from "@/stores/app-store";
+import { MarketRadarIcpPanel } from "@/components/studio/radar-icp-panel";
 
 interface Competitor {
   id: string;
@@ -651,6 +652,8 @@ export default function MarketIntelligenceView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <MarketRadarIcpPanel signals={data?.signals} onFeedAdded={refetch} />
     </div>
   );
 }

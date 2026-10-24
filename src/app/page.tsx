@@ -38,6 +38,19 @@ import {
   Sparkles,
   Rss,
   Activity,
+  BookOpen,
+  Phone,
+  GitBranch,
+  GraduationCap,
+  School,
+  CalendarCheck,
+  ClipboardList,
+  Clock,
+  DollarSign,
+  Receipt,
+  Briefcase,
+  PlaneTakeoff,
+  Handshake,
 } from 'lucide-react';
 
 // Lazy load views
@@ -75,6 +88,11 @@ const SalaryView = lazy(() => import('@/components/views/salary-view'));
 const HrmView = lazy(() => import('@/components/views/hrm-view'));
 const LeaveView = lazy(() => import('@/components/views/leave-view'));
 const PartnersView = lazy(() => import('@/components/views/partners-view'));
+const FreeAiHubView = lazy(() => import('@/components/views/free-ai-hub-view'));
+const KnowledgeWikiView = lazy(() => import('@/components/views/knowledge-wiki-view'));
+const OutreachHubView = lazy(() => import('@/components/views/outreach-hub-view'));
+const WorkflowStudioView = lazy(() => import('@/components/views/workflow-studio-view'));
+const UkviHubView = lazy(() => import('@/components/views/ukvi-hub-view'));
 
 const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   dashboard: DashboardView,
@@ -95,6 +113,11 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   announcements: AnnouncementsView,
   'audit-logs': AuditLogsView,
   'ai-agents': AiAgentsView,
+  'free-ai-hub': FreeAiHubView,
+  'knowledge-wiki': KnowledgeWikiView,
+  'outreach-hub': OutreachHubView,
+  'workflow-studio': WorkflowStudioView,
+  'ukvi-hub': UkviHubView,
   integrations: IntegrationsView,
   subscriptions: SettingsView,
   settings: SettingsView,
@@ -125,19 +148,38 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: 'dashboard', label: 'CEO Dashboard', icon: <LayoutDashboard className="w-4 h-4" />, section: 'Main' },
   { id: 'workforce', label: 'AI Workforce', icon: <Network className="w-4 h-4" />, badge: '2,000', section: 'Workforce' },
+  { id: 'workflow-studio', label: 'Workflow Studio', icon: <GitBranch className="w-4 h-4" />, badge: 'n8n', section: 'Workforce' },
   { id: 'integrations', label: 'Integrations', icon: <Plug className="w-4 h-4" />, badge: '116', section: 'Connect' },
   { id: 'social-accounts', label: 'Social Accounts', icon: <Link2 className="w-4 h-4" />, badge: 'OAuth', section: 'Connect' },
+  { id: 'outreach-hub', label: 'SMS, VoIP & Scraper', icon: <Phone className="w-4 h-4" />, badge: 'Live', section: 'Connect' },
+  { id: 'free-ai-hub', label: 'Free AI Agent Hub', icon: <Zap className="w-4 h-4" />, badge: '17 Free', section: 'AI' },
   { id: 'ai-command', label: 'AI Command', icon: <Bot className="w-4 h-4" />, section: 'AI' },
+  { id: 'knowledge-wiki', label: 'Knowledge Wiki & RAG', icon: <BookOpen className="w-4 h-4" />, badge: 'Wiki', section: 'AI' },
   { id: 'media-studio', label: 'Media Studio', icon: <Palette className="w-4 h-4" />, section: 'AI' },
   { id: 'ai-agents', label: 'AI Agents', icon: <Cpu className="w-4 h-4" />, section: 'AI' },
-  { id: 'crm', label: 'CRM', icon: <Users className="w-4 h-4" />, section: 'Marketing' },
-  { id: 'seo', label: 'SEO Engine', icon: <Search className="w-4 h-4" />, section: 'Marketing' },
+  { id: 'marketing-studio', label: 'Marketing Studio', icon: <Sparkles className="w-4 h-4" />, badge: '61 Kits', section: 'Marketing' },
+  { id: 'crm', label: 'CRM & Enrichment', icon: <Users className="w-4 h-4" />, section: 'Marketing' },
+  { id: 'seo', label: 'SEO & Live Crawler', icon: <Search className="w-4 h-4" />, section: 'Marketing' },
   { id: 'market-intelligence', label: 'Market Intelligence', icon: <Activity className="w-4 h-4" />, section: 'Marketing' },
   { id: 'campaigns', label: 'Campaigns', icon: <Megaphone className="w-4 h-4" />, section: 'Marketing' },
-  { id: 'content', label: 'Content', icon: <FileText className="w-4 h-4" />, section: 'Marketing' },
+  { id: 'content', label: 'Content & Queue', icon: <FileText className="w-4 h-4" />, section: 'Marketing' },
   { id: 'feeds', label: 'News Feeds', icon: <Rss className="w-4 h-4" />, section: 'Marketing' },
-  { id: 'marketing-studio', label: 'Marketing Studio', icon: <Sparkles className="w-4 h-4" />, section: 'Marketing' },
-  { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" />, section: 'Reports' },
+  { id: 'ukvi-hub', label: 'Study Abroad & UKVI', icon: <GraduationCap className="w-4 h-4" />, badge: 'CAS', section: 'Academic & UKVI' },
+  { id: 'students', label: 'Students', icon: <GraduationCap className="w-4 h-4" />, section: 'Academic & UKVI' },
+  { id: 'programs', label: 'Programs & Courses', icon: <BookOpen className="w-4 h-4" />, section: 'Academic & UKVI' },
+  { id: 'departments', label: 'Departments', icon: <School className="w-4 h-4" />, section: 'Academic & UKVI' },
+  { id: 'attendance', label: 'Attendance', icon: <CalendarCheck className="w-4 h-4" />, section: 'Academic & UKVI' },
+  { id: 'assignments', label: 'Assignments', icon: <ClipboardList className="w-4 h-4" />, section: 'Academic & UKVI' },
+  { id: 'exams', label: 'Exams & Results', icon: <FileText className="w-4 h-4" />, section: 'Academic & UKVI' },
+  { id: 'schedule', label: 'Class Schedule', icon: <Clock className="w-4 h-4" />, section: 'Academic & UKVI' },
+  { id: 'partners', label: 'University Partners', icon: <Handshake className="w-4 h-4" />, section: 'Academic & UKVI' },
+  { id: 'finance', label: 'Finance & Ledger', icon: <DollarSign className="w-4 h-4" />, section: 'ERP, Finance & HR' },
+  { id: 'fees', label: 'Fee Management', icon: <Receipt className="w-4 h-4" />, section: 'ERP, Finance & HR' },
+  { id: 'salary', label: 'Payroll & Salary', icon: <CreditCard className="w-4 h-4" />, section: 'ERP, Finance & HR' },
+  { id: 'employees', label: 'Employees', icon: <Users className="w-4 h-4" />, section: 'ERP, Finance & HR' },
+  { id: 'hrm', label: 'HR Management', icon: <Briefcase className="w-4 h-4" />, section: 'ERP, Finance & HR' },
+  { id: 'leave', label: 'Leave Requests', icon: <PlaneTakeoff className="w-4 h-4" />, section: 'ERP, Finance & HR' },
+  { id: 'analytics', label: 'Analytics & UTM', icon: <BarChart3 className="w-4 h-4" />, section: 'Reports' },
   { id: 'messages', label: 'Messages', icon: <Bell className="w-4 h-4" />, section: 'Reports' },
   { id: 'announcements', label: 'Announcements', icon: <Megaphone className="w-4 h-4" />, section: 'Reports' },
   { id: 'audit-logs', label: 'Audit Logs', icon: <FileText className="w-4 h-4" />, section: 'Reports' },
@@ -146,7 +188,7 @@ const navItems: NavItem[] = [
   { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" />, section: 'Management' },
 ];
 
-const sections = ['Main', 'Workforce', 'Connect', 'AI', 'Marketing', 'Reports', 'Management'];
+const sections = ['Main', 'Workforce', 'Connect', 'AI', 'Marketing', 'Academic & UKVI', 'ERP, Finance & HR', 'Reports', 'Management'];
 
 function ViewFallback() {
   return (

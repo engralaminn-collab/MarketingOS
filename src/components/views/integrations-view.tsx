@@ -418,7 +418,14 @@ export function IntegrationsView() {
   }, [authToken]);
 
   React.useEffect(() => {
-    void fetchAiStatus();
+    let active = true;
+    void (async () => {
+      await Promise.resolve();
+      if (active) await fetchAiStatus();
+    })();
+    return () => {
+      active = false;
+    };
   }, [fetchAiStatus]);
 
   const filteredTools = useMemo(() => {

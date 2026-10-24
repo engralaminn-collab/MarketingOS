@@ -50,6 +50,7 @@ import {
   Legend,
 } from "recharts";
 import { motion, type Variants } from "framer-motion";
+import { UtmAndFunnelAttributionPanel } from "@/components/studio/utm-attribution-panel";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -823,6 +824,8 @@ function AnalyticsViewInner() {
           )}
         </CardContent>
       </GlassCard>
+
+      <UtmAndFunnelAttributionPanel />
     </motion.div>
   );
 }

@@ -45,12 +45,18 @@ async function checkDatabase(): Promise<Check & { latencyMs?: number }> {
   }
 }
 
-function checkConfig(): Check & { missing: string[] } {
+function checkConfig(): Check & { missing: string[]; notes?: string[] } {
   const missing = REQUIRED_ENV.filter((key) => {
     const value = process.env[key];
     return !value || value.trim() === "";
   });
-  return { ok: missing.length === 0, missing };
+  const notes: string[] = [];
+  if (missing.includes("DATABASE_URL") && (process.env.DB_NAME || process.env.DB_HOST)) {
+    notes.push(
+      "cPanel DB_NAME/DB_HOST detected while DATABASE_URL is unset; MarketingOS uses Prisma SQLite via DATABASE_URL (e.g. file:/abs/path/to/custom.db).",
+    );
+  }
+  return { ok: missing.length === 0, missing, ...(notes.length > 0 ? { notes } : {}) };
 }
 
 export async function GET() {
@@ -80,6 +86,7 @@ export async function GET() {
           ok: config.ok,
           // Names only — never values.
           ...(config.missing.length > 0 ? { missing: config.missing } : {}),
+          ...(config.notes ? { notes: config.notes } : {}),
         },
       },
     },

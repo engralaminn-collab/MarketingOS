@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it } from 'bun:test';
-import { generateChatCompletion, getAiProviderConfig } from '../src/lib/ai-provider';
+import {
+  generateChatCompletion,
+  generateLocalImage,
+  generateLocalSpeech,
+  generateLocalVideo,
+  getAiProviderConfig,
+  normalizeProviderBaseUrl,
+} from '../src/lib/ai-provider';
 
 const originalFetch = globalThis.fetch;
 const originalEnv = {
@@ -78,5 +85,35 @@ describe('self-hosted AI provider', () => {
     await expect(generateChatCompletion([
       { role: 'user', content: 'test' },
     ])).rejects.toThrow('Unsupported AI_PROVIDER');
+  });
+
+  it('normalizes trailing slashes and rejects non-HTTP or credentialed provider URLs', () => {
+    expect(normalizeProviderBaseUrl('http://127.0.0.1:7860///', 'IMAGE_GENERATION_URL')).toBe('http://127.0.0.1:7860');
+    expect(normalizeProviderBaseUrl('https://inference.internal.example/v1/', 'AI_COMPATIBLE_BASE_URL')).toBe('https://inference.internal.example/v1');
+    expect(() => normalizeProviderBaseUrl('ftp://127.0.0.1:21', 'IMAGE_GENERATION_URL')).toThrow('must use http or https');
+    expect(() => normalizeProviderBaseUrl('http://user:secret@127.0.0.1:7860', 'IMAGE_GENERATION_URL')).toThrow('must not embed credentials');
+  });
+
+  it('local media helpers strip trailing slashes and fail closed when unconfigured', async () => {
+    delete process.env.VIDEO_GENERATION_URL;
+    delete process.env.TTS_SERVICE_URL;
+    await expect(generateLocalVideo('test clip')).rejects.toThrow('VIDEO_GENERATION_URL is not configured');
+    await expect(generateLocalSpeech('hello')).rejects.toThrow('TTS_SERVICE_URL is not configured');
+
+    const prevImgUrl = process.env.IMAGE_GENERATION_URL;
+    process.env.IMAGE_GENERATION_URL = 'http://127.0.0.1:7860///';
+    let calledUrl = '';
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      calledUrl = String(input);
+      return new Response(JSON.stringify({ images: ['iVBORw0KGgo='] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }) as typeof fetch;
+    const img = await generateLocalImage('editorial product shot', '1024x1024');
+    expect(calledUrl).toBe('http://127.0.0.1:7860/sdapi/v1/txt2img');
+    expect(img.dataUrl).toBe('data:image/png;base64,iVBORw0KGgo=');
+    if (prevImgUrl === undefined) delete process.env.IMAGE_GENERATION_URL;
+    else process.env.IMAGE_GENERATION_URL = prevImgUrl;
   });
 });

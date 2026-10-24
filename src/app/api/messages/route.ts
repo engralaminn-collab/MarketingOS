@@ -72,8 +72,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message content must contain 1 to 10,000 characters' }, { status: 400 });
     }
 
-    const recipientIds = [...new Set(body.recipientIds.filter((id: unknown): id is string => typeof id === 'string' && id.length <= 64))];
-    if (recipientIds.length !== body.recipientIds.length || recipientIds.includes(senderId)) {
+    const rawRecipientIds: unknown[] = Array.isArray(body.recipientIds) ? body.recipientIds : [];
+    const recipientIds: string[] = Array.from(
+      new Set(rawRecipientIds.filter((id): id is string => typeof id === 'string' && id.length <= 64)),
+    );
+    if (recipientIds.length !== rawRecipientIds.length || recipientIds.includes(senderId)) {
       return NextResponse.json({ error: 'Recipient list is invalid' }, { status: 400 });
     }
 

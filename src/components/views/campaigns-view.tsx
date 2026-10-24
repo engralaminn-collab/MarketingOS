@@ -49,6 +49,7 @@ import {
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { PublishingAndEmailSequencePanel } from "@/components/studio/publishing-email-panel";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -638,6 +639,8 @@ function CampaignsViewInner() {
         onOpenChange={setDialogOpen}
         onSubmit={handleCreate}
       />
+
+      <PublishingAndEmailSequencePanel />
     </motion.div>
   );
 }

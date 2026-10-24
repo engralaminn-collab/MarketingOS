@@ -7,6 +7,8 @@ import {
   LayoutDashboard, Users, Handshake, Megaphone, FileText, BarChart3,
   Settings, UserCog, Bot, Plug, Palette, Network, Search as SearchIcon,
   Link2, Plus, Download, Upload, Bell, Sparkles, Activity, Rss,
+  Zap, BookOpen, Phone, GitBranch, GraduationCap, School, CalendarCheck,
+  ClipboardList, Clock, DollarSign, Receipt, CreditCard, Briefcase, PlaneTakeoff,
 } from "lucide-react";
 import { useAppStore, type ViewId } from "@/stores/app-store";
 import { useRouter } from "next/navigation";
@@ -90,8 +92,28 @@ export function CommandPalette({ onNavigate, onQuickAction }: CommandPaletteProp
       { id: "nav-workforce", label: "AI Workforce", icon: Network, group: "Navigate", action: () => go("workforce") },
       { id: "nav-ai-agents", label: "AI Agents", icon: Bot, group: "Navigate", action: () => go("ai-agents") },
       { id: "nav-ai-command", label: "AI Command", icon: Bot, group: "Navigate", action: () => go("ai-command") },
-      { id: "nav-media-studio", label: "Media Studio", icon: Palette, group: "Navigate", action: () => go("media-studio") },
+      { id: "nav-free-ai-hub", label: "Free AI Agent Hub — 17 free LLM providers, tool loop, MCP & telemetry", icon: Zap, group: "Navigate", action: () => go("free-ai-hub"), keywords: "groq cerebras openrouter gemini ollama pollinations modeldeck radiant agent" },
+      { id: "nav-knowledge-wiki", label: "Knowledge Wiki & RAG — [[WikiLinks]], episodic memory & context compressor", icon: BookOpen, group: "Navigate", action: () => go("knowledge-wiki"), keywords: "wiki rag memory embeddings bm25 llm_wiki hindsight" },
+      { id: "nav-outreach-hub", label: "Omni-Channel Outreach — SMS, VoIP dialer, Inbox & Firecrawl scraper", icon: Phone, group: "Navigate", action: () => go("outreach-hub"), keywords: "sms httpsms twilio voip telnyx scraper firecrawl auto-reply" },
+      { id: "nav-workflow-studio", label: "Workflow Studio — visual automation & n8n JSON export", icon: GitBranch, group: "Navigate", action: () => go("workflow-studio"), keywords: "n8n workflow automation trigger tooljet" },
+      { id: "nav-ukvi-hub", label: "Study Abroad & UKVI Consultancy Hub — University matcher, CAS & IELTS", icon: GraduationCap, group: "Navigate", action: () => go("ukvi-hub"), keywords: "ukvi cas visa ielts university study abroad consultancy" },
+      { id: "nav-media-studio", label: "Media Studio — images, video, VideoCaptioner subtitles & VoiceStudio", icon: Palette, group: "Navigate", action: () => go("media-studio"), keywords: "subtitles srt vtt whisperflux video audio" },
       { id: "nav-social", label: "Social Accounts", icon: Link2, group: "Navigate", action: () => go("social-accounts") },
+      // Academic, UKVI, ERP, Finance & HRM views
+      { id: "nav-students", label: "Students Directory", icon: GraduationCap, group: "Navigate", action: () => go("students"), keywords: "academic student enrollment" },
+      { id: "nav-programs", label: "Programs & Courses", icon: BookOpen, group: "Navigate", action: () => go("programs"), keywords: "academic curriculum batch" },
+      { id: "nav-departments", label: "Departments", icon: School, group: "Navigate", action: () => go("departments"), keywords: "academic faculty" },
+      { id: "nav-attendance", label: "Attendance Tracking", icon: CalendarCheck, group: "Navigate", action: () => go("attendance"), keywords: "student class attendance" },
+      { id: "nav-assignments", label: "Assignments & Submissions", icon: ClipboardList, group: "Navigate", action: () => go("assignments"), keywords: "homework coursework grading" },
+      { id: "nav-exams", label: "Exams & Results", icon: FileText, group: "Navigate", action: () => go("exams"), keywords: "grades marks exam" },
+      { id: "nav-schedule", label: "Class Schedule", icon: Clock, group: "Navigate", action: () => go("schedule"), keywords: "timetable calendar" },
+      { id: "nav-partners", label: "University & Channel Partners", icon: Handshake, group: "Navigate", action: () => go("partners"), keywords: "agency commission university" },
+      { id: "nav-finance", label: "Finance & General Ledger", icon: DollarSign, group: "Navigate", action: () => go("finance"), keywords: "accounting expenses slowbooks erp" },
+      { id: "nav-fees", label: "Fee Management", icon: Receipt, group: "Navigate", action: () => go("fees"), keywords: "tuition invoice payment" },
+      { id: "nav-salary", label: "Payroll & Salary", icon: CreditCard, group: "Navigate", action: () => go("salary"), keywords: "payroll payslip compensation" },
+      { id: "nav-employees", label: "Employees Directory", icon: Users, group: "Navigate", action: () => go("employees"), keywords: "staff hr directory" },
+      { id: "nav-hrm", label: "HR Management", icon: Briefcase, group: "Navigate", action: () => go("hrm"), keywords: "human resources designations" },
+      { id: "nav-leave", label: "Leave Management", icon: PlaneTakeoff, group: "Navigate", action: () => go("leave"), keywords: "vacation pto sick leave" },
       // Quick actions
       { id: "action-new-lead", label: "Add new lead", icon: Plus, group: "Actions", action: () => fireAction("new-lead"), keywords: "create lead crm" },
       { id: "action-export-leads", label: "Export leads as CSV", icon: Download, group: "Actions", action: () => fireAction("export-leads"), keywords: "download csv backup" },

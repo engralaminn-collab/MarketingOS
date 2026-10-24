@@ -230,11 +230,11 @@ export async function verifyToken(token: string): Promise<VerifiedToken | null> 
             isSuperAdmin: true,
             institutionId: true,
             institution: { select: { isActive: true } },
-            companyUsers: companyId ? {
-              where: { companyId },
+            companyUsers: {
+              where: { companyId: companyId || '__none__' },
               select: { role: true, company: { select: { isActive: true } } },
               take: 1,
-            } : false,
+            },
           },
         },
       },

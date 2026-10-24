@@ -193,7 +193,7 @@ export function SocialAccountsView() {
   const handlePlatformSelect = (platform: string) => {
     setSelectedPlatform(platform);
     setAccountName(`My ${platform}`);
-    setTestError(null);
+    setConnectTestError(null);
     setWizardStep(1);
   };
 
@@ -724,7 +724,7 @@ export function SocialAccountsView() {
                           id="access-token"
                           type="password"
                           value={accessToken}
-                          onChange={(e) => { setAccessToken(e.target.value); setConnectSuccess(false); setTestError(null); }}
+                          onChange={(e) => { setAccessToken(e.target.value); setConnectSuccess(false); setConnectTestError(null); }}
                           placeholder="Enter provider-issued access token..."
                           className="font-mono text-sm"
                         />

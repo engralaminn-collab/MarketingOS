@@ -43,7 +43,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-':root {
+:root {
   --radius: 0.75rem;
   --background: #F8FAFC;
   --foreground: #0F172A;
@@ -95,7 +95,7 @@
   --alo-border-strong: #CBD5E1;
 }
 
-'.dark {
+.dark {
   --background: #0F172A;
   --foreground: #F8FAFC;
   --card: #1E293B;
