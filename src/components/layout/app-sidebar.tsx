@@ -24,6 +24,13 @@ import {
   Settings,
   Shield,
   School,
+  Sparkles,
+  Zap,
+  Phone,
+  GitBranch,
+  Search,
+  Activity,
+  BarChart3,
 } from "lucide-react";
 import {
   Sidebar,
@@ -47,6 +54,16 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["*"] },
+  { id: "free-ai-hub", label: "Free AI Agent Hub", icon: Zap, roles: ["*"] },
+  { id: "knowledge-wiki", label: "Knowledge Wiki & RAG", icon: BookOpen, roles: ["*"] },
+  { id: "marketing-studio", label: "Marketing Studio", icon: Sparkles, roles: ["*"] },
+  { id: "crm", label: "CRM & Enrichment", icon: Users, roles: ["*"] },
+  { id: "seo", label: "SEO & Live Crawler", icon: Search, roles: ["*"] },
+  { id: "market-intelligence", label: "Market Intelligence", icon: Activity, roles: ["*"] },
+  { id: "outreach-hub", label: "SMS, VoIP & Scraper", icon: Phone, roles: ["*"] },
+  { id: "workflow-studio", label: "Workflow Studio", icon: GitBranch, roles: ["*"] },
+  { id: "analytics", label: "Analytics & UTM", icon: BarChart3, roles: ["*"] },
+  { id: "ukvi-hub", label: "Study Abroad & UKVI", icon: GraduationCap, roles: ["*"] },
   { id: "students", label: "Students", icon: GraduationCap, roles: ["admin", "teacher"] },
   { id: "employees", label: "Employees", icon: Users, roles: ["admin"] },
   { id: "departments", label: "Departments", icon: School, roles: ["admin"] },
@@ -78,8 +95,9 @@ export function AppSidebar() {
   );
 
   const sections = [
-    { label: "Overview", items: filteredItems.filter((i) => ["dashboard"].includes(i.id)) },
-    { label: "Academic", items: filteredItems.filter((i) => ["students", "employees", "departments", "programs", "attendance", "assignments", "exams", "schedule"].includes(i.id)) },
+    { label: "Overview", items: filteredItems.filter((i) => ["dashboard", "free-ai-hub", "knowledge-wiki"].includes(i.id)) },
+    { label: "Marketing & Outreach", items: filteredItems.filter((i) => ["marketing-studio", "crm", "seo", "market-intelligence", "outreach-hub", "workflow-studio", "analytics"].includes(i.id)) },
+    { label: "Academic & UKVI", items: filteredItems.filter((i) => ["ukvi-hub", "students", "employees", "departments", "programs", "attendance", "assignments", "exams", "schedule"].includes(i.id)) },
     { label: "Finance & HR", items: filteredItems.filter((i) => ["finance", "fees", "salary", "hrm", "leave"].includes(i.id)) },
     { label: "Communication", items: filteredItems.filter((i) => ["announcements", "messages", "partners"].includes(i.id)) },
     { label: "System", items: filteredItems.filter((i) => ["ai-command", "audit-logs", "settings"].includes(i.id)) },

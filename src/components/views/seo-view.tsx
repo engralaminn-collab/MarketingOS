@@ -59,6 +59,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { OpenSeoCrawlerPanel } from "@/components/studio/openseo-crawler-panel";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -932,6 +933,8 @@ export function SeoView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <OpenSeoCrawlerPanel />
     </div>
   );
 }

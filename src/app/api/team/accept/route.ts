@@ -5,7 +5,7 @@ import { createToken, hashPassword, ROLE_LABELS, ROLES, verifyToken } from '@/li
 import { ipFromRequest, rateLimiter } from '@/lib/security';
 
 const INVITE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
-const INVITABLE_ROLES = new Set(ROLES.filter((role) => role !== 'super_admin' && role !== 'company_owner'));
+const INVITABLE_ROLES = new Set<string>(ROLES.filter((role) => role !== 'super_admin' && role !== 'company_owner'));
 
 class InvitationFlowError extends Error {
   constructor(message: string, readonly status: number) {

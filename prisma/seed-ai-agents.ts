@@ -4,9 +4,7 @@
  *
  * Usage:  bunx tsx prisma/seed-ai-agents.ts
  */
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db as prisma } from '../src/lib/db';
 
 const AGENTS = [
   { name: 'SEO Optimizer', type: 'seo_agent', description: 'Analyzes content and suggests SEO improvements — meta tags, headings, keywords.', category: 'Optimization' },

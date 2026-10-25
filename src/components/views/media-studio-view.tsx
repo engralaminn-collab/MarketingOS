@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { useApiMutation, useApiQuery } from "@/hooks/use-api-query";
+import { VideoCaptionerAndVoicePanel } from "@/components/studio/video-captioner-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -1678,6 +1679,10 @@ export function MediaStudioView() {
             <AudioStudio />
           </TabsContent>
         </Tabs>
+
+        <div className="mt-8">
+          <VideoCaptionerAndVoicePanel />
+        </div>
       </motion.div>
     </div>
   );

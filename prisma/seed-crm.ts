@@ -6,9 +6,7 @@
  *
  * Usage:  bunx tsx prisma/seed-crm.ts
  */
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db as prisma } from '../src/lib/db';
 
 // Realistic-looking synthetic data — names/emails/companies are fictional
 const COMPANIES = [

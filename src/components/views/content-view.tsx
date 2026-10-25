@@ -57,6 +57,7 @@ import {
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, getDay, addMonths, subMonths } from "date-fns";
+import { PublishingAndEmailSequencePanel } from "@/components/studio/publishing-email-panel";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -742,6 +743,8 @@ function ContentViewInner() {
         onOpenChange={setDialogOpen}
         onSubmit={handleCreate}
       />
+
+      <PublishingAndEmailSequencePanel onSaved={reloadContent} />
     </motion.div>
   );
 }

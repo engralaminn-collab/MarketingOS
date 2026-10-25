@@ -45,7 +45,60 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // ── Real delivery ────────────────────────────────────────────────────
+    // ── Real delivery (NdoleStudio/httpsms OR Twilio) ────────────────────
+    const httpSmsKey = process.env.HTTPSMS_API_KEY;
+    const httpSmsFrom = process.env.HTTPSMS_FROM_NUMBER;
+    if (httpSmsKey && httpSmsFrom) {
+      try {
+        const res = await fetch('https://api.httpsms.com/v1/messages/send', {
+          method: 'POST',
+          headers: {
+            'x-api-key': httpSmsKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: text, from: httpSmsFrom, to }),
+          signal: AbortSignal.timeout(15000),
+        });
+        const httpSmsBody = (await res.json().catch(() => ({}))) as {
+          data?: { id?: string; status?: string };
+          message?: string;
+        };
+        if (!res.ok) {
+          await db.smsMessage.update({
+            where: { id: sms.id },
+            data: { status: 'failed', error: `httpSMS rejected message (HTTP ${res.status}): ${httpSmsBody.message || 'unknown'}` },
+          });
+          return NextResponse.json({ data: { id: sms.id, to, body: text, status: 'failed' }, error: 'httpSMS rejected message' }, { status: 502 });
+        }
+        await db.smsMessage.update({
+          where: { id: sms.id },
+          data: {
+            from: httpSmsFrom,
+            status: httpSmsBody.data?.status || 'queued',
+            providerMessageId: httpSmsBody.data?.id || null,
+          },
+        });
+        return NextResponse.json(
+          {
+            data: {
+              id: sms.id,
+              to: sms.to,
+              body: sms.body,
+              provider: 'httpsms',
+              status: httpSmsBody.data?.status || 'queued',
+              providerMessageId: httpSmsBody.data?.id || null,
+              createdAt: sms.createdAt.toISOString(),
+            },
+          },
+          { status: 201 }
+        );
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown httpSMS transport error';
+        await db.smsMessage.update({ where: { id: sms.id }, data: { status: 'failed', error: message } });
+        return NextResponse.json({ data: { id: sms.id, to, body: text, status: 'failed' }, error: message }, { status: 502 });
+      }
+    }
+
     // Credentials come from server-side env only. If any are missing we do NOT
     // pretend the message went out.
     const sid = process.env.TWILIO_ACCOUNT_SID;
@@ -57,7 +110,7 @@ export async function POST(req: NextRequest) {
         where: { id: sms.id },
         data: {
           status: 'blocked',
-          error: 'No SMS provider configured (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_FROM_NUMBER are unset).',
+          error: 'No SMS provider configured (set HTTPSMS_API_KEY + HTTPSMS_FROM_NUMBER for free Android gateway or TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_FROM_NUMBER).',
         },
       });
       return NextResponse.json(

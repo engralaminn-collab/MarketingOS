@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const payload = await verifyToken(token);
     if (!payload?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const companyId = payload.companyId;
 
     const contentLength = Number(req.headers.get('content-length') || 0);
     if (contentLength > MAX_CSV_BYTES + 16 * 1024) {
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
               status,
               score,
               notes: notes || null,
-              companyId: payload.companyId,
+              companyId,
             },
           });
           await tx.leadActivity.create({

@@ -1,8 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import { PrismaClient } from '@prisma/client';
+import { db as prisma } from '../src/lib/db';
 import { hashPassword, createToken } from '../src/lib/auth';
-
-const prisma = new PrismaClient();
 
 // ─── Administrator seed identity ─────────────────────────────────────────────
 // The address is an identifier, not a secret, and stays overridable per environment.

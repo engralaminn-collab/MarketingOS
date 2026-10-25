@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db as prisma } from '../src/lib/db';
 
 // ==================== NAME DATA ====================
 const FIRST_NAMES = [
@@ -338,7 +336,7 @@ async function main() {
   console.log('=' .repeat(60));
 
   // 1. Get or create company
-  let company = await prisma.company.findFirst({ where: { slug: 'demo' } });
+  let company = await prisma.company.findFirst({ where: { slug: { in: ['demo-agency', 'demo'] } } });
   if (!company) {
     company = await prisma.company.create({
       data: {

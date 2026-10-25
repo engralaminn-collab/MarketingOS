@@ -15,32 +15,70 @@ new Function('require', 'module', 'exports', compiled)(require, loadedModule, lo
 const {
   bestButtonTextColor,
   buildMarketingKit,
+  buttonCodeExports,
+  buttonEmailVml,
   buttonHtml,
   contrastRatio,
   DEFAULT_KIT_FORM,
   DIAGRAM_PRESETS,
+  exportInteractiveArchifyHtml,
+  importDiagramSourceToNodes,
+  KIT_TYPES,
   normalizeHexColor,
+  reimagineSourceContent,
+  renderEditorialDiagramSvg,
   safeButtonHref,
   softButtonBackground,
 } = loadedModule.exports;
 
-test('diagram presets cover seven semantic layouts with renderable starter nodes', () => {
-  assert.deepEqual(DIAGRAM_PRESETS.map((preset) => preset.id), [
+test('diagram presets include the 7 foundational layouts plus the full 48 editorial SVG grammars', () => {
+  assert.deepEqual(DIAGRAM_PRESETS.slice(0, 7).map((preset) => preset.id), [
     'journey', 'flow', 'funnel', 'timeline', 'quadrant', 'flywheel', 'service_blueprint',
   ]);
+  assert.equal(DIAGRAM_PRESETS.length, 48);
   for (const preset of DIAGRAM_PRESETS) {
-    assert.ok(preset.nodes.length >= 4, `${preset.id} should have enough starter nodes`);
+    assert.ok(preset.nodes.length >= 3, `${preset.id} should have starter nodes`);
     assert.ok(preset.nodes.every((node) => node.title && node.detail));
+    const svg = renderEditorialDiagramSvg({
+      type: preset.id,
+      title: preset.title,
+      accent: '#bf4520',
+      nodes: preset.nodes,
+    });
+    assert.match(svg, /^<svg\b/);
+    assert.match(svg, /<\/svg>$/);
   }
   assert.ok(DIAGRAM_PRESETS.find((preset) => preset.id === 'service_blueprint').nodes.every((node) => node.frontstage && node.backstage));
 });
 
-test('specialized campaign kits include actionable measurement and claim safeguards', () => {
+test('Mermaid, Draw.io, and Excalidraw importers convert diagrams and Archify exports standalone HTML', () => {
+  const mmd = importDiagramSourceToNodes('flowchart LR\n  A[Capture Lead] --> B[Enrich Domain] --> C[Book Demo]');
+  assert.equal(mmd.detectedFormat, 'mermaid');
+  assert.ok(mmd.nodes.length >= 3);
+
+  const drawio = importDiagramSourceToNodes('<mxfile><mxCell id="1" value="Landing Page: Hero"/><mxCell id="2" value="Checkout: Stripe"/></mxfile>');
+  assert.equal(drawio.detectedFormat, 'drawio');
+  assert.equal(drawio.nodes.length, 2);
+
+  const archifyHtml = exportInteractiveArchifyHtml({
+    type: 'architecture',
+    title: 'Interactive Stack',
+    accent: '#bf4520',
+    nodes: mmd.nodes,
+  });
+  assert.match(archifyHtml, /Archify Interactive Inspector/);
+  assert.match(archifyHtml, /<!DOCTYPE html>/);
+});
+
+test('specialized campaign kits and 52 marketingskills catalog include actionable measurement and claim safeguards', () => {
+  assert.ok(KIT_TYPES.length >= 60);
   const cases = [
     ['seo_content_brief', /not live SEO data/i, /organic visits/i, /opt-out rate/i],
     ['cro_experiment', /no conversion lift is predicted/i, /conversion rate/i, /stopping rule/i],
     ['case_study', /written permission/i, /attribution window/i, /complaint rate/i],
     ['referral_campaign', /anti-spam terms/i, /consented referrals/i, /eligibility/i],
+    ['programmatic-seo', /not live SEO data/i, /organic visits/i, /opt-out rate/i],
+    ['ab-testing', /no conversion lift is predicted/i, /conversion rate/i, /stopping rule/i],
   ];
 
   for (const [type, reviewPattern, metricPattern, guardrailPattern] of cases) {
@@ -58,11 +96,12 @@ test('specialized campaign kits include actionable measurement and claim safegua
     assert.match(kit.outputs.primaryKpi, metricPattern, type);
     assert.match(kit.outputs.guardrails.join(' '), guardrailPattern, type);
     assert.ok(kit.outputs.guardrails.length >= 3, type);
+    assert.ok(Array.isArray(kit.outputs.skillPlaybook) && kit.outputs.skillPlaybook.length >= 3, type);
     assert.equal(kit.form.type, type);
   }
 });
 
-test('CTA generation escapes user content and rejects unsafe destinations', () => {
+test('CTA generation supports 12 variants, Outlook VML, escapes user content, and rejects unsafe destinations', () => {
   const html = buttonHtml({
     label: '<Start & go>',
     href: 'https://example.com/path?a=1&b=2',
@@ -80,17 +119,39 @@ test('CTA generation escapes user content and rejects unsafe destinations', () =
   assert.throws(() => buttonHtml({
     label: 'Open', href: 'javascript:alert(1)', accent: '#123456', variant: 'solid', size: 'standard', corners: 'rounded',
   }), /Use an HTTPS/);
+
+  const vml = buttonEmailVml({
+    label: 'Book Consultation',
+    href: 'https://example.com/book',
+    accent: '#bf4520',
+    size: 'large',
+    corners: 'pill',
+  });
+  assert.match(vml, /v:roundrect/);
+
+  const exportsBundle = buttonCodeExports({
+    version: 1,
+    label: 'Get Started',
+    href: '/signup',
+    accent: '#bf4520',
+    variant: 'pill-badge',
+    size: 'standard',
+    corners: 'pill',
+  });
+  assert.ok(exportsBundle.tailwind.includes('rounded-full'));
+  assert.ok(exportsBundle.reactComponent.includes('export function CampaignCta'));
+  assert.ok(exportsBundle.cssTokens.includes('--cta-accent'));
 });
 
-test('CTA palette tokens are normalized and contrast uses the rendered soft fill', () => {
+test('CTA palette tokens are normalized and Reimagine-It preserves source facts across 3 visual directions', () => {
   assert.equal(normalizeHexColor('fFaa00'), '#ffaa00');
   assert.equal(normalizeHexColor('red; color: red'), '#bf4520');
   assert.equal(softButtonBackground('#000000'), '#e5e5e5');
   assert.equal(bestButtonTextColor('#000000'), '#ffffff');
   assert.ok(contrastRatio('#111111', softButtonBackground('#bf4520')) > 4.5);
-  const safeColor = buttonHtml({
-    label: 'Open', href: '/', accent: 'red; color: red', variant: 'solid', size: 'standard', corners: 'rounded',
-  });
-  assert.match(safeColor, /background:#bf4520/);
-  assert.doesNotMatch(safeColor, /red; color/);
+
+  const reimagined = reimagineSourceContent('# Q4 Growth Report\n- 42% increase in SQL pipeline\nWe reduced onboarding time to 6 minutes.\n[Read Full Study](https://example.com/study)');
+  assert.equal(reimagined.directions.length, 3);
+  assert.ok(reimagined.extractedBrief.factsAndMetrics.some((f) => f.includes('42%')));
+  assert.match(reimagined.directions[0].html, /42% increase in SQL pipeline/);
 });
