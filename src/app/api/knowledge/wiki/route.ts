@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       retrieveMemories(actor.companyId, 'all', undefined, 30),
     ]);
 
-    const titleToId = new Map(nodes.map((n) => [n.title.toLowerCase(), n.id]));
+    const titleToId = new Map<string, string>(nodes.map((n) => [n.title.toLowerCase(), n.id]));
     const edges: Array<{ from: string; to: string; label: string }> = [];
 
     const enrichedNodes = nodes.map((n) => {

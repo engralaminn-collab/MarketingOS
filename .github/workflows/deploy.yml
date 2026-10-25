@@ -4,6 +4,8 @@
 # FIXED: use step outputs (id:resolve) consistently — no more broken "echo SHA" issue
 # FIXED: stop masking failures with "|| true" on the migrate step
 # FIXED: properly validate required secrets before SSH attempt
+# FIXED: missing VPS secrets no longer fail every merge to main — the deploy is
+#        skipped with setup instructions until DEPLOY_HOST/DEPLOY_SSH_KEY exist
 
 name: Deploy to VPS
 
@@ -48,15 +50,98 @@ env:
   HEALTH_TIMEOUT_SECONDS: "60"
 
 jobs:
-  deploy:
-    name: Deploy to VPS
+  # ── Is a VPS actually configured for this repository? ─────────────────
+  # The `secrets` context cannot be used in a job-level `if:`, so this small
+  # gate job reads the secrets and exposes a boolean the deploy job can key on.
+  #
+  # Previously the secrets check lived inside the deploy job and `exit 1`-ed,
+  # so every merge to main painted the branch red with "Missing required
+  # GitHub secrets: DEPLOY_HOST DEPLOY_SSH_KEY" even though CI and the image
+  # build were green and nothing was wrong with the code. A repository with no
+  # VPS wired up yet is a configuration state, not a failure — so an automatic
+  # deploy is now SKIPPED (with a prominent warning and setup instructions)
+  # until the secrets exist, after which it deploys exactly as before.
+  #
+  # A *manual* workflow_dispatch with missing secrets is still a hard failure:
+  # a human explicitly asked for a deploy and must be told why it cannot run.
+  preflight:
+    name: Check deployment configuration
     runs-on: ubuntu-24.04
-    timeout-minutes: 18
+    timeout-minutes: 2
 
     # Never deploy off a failed image build.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'
+
+    # Same environment as the deploy job so environment-scoped secrets are
+    # visible here too (repository-level secrets are visible either way).
+    environment:
+      name: production
+
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+
+    steps:
+      - name: Verify required secrets are configured
+        id: check
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+          MISSING=()
+          [ -z "${DEPLOY_HOST}" ] && MISSING+=("DEPLOY_HOST")
+          [ -z "${DEPLOY_SSH_KEY}" ] && MISSING+=("DEPLOY_SSH_KEY")
+          # DOCKERHUB_USERNAME is optional — images are always published to
+          # GHCR, which authenticates with the built-in GITHUB_TOKEN.
+
+          if [ ${#MISSING[@]} -eq 0 ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "✅ All required secrets present — proceeding to deploy."
+            exit 0
+          fi
+
+          echo "configured=false" >> "$GITHUB_OUTPUT"
+          SETTINGS_URL="${SERVER_URL}/${REPO}/settings/secrets/actions"
+
+          {
+            echo "## ⚠️ Deployment skipped — VPS is not configured"
+            echo ""
+            echo "The image for this commit was built and pushed successfully, but it was **not** deployed"
+            echo "because the following GitHub Actions secrets are missing: **${MISSING[*]}**"
+            echo ""
+            echo "### How to enable automatic deploys"
+            echo ""
+            echo "1. Open [Settings → Secrets and variables → Actions](${SETTINGS_URL})"
+            echo "2. Add **DEPLOY_HOST** — the hostname or IP of the VPS"
+            echo "3. Add **DEPLOY_SSH_KEY** — the private key for the deploy user (the full PEM, including the BEGIN/END lines)"
+            echo "4. Optional: **DEPLOY_USER** (default \`deploy\`), **DEPLOY_PORT** (default \`22\`), **DOCKERHUB_USERNAME** / **DOCKERHUB_TOKEN**"
+            echo "5. Re-run this workflow (or merge the next change to \`main\`)"
+            echo ""
+            echo "See \`docs/DEPLOYMENT.md\` § 6 for the full list."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "::error title=Deploy secrets missing::Cannot deploy — missing GitHub secrets: ${MISSING[*]}. Add them at ${SETTINGS_URL}"
+            exit 1
+          fi
+
+          echo "::warning title=Deploy skipped::Missing GitHub secrets: ${MISSING[*]}. Automatic deploy to the VPS is skipped until they are added at ${SETTINGS_URL}"
+          echo "ℹ️  Skipping deploy — nothing on the server was touched."
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    needs: preflight
+
+    # Only when the VPS secrets exist. The image-build guard is enforced by
+    # the preflight job, so a skipped/failed preflight also skips this job.
+    if: needs.preflight.outputs.configured == 'true'
 
     environment:
       name: production
@@ -106,21 +191,8 @@ jobs:
           fi
           echo "✅ CI passed for ${SHA}"
 
-      # ── Fail-fast on missing required secrets ────────────────
-      - name: Verify required secrets are configured
-        run: |
-          set -euo pipefail
-          MISSING=()
-          [ -z "${{ secrets.DEPLOY_HOST }}" ] && MISSING+=("DEPLOY_HOST")
-          [ -z "${{ secrets.DEPLOY_SSH_KEY }}" ] && MISSING+=("DEPLOY_SSH_KEY")
-          # DOCKERHUB_USERNAME is optional — images are always published to
-          # GHCR, which authenticates with the built-in GITHUB_TOKEN.
-          if [ ${#MISSING[@]} -gt 0 ]; then
-            echo "❌ Missing required GitHub secrets: ${MISSING[*]}"
-            echo "Add them at: Settings → Secrets and variables → Actions"
-            exit 1
-          fi
-          echo "✅ All required secrets present"
+      # (Required-secrets validation happens in the `preflight` job above —
+      #  this job only runs when DEPLOY_HOST and DEPLOY_SSH_KEY are present.)
 
       # ── Resolve the exact commit SHA being deployed ──────────
       - name: Resolve commit SHA for image tag
@@ -411,7 +483,7 @@ jobs:
 
       # ── Rollback on failure ──────────────────────────────────
       # Only roll back if we actually got far enough to replace the running
-      # container. Failing at the secrets check or the persistence preflight
+      # container. Failing at the CI gate or the persistence preflight
       # means production was never touched, so there is nothing to undo and a
       # "rollback failed" line would be misleading noise.
       - name: Rollback to previous image

@@ -203,7 +203,17 @@ check reports only an error *class*.
 
 Variables: `DEPLOY_URL`, `DOCKER_IMAGE_NAME`, `HEALTH_PATH`.
 
-`Verify required secrets are configured` fails fast and names anything missing.
+The `Check deployment configuration` job runs first and names anything missing.
+If `DEPLOY_HOST` / `DEPLOY_SSH_KEY` are absent, an **automatic** deploy
+(triggered by a merge to `main`) is *skipped* with a warning and step-by-step
+setup instructions in the run summary — the image is still built and pushed,
+and nothing on the server is touched. A **manual** `workflow_dispatch` with
+missing secrets fails hard, because a person explicitly asked for a deploy.
+
+To enable deploys: *Settings → Secrets and variables → Actions → New repository
+secret* and add `DEPLOY_HOST` and `DEPLOY_SSH_KEY` (full private key including
+the `BEGIN`/`END` lines). The next merge to `main` — or a re-run of the latest
+"Deploy to VPS" run — will deploy.
 
 ### Server environment
 
@@ -221,7 +231,7 @@ Each stage fails distinctly and stops the sequence:
 |---|---|
 | CI gate | Deploy never starts |
 | Image build | `workflow_run` guard blocks the deploy |
-| Missing secrets | Fails before SSH, names what is absent |
+| Missing secrets | Automatic deploy skipped with instructions (manual deploy fails), names what is absent |
 | SSH / host key | Fails at `ssh-keyscan` |
 | **Persistence preflight** | **Stops before backup — nothing touched** |
 | Backup | Stops before the schema change |
