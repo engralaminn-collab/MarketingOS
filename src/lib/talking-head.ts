@@ -48,7 +48,7 @@ export function charToViseme(char: string): VisemeName {
   if ('mbp'.includes(c)) return 'M';
   if ('fv'.includes(c)) return 'FV';
   if ('l'.includes(c)) return 'L';
-  if ('wq'.includes(c)) return 'WQ';
+  if ('wqr'.includes(c)) return 'WQ';
   if (' .,!?;:'.includes(c)) return 'rest';
   return 'E';
 }
