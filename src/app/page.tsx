@@ -51,6 +51,7 @@ import {
   Briefcase,
   PlaneTakeoff,
   Handshake,
+  Boxes,
 } from 'lucide-react';
 
 // Lazy load views
@@ -93,6 +94,7 @@ const KnowledgeWikiView = lazy(() => import('@/components/views/knowledge-wiki-v
 const OutreachHubView = lazy(() => import('@/components/views/outreach-hub-view'));
 const WorkflowStudioView = lazy(() => import('@/components/views/workflow-studio-view'));
 const UkviHubView = lazy(() => import('@/components/views/ukvi-hub-view'));
+const EcosystemView = lazy(() => import('@/components/views/ecosystem-view').then(m => ({ default: m.EcosystemView })));
 
 const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   dashboard: DashboardView,
@@ -118,6 +120,7 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   'outreach-hub': OutreachHubView,
   'workflow-studio': WorkflowStudioView,
   'ukvi-hub': UkviHubView,
+  ecosystem: EcosystemView,
   integrations: IntegrationsView,
   subscriptions: SettingsView,
   settings: SettingsView,
@@ -149,6 +152,7 @@ const navItems: NavItem[] = [
   { id: 'dashboard', label: 'CEO Dashboard', icon: <LayoutDashboard className="w-4 h-4" />, section: 'Main' },
   { id: 'workforce', label: 'AI Workforce', icon: <Network className="w-4 h-4" />, badge: '2,000', section: 'Workforce' },
   { id: 'workflow-studio', label: 'Workflow Studio', icon: <GitBranch className="w-4 h-4" />, badge: 'n8n', section: 'Workforce' },
+  { id: 'ecosystem', label: 'Ecosystem Library', icon: <Boxes className="w-4 h-4" />, badge: '190', section: 'Connect' },
   { id: 'integrations', label: 'Integrations', icon: <Plug className="w-4 h-4" />, badge: '116', section: 'Connect' },
   { id: 'social-accounts', label: 'Social Accounts', icon: <Link2 className="w-4 h-4" />, badge: 'OAuth', section: 'Connect' },
   { id: 'outreach-hub', label: 'SMS, VoIP & Scraper', icon: <Phone className="w-4 h-4" />, badge: 'Live', section: 'Connect' },

@@ -186,3 +186,73 @@ Stage Summary:
   * 3+ notifications per user (was 0)
   * 2 message threads (was 0)
   * 1 registered webhook (fires on lead.created)
+
+---
+Task ID: marketingos-ecosystem-1
+Agent: Main Orchestrator
+Task: Verify every link from the brief and add the Ecosystem reference library as a first-class feature
+
+Work Log:
+- Extracted the full link set from the project brief into scripts/data/reference-links.json
+  (190 unique URLs after de-duplication; includes the 9 RedditVideoMakerBot maintainer
+  profiles and the cometchat organisation link, not just repositories)
+- Wrote scripts/verify-reference-links.mjs:
+  * GitHub repos/profiles checked through the REST API (description, stars, forks,
+    licence, language, archived, last push)
+  * non-GitHub sites probed once; the sandbox egress allowlist blocks them, recorded
+    as `external` instead of pretending they are dead
+  * HTTP 403 entries recorded as access-required, never removed
+  * Result: 166 verified, 2 verified-but-archived, 3 access-required, 19 external
+- Wrote scripts/build-reference-library.mjs:
+  * integrity checks (malformed URL, duplicate URL, unknown status, adopted claim
+    without an existing evidence file) — fails the build instead of inventing rows
+  * generates src/data/reference-library.ts (typed catalogue, 190 entries)
+  * generates docs/REFERENCE-LIBRARY.md (full link inventory, grouped by category)
+- Added the Ecosystem Library view (src/components/views/ecosystem-view.tsx):
+  * Hero with verification date, totals and export buttons (CSV / JSON)
+  * KPI cards: adopted, blueprints, links verified, needs review
+  * Catalogue tab: search, category/status/module filters, sort (stars/recent/name/
+    module), bookmarks persisted in localStorage, paginated grid (36 + load more),
+    detail dialog with metadata, licence position, evidence path and copy actions
+  * Playbooks tab: 5 outcome stacks (growth, conversation, media, intelligence,
+    education) + recently-active upstream list
+  * Coverage tab: per-module adoption bars, adopted evidence table, top blueprints
+  * Verification tab: verification counts, every unverified link with a reason,
+    and the exact commands to re-run the audit
+  * "Copy/download adoption brief" per reference — deterministic Markdown brief with
+    licence position, next steps and guardrails; no model call
+- Added GET /api/ecosystem (auth required): filtered catalogue + stats for CI/docs
+- Wired the view into the store ViewId union, src/app/page.tsx router/sidebar,
+  the command palette (Cmd+K) and components/layout/app-sidebar.tsx
+- Added npm scripts refs:verify and refs:build
+- Updated README.md and docs/CANONICAL-APPLICATION.md with the catalogue pipeline
+- Local verification:
+  * npx tsc --noEmit — clean
+  * npx eslint on new/changed files — clean
+  * npx next build — succeeds (all API routes + client chunks)
+  * Seeded SQLite (scripts/init-sqlite-schema.mjs + all five seeds) and exercised
+    POST /api/auth/login followed by GET /api/ecosystem?status=adopted — 200 with 18
+    adopted entries and their evidence paths
+  * SSR render check of the new view: 162 KB of HTML, all 36 first-page cards render
+
+Notes:
+- `prisma generate` cannot download engines from binaries.prisma.sh in this sandbox.
+  Generating with fake preflight binaries plus PRISMA_CLI_QUERY_ENGINE_TYPE=wasm
+  produces a valid engineType="client" client for the libSQL adapter. Documented here
+  because it is environment-specific, not a repository requirement.
+- Copyleft references (GPL/AGPL/LGPL) stay in the catalogue under licence review.
+  No upstream source, assets, weights or datasets were copied into this repository.
+
+- Added the Study-abroad Intake Roadmap Planner (src/components/studio/study-roadmap-panel.tsx)
+  as a fourth tab in the UKVI hub:
+  * destination (UK/US/CA/DE/AU), study level, intake date, English/offer/funding/document status
+  * deterministic readiness score with banding, weeks-to-intake, indicative annual cost range
+    matched against an optional stated budget (surplus/shortfall)
+  * 12-milestone timeline back-planned from the intake date, each with owner, date and
+    overdue/due-now state plus checkbox tracking
+  * visa-route card and next-actions card with an explicit "not legal/immigration advice" notice
+  * Markdown plan export
+  * Pattern credit to studytra / NextStep-Abroad / ALO Education in the Ecosystem Library;
+    no upstream code or data is bundled
+- Verified both new surfaces render server-side (SSR smoke render), pass tsc + eslint,
+  and `next build` completes

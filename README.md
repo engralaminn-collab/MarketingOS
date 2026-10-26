@@ -50,6 +50,28 @@ bun run build
 
 Production uses the SQLite database configured in `prisma/schema.prisma`; the database file must live in the persistent `./db` volume described in `docker-compose.prod.yml`. Back up both the database and the credential-encryption key. SQLite is suitable for smaller/self-hosted deployments but should be load-tested before multi-user high-write production use.
 
+## Open-source reference library
+
+Every repository, maintainer profile and product site from the project brief is catalogued in
+**Ecosystem Library** (`src/components/views/ecosystem-view.tsx`) and in
+[`docs/REFERENCE-LIBRARY.md`](docs/REFERENCE-LIBRARY.md). The catalogue is generated, not hand-written:
+
+```bash
+node scripts/verify-reference-links.mjs   # re-checks every link via the GitHub API
+node scripts/build-reference-library.mjs  # rebuilds the typed catalogue + inventory doc
+```
+
+- Source list: `scripts/data/reference-links.json` (190 unique URLs, de-duplicated)
+- Verification snapshot: `docs/link-verification.json`
+- Typed catalogue used by the UI: `src/data/reference-library.ts`
+- Read-only JSON API: `GET /api/ecosystem?q=&category=&module=&status=&sort=&limit=`
+
+Statuses describe **this** repository: `adopted` patterns point at the implementing code path,
+`blueprint` items are scheduled, `evaluated` items are reference-only, and copyleft licences are
+flagged for review. No upstream source, model weights, datasets or assets are bundled. Links that
+returned HTTP 403 or sit outside the build sandbox network allowlist stay in the catalogue marked
+`access required` / `external site` — they are not silently dropped.
+
 ## Platform areas
 
 - CRM: leads, contacts, deals, tickets
@@ -58,6 +80,8 @@ Production uses the SQLite database configured in `prisma/schema.prisma`; the da
 - Local image generation and optional self-hosted video/TTS adapters
 - Campaigns, content calendar, analytics, SEO, competitor and keyword tracking
 - Social account records, integration settings, workflow builder and execution
+- Ecosystem library: every brief link verified, classified, mapped to a module and searchable
+- Study-abroad intake roadmap: back-planned milestones, readiness score, cost ranges and an exportable plan (deterministic, no model call)
 - SMS/OTP, webhooks, audit logs, notifications, team management and settings
 
 ## Tech stack

@@ -36,10 +36,18 @@ The codebase contains CRM, campaigns/content, analytics, feeds/market intelligen
 - The seed catalog has **116 unique tool-number entries**, with gaps at 16, 17, 18, and 115. These are catalog definitions, not 116 verified/live integrations. Music is tool #120, leaving identifier gaps rather than a continuous 1–120 list.
 - Social publishing/sync, a unified external inbox, live rank/traffic/backlink SEO data, and production-ready end-to-end video generation are not implemented. The local video adapter is a configurable workflow hook, not a bundled or verified model pipeline. A silent browser-generated WebM text-card template is available for download.
 
+## Reference library
+
+- `scripts/data/reference-links.json` is the reviewed list of every link supplied in the briefs (190 unique URLs after de-duplication).
+- `scripts/verify-reference-links.mjs` re-checks each link through the GitHub REST API for repositories and profiles, and records HTTP 403 or sandbox-blocked sites as such rather than guessing.
+- `scripts/build-reference-library.mjs` validates the result (malformed URLs, duplicates, unknown statuses, adopted claims without an existing evidence file) and regenerates `src/data/reference-library.ts`, `docs/REFERENCE-LIBRARY.md` and the Ecosystem Library screen.
+- "Adopted" means a pattern is implemented natively and the cited code path exists in this repository. It does not mean upstream code was copied. Copyleft references are recorded under licence review.
+
 ## Source of truth
 
 - Setup and local-AI limits: [SELF-HOSTED-AI.md](SELF-HOSTED-AI.md)
 - Deployment and persistence: [DEPLOYMENT.md](DEPLOYMENT.md), `docker-compose.prod.yml`, `.github/workflows/`
 - Reference and project audit: [REFERENCE-AND-PROJECT-AUDIT.md](REFERENCE-AND-PROJECT-AUDIT.md)
+- Full link inventory and adoption status: [REFERENCE-LIBRARY.md](REFERENCE-LIBRARY.md)
 
 The old `docs/DEPLOYMENT-RUNBOOK.md` and `docs/FINAL-PRODUCTION-VERIFICATION-REPORT.md` refer to a different sandbox path/repository snapshot. They are marked as historical and must not be treated as current deployment instructions or evidence.

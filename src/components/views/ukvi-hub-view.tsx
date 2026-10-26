@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Calculator,
+  CalendarClock,
   CheckSquare,
   GraduationCap,
   MessageCircleQuestion,
@@ -16,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { apiFetch } from '@/hooks/use-api';
+import { StudyRoadmapPanel } from '@/components/studio/study-roadmap-panel';
 
 const UNIVERSITY_CATALOG = [
   { name: 'University of Manchester', country: 'UK', city: 'Outside London', minGpa: 3.3, minIelts: 6.5, tuitionGbp: 24500, scholarshipMaxGbp: 5000, intakes: 'Sep' },
@@ -119,7 +121,7 @@ export default function UkviHubView() {
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight">Study-Abroad & UKVI Admissions Consultancy Hub</h1>
-          <Badge variant="secondary">University Matcher · 28-Day CAS Calculator · Pre-CAS Mock</Badge>
+          <Badge variant="secondary">University Matcher · 28-Day CAS Calculator · Pre-CAS Mock · Intake Roadmap</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
           Complete international student counseling suite (ALO Education UK / Studytra / NextStep-Abroad / OpenMAIC) wired directly into your CRM.
@@ -131,6 +133,7 @@ export default function UkviHubView() {
           <TabsTrigger value="matcher" className="gap-1.5"><GraduationCap className="h-4 w-4" /> University & Scholarship Matcher</TabsTrigger>
           <TabsTrigger value="cas" className="gap-1.5"><Calculator className="h-4 w-4" /> UKVI 28-Day CAS Calculator</TabsTrigger>
           <TabsTrigger value="compliance" className="gap-1.5"><CheckSquare className="h-4 w-4" /> Document Checklist & Pre-CAS Interview</TabsTrigger>
+          <TabsTrigger value="roadmap" className="gap-1.5"><CalendarClock className="h-4 w-4" /> Intake Roadmap Planner</TabsTrigger>
         </TabsList>
 
         <TabsContent value="matcher">
@@ -303,6 +306,10 @@ export default function UkviHubView() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="roadmap">
+          <StudyRoadmapPanel />
         </TabsContent>
       </Tabs>
     </div>
