@@ -50,6 +50,33 @@ bun run build
 
 Production uses the SQLite database configured in `prisma/schema.prisma`; the database file must live in the persistent `./db` volume described in `docker-compose.prod.yml`. Back up both the database and the credential-encryption key. SQLite is suitable for smaller/self-hosted deployments but should be load-tested before multi-user high-write production use.
 
+## Agency operating model (100 departments · 2,000 agents · SOPs everywhere)
+
+The platform is one application that serves many clients. A client is configuration, not a deployment.
+
+```bash
+npm run agency:seed     # top up 100 departments, 2,000 agent specs, SOPs, department runtimes
+npm run backup:now      # take + verify + register a database snapshot
+npm run backup:verify   # re-verify the newest snapshot
+```
+
+- **100 departments**, each with its own `DepartmentRuntime`: model name, tier, temperature, system prompt,
+  guardrails, knowledge scope and SOP binding. Isolation is `local` and fallback is `none` by default, so a
+  department fails loudly instead of silently calling a hosted provider.
+- **2,000 agent specs** (`AGT-0001`…`AGT-2000`) across 20 role archetypes, plus **2,464 AI employees** that
+  execute them. Every department is staffed.
+- **120 SOPs**: one delivery procedure per department plus 12 cross-functional playbooks (onboarding, brand
+  voice, publishing, SEO content, media, persona consent, SMS, leads, invoicing, backups, access, reporting).
+- **Per-client configuration** via `POST /api/clients`: channels, credential mode (`client_login` with
+  auto-logout and password rotation, or `managed`), persona limit and a default brand voice — in one call.
+- **Face agents** (`BrandPersona`) built from client-supplied photos, with server-enforced consent, usage
+  scope and a gated render request.
+- **Verified backups**: `VACUUM INTO` snapshots with SHA-256 checksums, per-table manifests and a restore
+  dry-run. `scripts/db-backup.sh` remains the deploy-time safeguard.
+
+Open **Agency Console** in the app, or `GET /api/agency/readiness`, to see every check recomputed from live
+data. Details and limits: [docs/AGENCY-OPERATIONS.md](docs/AGENCY-OPERATIONS.md).
+
 ## Open-source reference library
 
 Every repository, maintainer profile and product site from the project brief is catalogued in
@@ -82,6 +109,7 @@ returned HTTP 403 or sit outside the build sandbox network allowlist stay in the
 - Social account records, integration settings, workflow builder and execution
 - Ecosystem library: every brief link verified, classified, mapped to a module and searchable
 - Study-abroad intake roadmap: back-planned milestones, readiness score, cost ranges and an exportable plan (deterministic, no model call)
+- Agency Console: 100 department runtimes, 2,000 agent specs, SOP library, client provisioning, brand voices, personas and backups with a live readiness audit
 - SMS/OTP, webhooks, audit logs, notifications, team management and settings
 
 ## Tech stack

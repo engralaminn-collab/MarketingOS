@@ -8,7 +8,7 @@ import {
   Settings, UserCog, Bot, Plug, Palette, Network, Search as SearchIcon,
   Link2, Plus, Download, Upload, Bell, Sparkles, Activity, Rss,
   Zap, BookOpen, Phone, GitBranch, GraduationCap, School, CalendarCheck,
-  ClipboardList, Clock, DollarSign, Receipt, CreditCard, Briefcase, PlaneTakeoff, Boxes,
+  ClipboardList, Clock, DollarSign, Receipt, CreditCard, Briefcase, PlaneTakeoff, Boxes, Building2,
 } from "lucide-react";
 import { useAppStore, type ViewId } from "@/stores/app-store";
 import { useRouter } from "next/navigation";
@@ -88,6 +88,7 @@ export function CommandPalette({ onNavigate, onQuickAction }: CommandPaletteProp
       { id: "nav-analytics", label: "Analytics", icon: BarChart3, group: "Navigate", action: () => go("analytics") },
       { id: "nav-team", label: "Team", icon: UserCog, group: "Navigate", action: () => go("team") },
       { id: "nav-settings", label: "Settings", icon: Settings, group: "Navigate", action: () => go("settings") },
+      { id: "nav-agency-console", label: "Agency Console — 100 departments, 2,000 agents, SOPs, clients & backups", icon: Building2, group: "Navigate", action: () => go("agency-console"), keywords: "agency console readiness departments agents sop clients backup persona brand voice audit" },
       { id: "nav-ecosystem", label: "Ecosystem Library — 190 verified open-source references with adoption evidence", icon: Boxes, group: "Navigate", action: () => go("ecosystem"), keywords: "open source references library github repos licence verification blueprint adopted radar video crm" },
       { id: "nav-integrations", label: "Integrations", icon: Plug, group: "Navigate", action: () => go("integrations") },
       { id: "nav-workforce", label: "AI Workforce", icon: Network, group: "Navigate", action: () => go("workforce") },

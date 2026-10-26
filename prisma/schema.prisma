@@ -1652,3 +1652,157 @@ model WorkflowRun {
   @@index([companyId])
   @@index([status])
 }
+
+// ==================== AGENCY OPERATING MODEL ====================
+// These tables back the "one platform, many clients, no external help" model:
+// every department runs as its own isolated local model profile, every agent is
+// a versioned spec, and every client is configuration rather than a fork.
+
+/// Per-department model runtime. One row per department; this is what makes a
+/// department behave like an independent model instead of a prompt template.
+model DepartmentRuntime {
+  id                String   @id @default(cuid())
+  departmentId      String   @unique
+  departmentCode    String
+  modelName         String              // e.g. "qwen2.5:7b"
+  modelTier         String   @default("balanced") // fast | balanced | reasoning | vision | specialised
+  provider          String   @default("ollama")
+  temperature       Float    @default(0.4)
+  maxTokens         Int      @default(2048)
+  systemPrompt      String
+  /// "local" means the department must run without any hosted provider.
+  isolationMode     String   @default("local")
+  /// "none" means no automatic hosted fallback when the local model is down.
+  fallbackPolicy    String   @default("none")
+  toolPolicy        String   @default("{}")   // JSON: allowed tool ids per department
+  knowledgeScope    String   @default("[]")   // JSON: knowledge categories in scope
+  guardrails        String   @default("[]")   // JSON: hard rules for this department
+  sopIds            String   @default("[]")   // JSON: SOP ids this department follows
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([departmentCode])
+}
+
+/// A concrete, executable agent specification. 2,000 of these exist at seed
+/// time (100 departments x 20 roles). Employees execute specs; specs carry the
+/// model profile, skills, tools and the SOP that governs the work.
+model AgentSpec {
+  id              String   @id @default(cuid())
+  code            String   @unique          // AGT-0001
+  name            String
+  departmentId    String
+  departmentCode  String
+  role            String
+  level           String   @default("specialist") // executive..worker
+  mission         String
+  modelTier       String   @default("balanced")
+  modelName       String?
+  skills          String   @default("[]")
+  capabilities    String   @default("[]")
+  tools           String   @default("[]")
+  sopId           String?
+  autonomy        String   @default("supervised") // supervised | semi_autonomous | autonomous
+  guardrails      String   @default("[]")
+  inputChannels   String   @default("[]")
+  outputChannels  String   @default("[]")
+  isEnabled       Boolean  @default(true)
+  companyId       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([departmentCode])
+  @@index([companyId, isEnabled])
+}
+
+/// Per-client workspace configuration. One row per company. Adding a client is
+/// an INSERT plus configuration, never a new application.
+model ClientConfig {
+  id                    String   @id @default(cuid())
+  companyId             String   @unique
+  /// "managed" = we hold the connection; "client_login" = the client signs in,
+  /// we act, then the session is closed automatically.
+  credentialMode        String   @default("client_login")
+  autoLogoutMinutes     Int      @default(15)
+  passwordRotationDays  Int      @default(90)
+  allowedChannels       String   @default("[]")  // JSON: platform ids enabled for this client
+  channelCredentials    String   @default("{}")  // JSON: provider -> reference (never raw secrets)
+  brandVoiceId          String?
+  personaLimit          Int      @default(3)
+  onboardingStatus      String   @default("configured") // pending | configured | paused
+  dataRegion            String   @default("local")
+  notes                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([onboardingStatus])
+}
+
+/// A reusable brand voice. Every persona, post, email and script inherits it so
+/// the client's identity stays consistent across channels.
+model BrandVoice {
+  id            String   @id @default(cuid())
+  name          String
+  companyId     String
+  tone          String   @default("professional")
+  personaLine   String   @default("")   // "we sound like ..."
+  readingLevel  String   @default("general")
+  doList        String   @default("[]")
+  dontList      String   @default("[]")
+  lexicon       String   @default("[]") // preferred terms
+  bannedPhrases String   @default("[]")
+  ctaStyle      String   @default("direct")
+  sampleCopy    String   @default("")
+  isDefault     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+/// An AI face agent built from photos the client supplies. Consent and rights
+/// must be recorded before any render is allowed.
+model BrandPersona {
+  id             String   @id @default(cuid())
+  name           String
+  companyId      String
+  role           String   @default("presenter")
+  description    String   @default("")
+  voiceId        String?
+  brandVoiceId   String?
+  /// Photos supplied by the client, stored as asset rows (never scraped).
+  assets         String   @default("[]")
+  consentOwner   String   @default("")   // who granted permission
+  consentGranted Boolean  @default(false)
+  consentProof   String   @default("")   // reference to the signed permission
+  usageScope     String   @default("[]") // JSON: allowed channels/uses
+  likenessPolicy String   @default("client_owned")
+  status         String   @default("draft") // draft | ready | paused | retired
+  renderCount    Int      @default(0)
+  lastRenderedAt DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([companyId, status])
+}
+
+/// Evidence that a backup happened, with a checksum so restores can be trusted.
+model BackupRecord {
+  id            String   @id @default(cuid())
+  filename      String
+  kind          String   @default("scheduled") // scheduled | manual | pre_deploy
+  sizeBytes     Int      @default(0)
+  checksum      String   @default("")
+  tableCount    Int      @default(0)
+  rowCount      Int      @default(0)
+  counts        String   @default("{}") // JSON: table -> rows
+  status        String   @default("completed") // completed | failed | verified
+  verifiedAt    DateTime?
+  error         String?
+  location      String   @default("./backups")
+  createdBy     String?
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+}

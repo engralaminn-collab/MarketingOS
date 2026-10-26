@@ -256,3 +256,58 @@ Notes:
     no upstream code or data is bundled
 - Verified both new surfaces render server-side (SSR smoke render), pass tsc + eslint,
   and `next build` completes
+
+---
+Task ID: marketingos-agency-1
+Agent: Main Orchestrator
+Task: Audit and complete the 100-department / 2,000-agent / SOP / backup agency specification
+
+Audit of the starting state (measured, not assumed):
+  Department 54 · Employee 2,000 · Sop 8 (only 1 department covered) · AiAgent 22
+  → departments, per-department SOPs, department model runtimes, client config,
+    brand voices and personas, and a backup register were all incomplete.
+
+Work Log:
+- Sandbox restore detected on session resume: node_modules, .env and db were gone and
+  the branch pointer sat on the parent commit. Re-created .env, regenerated the Prisma
+  client (engineType=client via wasm preflight), rebuilt the SQLite schema and re-ran
+  all six seeds before touching feature work.
+- Added 6 Prisma models: DepartmentRuntime, AgentSpec, ClientConfig, BrandVoice,
+  BrandPersona, BackupRecord (schema now 77 tables).
+- prisma/seed-agency.ts (idempotent):
+  * +46 departments -> 100 total (never deletes existing rows)
+  * +112 SOPs -> 120 (100 per-department delivery SOPs + 12 cross-functional)
+  * 100 DepartmentRuntime rows: local isolation, fallback=none, per-department prompt,
+    guardrails, knowledge scope and SOP binding; model tiers mapped to qwen2.5 /
+    llama3.1 / qwen2.5-coder / llava / mistral
+  * 2,000 AgentSpec rows = 100 departments x 20 role archetypes
+  * +464 employees for the 58 departments that had none -> 2,464 total, every department staffed
+  * ClientConfig + default BrandVoice + one demo persona (consent marked DEMO)
+- src/lib/backup.ts: VACUUM INTO snapshots, SHA-256 checksum, per-table manifest,
+  retention pruning, and verification that opens the copy in a separate libSQL client
+  (file present, checksum, PRAGMA integrity_check, 18 critical tables, row counts).
+  Verified end-to-end: 7.3 MB, 77 tables, 5,358 rows, all 5 checks PASS.
+- src/lib/agency.ts: readiness engine. 12 checks computed from live data, including
+  "no external AI dependency" (fails if a hosted key is set or any department allows
+  fallback) and "backups verified within 7 days". Current result: 12/12 PASS.
+- Routes: /api/agency/{readiness,departments,agents,sops,backups}, /api/agency/backups/[id]/verify,
+  /api/clients (+[id] PATCH), /api/brand/voices, /api/brand/personas (+[id]/render).
+- Agency Console view (src/components/views/agency-console-view.tsx), 7 tabs:
+  Readiness (checklist + evidence + model isolation + backup policy), Departments
+  (runtime/prompt/guardrails dialog), Agents (paged searchable 2,000 roster), SOPs,
+  Clients (provision form: channels, credential mode, auto-logout, rotation),
+  Brand & personas (voice editor, consent-gated persona + render request), Backups
+  (take/verify with per-check output). Wired into store ViewId, router, sidebar and Cmd+K.
+- scripts/agency-backup.ts CLI + npm scripts agency:seed, backup:now, backup:verify,
+  backup:list; added tsx to devDependencies so the scripts are reproducible.
+- Docs: docs/AGENCY-OPERATIONS.md (requirement -> evidence table, how to add a department
+  or a client, cron example, honest limits), README and canonical-application updated.
+
+Verified:
+  * tsc --noEmit clean, eslint . clean, next build succeeds
+  * POST /api/clients -> 201 (workspace + config + channel map + voice in one call)
+  * persona without consent -> 400; out-of-scope render channel -> 400 with blockers
+  * in-scope render -> 200, recorded, and reports honestly that no local adapter is configured
+  * POST /api/agency/backups -> 201; verify -> all checks PASS
+  * readiness endpoint: 12/12 PASS (100 depts, 2,000 agents, 2,464 employees, 120 SOPs,
+    100 local runtimes, 0 fallbacks, 0 hosted keys)
