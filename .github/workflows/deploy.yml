@@ -154,17 +154,36 @@ jobs:
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
 
     steps:
-      # ── The commit actually being deployed ───────────────────
-      # On workflow_run, github.sha is the default branch tip, NOT the commit
-      # that triggered the build. head_sha is the real one.
+      # ── Resolve exactly the image commit requested ───────────
+      # Keep GitHub expressions in environment variables, never interpolate
+      # event data into shell source. workflow_run uses its build's head_sha;
+      # a manual short-SHA input is resolved to the canonical full SHA first.
       - name: Resolve target commit
         id: target
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_SHA: ${{ github.sha }}
+          WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          REQUESTED_IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            SHA="${{ github.event.workflow_run.head_sha }}"
+          if [ "$EVENT_NAME" = "workflow_run" ]; then
+            SHA="$WORKFLOW_RUN_SHA"
           else
-            SHA="${{ github.sha }}"
+            SHA="$WORKFLOW_SHA"
+            if [ -n "$REQUESTED_IMAGE_TAG" ] && [ "$REQUESTED_IMAGE_TAG" != "latest" ]; then
+              if [[ ! "$REQUESTED_IMAGE_TAG" =~ ^[0-9a-fA-F]{7,40}$ ]]; then
+                echo "::error::image_tag must be latest or a 7–40 character commit SHA."
+                exit 1
+              fi
+              SHA="$(gh api "repos/${REPOSITORY}/commits/${REQUESTED_IMAGE_TAG}" --jq .sha)"
+            fi
+          fi
+          if [[ ! "$SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "::error::Could not resolve a full target commit SHA."
+            exit 1
           fi
           echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
           echo "short_sha=${SHA:0:7}" >> "$GITHUB_OUTPUT"
@@ -194,22 +213,18 @@ jobs:
       # (Required-secrets validation happens in the `preflight` job above —
       #  this job only runs when DEPLOY_HOST and DEPLOY_SSH_KEY are present.)
 
-      # ── Resolve the exact commit SHA being deployed ──────────
-      - name: Resolve commit SHA for image tag
+      # The image tag is always derived from the canonical commit that passed
+      # the CI gate above; never allow an unchecked tag/commit mismatch.
+      - name: Set deployment image tag
         id: resolve
+        env:
+          FULL_SHA: ${{ steps.target.outputs.sha }}
+          SHORT_SHA: ${{ steps.target.outputs.short_sha }}
         run: |
           set -euo pipefail
-          # Prefer explicit input, fall back to current commit
-          if [ -n "${{ github.event.inputs.image_tag }}" ] && [ "${{ github.event.inputs.image_tag }}" != "latest" ]; then
-            SHORT_SHA="${{ github.event.inputs.image_tag }}"
-          else
-            FULL_SHA="${{ steps.target.outputs.sha }}"
-            SHORT_SHA="${{ steps.target.outputs.short_sha }}"
-            echo "full_sha=${FULL_SHA}" >> "$GITHUB_OUTPUT"
-          fi
+          echo "full_sha=${FULL_SHA}" >> "$GITHUB_OUTPUT"
           echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-          echo "👉 Deploying image tag: ${SHORT_SHA}"
-          echo "👉 Full SHA: ${FULL_SHA:-manual-deploy}"
+          echo "👉 Deploying image ${SHORT_SHA} (${FULL_SHA})"
 
       - name: Checkout repository
         uses: actions/checkout@v5

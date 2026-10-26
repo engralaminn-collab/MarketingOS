@@ -187,6 +187,21 @@ check reports only an error *class*.
 
 ---
 
+## Dashboard release control
+
+MarketingOS includes a company-owner/super-admin-only **Deployments & Hosting** view. It reads recent GitHub Actions runs and can queue the repository's `deploy.yml` using `workflow_dispatch`; dispatch accepts only `latest` or a commit SHA and requires an explicit human confirmation. The privileged SSH deployment remains in GitHub Actions, never in browser code. The workflow keeps its CI, verified backup, safe schema sync, health-check and rollback gates.
+
+Configure these values only in the server-side environment (never in `NEXT_PUBLIC_*` variables):
+
+| Variable | Purpose |
+|---|---|
+| `DEPLOY_GITHUB_REPOSITORY` | `owner/repository` containing the deployment workflow |
+| `DEPLOY_GITHUB_TOKEN` | Least-privilege GitHub token with Actions read/write access to that repository |
+| `DEPLOY_GITHUB_WORKFLOW` | Optional workflow filename; defaults to `deploy.yml` |
+| `DEPLOY_GITHUB_BRANCH` | Optional workflow dispatch ref; defaults to `main` |
+
+Then restart MarketingOS and sign in as an admin to load the view. The dashboard does not provision the supplied Ubuntu host, reserve ports, edit Nginx, change Cloudflare DNS, or issue TLS certificates. Those actions need a reviewed host bootstrap process and operator-controlled credentials. The UI presents the provided host information and copies a project brief, but does not claim the host was reached or modified. Additional deployment providers can be implemented behind an adapter; only GitHub Actions is currently wired.
+
 ## 6. Required configuration
 
 ### GitHub Actions secrets

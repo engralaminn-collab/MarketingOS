@@ -53,6 +53,7 @@ import {
   Handshake,
   Boxes,
   Building2,
+  Rocket,
   UserCircle,
 } from 'lucide-react';
 
@@ -99,6 +100,7 @@ const WorkflowStudioView = lazy(() => import('@/components/views/workflow-studio
 const UkviHubView = lazy(() => import('@/components/views/ukvi-hub-view'));
 const EcosystemView = lazy(() => import('@/components/views/ecosystem-view').then(m => ({ default: m.EcosystemView })));
 const AgencyConsoleView = lazy(() => import('@/components/views/agency-console-view').then(m => ({ default: m.AgencyConsoleView })));
+const DeploymentsView = lazy(() => import('@/components/views/deployments-view'));
 
 const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   dashboard: DashboardView,
@@ -127,6 +129,7 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   'ukvi-hub': UkviHubView,
   ecosystem: EcosystemView,
   'agency-console': AgencyConsoleView,
+  deployments: DeploymentsView,
   integrations: IntegrationsView,
   subscriptions: SettingsView,
   settings: SettingsView,
@@ -159,6 +162,7 @@ const navItems: NavItem[] = [
   { id: 'workforce', label: 'AI Workforce', icon: <Network className="w-4 h-4" />, badge: '2,000', section: 'Workforce' },
   { id: 'workflow-studio', label: 'Workflow Studio', icon: <GitBranch className="w-4 h-4" />, badge: 'n8n', section: 'Workforce' },
   { id: 'agency-console', label: 'Agency Console', icon: <Building2 className="w-4 h-4" />, badge: '100·2K', section: 'Workforce' },
+  { id: 'deployments', label: 'Deployments & Hosting', icon: <Rocket className="w-4 h-4" />, section: 'Management' },
   { id: 'ecosystem', label: 'Ecosystem Library', icon: <Boxes className="w-4 h-4" />, badge: '190', section: 'Connect' },
   { id: 'integrations', label: 'Integrations', icon: <Plug className="w-4 h-4" />, badge: '116', section: 'Connect' },
   { id: 'social-accounts', label: 'Social Accounts', icon: <Link2 className="w-4 h-4" />, badge: 'OAuth', section: 'Connect' },
@@ -259,7 +263,10 @@ function Sidebar() {
         <ScrollArea className="flex-1 py-3 px-2">
           <div className="space-y-1">
             {sections.map((section) => {
-              const sectionItems = navItems.filter(n => n.section === section);
+              const sectionItems = navItems.filter(n =>
+                n.section === section &&
+                (n.id !== 'deployments' || ['super_admin', 'company_owner'].includes(user?.role || ''))
+              );
               if (sectionItems.length === 0) return null;
               return (
                 <div key={section} className="mb-3">

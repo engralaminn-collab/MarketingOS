@@ -30,6 +30,7 @@ export type ViewId =
   | 'ukvi-hub'
   | 'ecosystem'
   | 'agency-console'
+  | 'deployments'
   // Academic & HRM. The views and API routes for these already existed but
   // were unreachable because they were never added to this union.
   | 'students'
