@@ -19,6 +19,7 @@
     "db:reset": "prisma migrate reset",
     "refs:verify": "node scripts/verify-reference-links.mjs",
     "refs:build": "node scripts/build-reference-library.mjs",
+    "refs:audit": "node scripts/audit-submitted-links.mjs",
     "agency:seed": "tsx prisma/seed-agency.ts",
     "backup:now": "tsx scripts/agency-backup.ts",
     "backup:verify": "tsx scripts/agency-backup.ts --verify-latest",

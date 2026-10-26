@@ -372,3 +372,46 @@ Verified against a fake local adapter (port 5055, now stopped):
   * agency readiness back to 12/12 PASS after taking a fresh verified backup
 Not verifiable in this sandbox: MediaRecorder / SpeechSynthesis / canvas capture
 need a real browser, so the recording path is type-checked and reviewed, not run.
+
+---
+Task ID: marketingos-reference-audit-2
+Agent: Main Orchestrator
+Task: "Why did you not check my order?" — audit the submitted link batch link by link
+
+Finding: all 79 unique links from the submission were already in the catalogue
+(190 entries), and 74 of them were verified by the GitHub API. The real gap was
+the 17 non-GitHub sites: the verifier marks anything outside the sandbox egress
+allowlist as `blocked`, the builder rendered that as "Not fetched here", so the
+operator was told those links had not been checked. They had not been.
+
+Work Log:
+- scripts/data/submitted-links-2026-10-26.txt: the batch exactly as submitted
+  (112 lines, duplicates and the two malformed entries kept on purpose).
+- scripts/audit-submitted-links.mjs + `npm run refs:audit`: repairs submitted
+  lines (doubled scheme, a dropped 'h', two URLs glued into one line), collapses
+  duplicates, joins the batch against the catalogue and the verification
+  snapshot, and fails if any submitted link is missing from the catalogue.
+  Output docs/SUBMITTED-LINKS-AUDIT.md: 111 lines -> 79 unique, 32 duplicates
+  collapsed, 3 repairs, 0 missing, 78 verified + 1 archived.
+- scripts/data/external-verification.json: the 19 hosts the sandbox cannot reach
+  were checked from a general network. 18 verified (buffer, enerpize, aipraktor,
+  supercool, join.supercool, mat3ra, platform.mat3ra, stackoverflow, openrouter,
+  the OpenRouter agent-loop tutorial, coder.qwen.ai, cline.bot, mureka,
+  astryx.atmeta.com, larksuite, hatchable, hetrixtools, refine.ink);
+  developer.meta.com/ai returns 403 to automated requests and is recorded as
+  access-restricted rather than verified.
+- scripts/verify-reference-links.mjs merges those overrides ONLY for URLs whose
+  own probe failed, and keeps the sandbox result under `sandboxProbe`, so a stale
+  override can never hide a regression the sandbox did see. Summary now reports
+  `blocked: 0` (was 19) and prints anything still unreachable.
+- scripts/build-reference-library.mjs carries `verifiedBy`, `sandboxProbe` and
+  `verifiedAt` per entry, adds a "Verified outside the build sandbox" section and
+  no longer emits a "Not fetched here" bucket when the bucket is empty.
+- Ecosystem Library UI: detail dialog shows "Checked by", CSV gains `verified_by`,
+  the Verification tab counts "Verified externally" and explains step 2b.
+- README + docs/REFERENCE-LIBRARY.md updated.
+
+Verified: tsc --noEmit clean, eslint . clean, verifier reports
+{ ok: 184, http-403: 4, archived: 2 } with zero blocked, builder emits 190
+entries, audit reports 0 missing. The 4 remaining access-required links are three
+private repos the GitHub token cannot read plus developer.meta.com/ai.

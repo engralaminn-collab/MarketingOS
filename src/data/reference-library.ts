@@ -5,7 +5,7 @@
  *   source of truth : scripts/data/reference-links.json
  *   verification    : scripts/verify-reference-links.mjs -> docs/link-verification.json
  *   generator       : scripts/build-reference-library.mjs
- *   last verified   : 2026-10-26T12:04:02.148Z
+ *   last verified   : 2026-10-26T16:00:55.921Z
  *
  * Every entry is a real, checked link. Status is about *this* repository:
  * - adopted          pattern implemented natively (evidence = code path)
@@ -25,6 +25,8 @@ export type ReferenceStatus =
   | 'external-reference';
 
 export type ReferenceOrigin = 'repository' | 'profile' | 'website';
+
+export type ReferenceVerifiedBy = 'github-api' | 'page-fetch' | 'host-probe' | 'sandbox-probe';
 
 export type ReferenceVerification =
   | 'verified'
@@ -59,6 +61,11 @@ export interface ReferenceEntry {
   archived: boolean;
   pushedAt: string | null;
   verification: ReferenceVerification;
+  /** How the link was actually checked. */
+  verifiedBy: ReferenceVerifiedBy;
+  /** Sandbox probe result when an out-of-band check supplied the verdict. */
+  sandboxProbe: string | null;
+  verifiedAt: string | null;
   httpStatus: number | null;
   origin: ReferenceOrigin;
   checkedAt: string;
@@ -131,8 +138,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/lib/firecrawl-scraper.ts",
     "evidenceDetail": "Optional self-hosted Firecrawl adapter with size and timeout limits.",
-    "stars": 195491,
-    "forks": 10318,
+    "stars": 195566,
+    "forks": 10317,
     "followers": null,
     "language": "TypeScript",
     "license": "AGPL-3.0",
@@ -145,11 +152,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "crawler"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T04:20:44Z",
+    "pushedAt": "2026-10-26T15:48:07Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.702Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.347Z"
+    "checkedAt": "2026-10-26T16:00:47.702Z"
   },
   {
     "id": "humanizer-55",
@@ -166,8 +176,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/app/api/ai/humanize/route.ts",
     "evidenceDetail": "De-robotise copy pass with banned-phrase detection.",
-    "stars": 60818,
-    "forks": 4831,
+    "stars": 60913,
+    "forks": 4836,
     "followers": null,
     "language": "Python",
     "license": "MIT",
@@ -182,9 +192,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-16T19:12:03Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.785Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.591Z"
+    "checkedAt": "2026-10-26T16:00:47.785Z"
   },
   {
     "id": "marketingskills-45",
@@ -201,8 +214,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/lib/marketing-studio.ts",
     "evidenceDetail": "52-skill marketing kit catalogue plus diagram and CTA generators.",
-    "stars": 56603,
-    "forks": 8369,
+    "stars": 56640,
+    "forks": 8370,
     "followers": null,
     "language": "JavaScript",
     "license": "MIT",
@@ -217,9 +230,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-22T16:57:46Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.315Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.033Z"
+    "checkedAt": "2026-10-26T16:00:47.315Z"
   },
   {
     "id": "ghost-62",
@@ -236,8 +252,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 55608,
-    "forks": 12024,
+    "stars": 55611,
+    "forks": 12027,
     "followers": null,
     "language": "TypeScript",
     "license": "MIT",
@@ -250,11 +266,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "nodejs"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T11:52:12Z",
+    "pushedAt": "2026-10-26T15:49:30Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.449Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.923Z"
+    "checkedAt": "2026-10-26T16:00:48.449Z"
   },
   {
     "id": "rsshub-60",
@@ -271,8 +290,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/components/views/feeds-view.tsx",
     "evidenceDetail": "Feed source registry, refresh and item ingestion.",
-    "stars": 46669,
-    "forks": 10288,
+    "stars": 46672,
+    "forks": 10287,
     "followers": null,
     "language": "TypeScript",
     "license": "AGPL-3.0",
@@ -285,11 +304,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "pixiv"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T11:25:37Z",
+    "pushedAt": "2026-10-26T15:14:21Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.175Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.869Z"
+    "checkedAt": "2026-10-26T16:00:48.175Z"
   },
   {
     "id": "umami-61",
@@ -306,8 +328,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 39700,
-    "forks": 8415,
+    "stars": 39710,
+    "forks": 8419,
     "followers": null,
     "language": "TypeScript",
     "license": "MIT",
@@ -322,9 +344,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-23T21:58:32Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.202Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.870Z"
+    "checkedAt": "2026-10-26T16:00:48.202Z"
   },
   {
     "id": "open-seo-44",
@@ -341,8 +366,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/app/api/seo/crawl/route.ts",
     "evidenceDetail": "Live crawler, topic clustering and on-page audit scoring.",
-    "stars": 25021,
-    "forks": 3414,
+    "stars": 25037,
+    "forks": 3416,
     "followers": null,
     "language": "TypeScript",
     "license": "MIT",
@@ -357,9 +382,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T10:39:41Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.272Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.019Z"
+    "checkedAt": "2026-10-26T16:00:47.272Z"
   },
   {
     "id": "languagetool-56",
@@ -376,8 +404,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/app/api/ai/grammar-check/route.ts",
     "evidenceDetail": "Grammar and style findings API; local model by default.",
-    "stars": 15195,
-    "forks": 1592,
+    "stars": 15197,
+    "forks": 1593,
     "followers": null,
     "language": "Java",
     "license": "LGPL-2.1",
@@ -392,9 +420,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-25T04:05:35Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.025Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.654Z"
+    "checkedAt": "2026-10-26T16:00:48.025Z"
   },
   {
     "id": "gpt4o-image-prompts-57",
@@ -420,9 +451,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-01-08T13:39:25Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.064Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.752Z"
+    "checkedAt": "2026-10-26T16:00:48.064Z"
   },
   {
     "id": "web-agent-53",
@@ -448,9 +482,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-22T17:55:17Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.719Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.454Z"
+    "checkedAt": "2026-10-26T16:00:47.719Z"
   },
   {
     "id": "bricks-51",
@@ -483,9 +520,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-23T20:01:56Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.691Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.309Z"
+    "checkedAt": "2026-10-26T16:00:47.691Z"
   },
   {
     "id": "molx-54",
@@ -515,9 +555,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-08-07T16:12:07Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.769Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.456Z"
+    "checkedAt": "2026-10-26T16:00:47.769Z"
   },
   {
     "id": "open-prospector-49",
@@ -543,9 +586,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-25T21:53:30Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.404Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.210Z"
+    "checkedAt": "2026-10-26T16:00:47.404Z"
   },
   {
     "id": "open-enrich-48",
@@ -571,9 +617,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-05-30T14:24:40Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.333Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.114Z"
+    "checkedAt": "2026-10-26T16:00:47.333Z"
   },
   {
     "id": "market-intelligence-radar-46",
@@ -599,9 +648,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-25T19:36:07Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.318Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.075Z"
+    "checkedAt": "2026-10-26T16:00:47.318Z"
   },
   {
     "id": "dave-50",
@@ -627,9 +679,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-06-17T03:36:27Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.690Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.266Z"
+    "checkedAt": "2026-10-26T16:00:47.690Z"
   },
   {
     "id": "email-markting-58",
@@ -655,9 +710,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-06-01T01:07:51Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.101Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.790Z"
+    "checkedAt": "2026-10-26T16:00:48.101Z"
   },
   {
     "id": "email-markting-59",
@@ -683,9 +741,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-08T07:56:34Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.145Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.811Z"
+    "checkedAt": "2026-10-26T16:00:48.145Z"
   },
   {
     "id": "n8n-gtm-lead-enrichment-47",
@@ -718,9 +779,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-07-13T11:11:27Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.322Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:55.092Z"
+    "checkedAt": "2026-10-26T16:00:47.322Z"
   },
   {
     "id": "twenty-39",
@@ -737,8 +801,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 59777,
-    "forks": 9767,
+    "stars": 59802,
+    "forks": 9770,
     "followers": null,
     "language": "TypeScript",
     "license": "NOASSERTION",
@@ -751,11 +815,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "hacktoberfest"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T12:02:40Z",
+    "pushedAt": "2026-10-26T15:57:43Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.913Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.775Z"
+    "checkedAt": "2026-10-26T16:00:46.913Z"
   },
   {
     "id": "crm-31",
@@ -772,8 +839,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 11687,
-    "forks": 1722,
+    "stars": 11690,
+    "forks": 1723,
     "followers": null,
     "language": "TypeScript",
     "license": "MIT",
@@ -781,9 +848,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-23T20:00:53Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.305Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.371Z"
+    "checkedAt": "2026-10-26T16:00:46.305Z"
   },
   {
     "id": "crmeb-34",
@@ -816,9 +886,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-05T07:55:58Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.537Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.468Z"
+    "checkedAt": "2026-10-26T16:00:46.537Z"
   },
   {
     "id": "idurar-erp-crm-35",
@@ -835,7 +908,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "license-review",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 8918,
+    "stars": 8920,
     "forks": 3155,
     "followers": null,
     "language": "JavaScript",
@@ -851,9 +924,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-08-14T23:02:15Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.578Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.497Z"
+    "checkedAt": "2026-10-26T16:00:46.578Z"
   },
   {
     "id": "deskcomm-crm-25",
@@ -871,7 +947,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "evidence": null,
     "evidenceDetail": null,
     "stars": 4855,
-    "forks": 1354,
+    "forks": 1356,
     "followers": null,
     "language": "TypeScript",
     "license": "MIT",
@@ -884,11 +960,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "ecommerce"
     ],
     "archived": false,
-    "pushedAt": "2026-10-24T19:43:53Z",
+    "pushedAt": "2026-10-26T15:54:19Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.970Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.072Z"
+    "checkedAt": "2026-10-26T16:00:45.970Z"
   },
   {
     "id": "crm-32",
@@ -905,7 +984,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/components/views/crm-view.tsx",
     "evidenceDetail": "Drag-and-drop deal pipeline with inline lead status changes.",
-    "stars": 3858,
+    "stars": 3861,
     "forks": 1545,
     "followers": null,
     "language": "Vue",
@@ -919,11 +998,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "crm-system"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T10:07:19Z",
+    "pushedAt": "2026-10-26T14:45:30Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.432Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.437Z"
+    "checkedAt": "2026-10-26T16:00:46.432Z"
   },
   {
     "id": "fat-free-crm-37",
@@ -949,9 +1031,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T08:09:03Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.767Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.710Z"
+    "checkedAt": "2026-10-26T16:00:46.767Z"
   },
   {
     "id": "wacrm-38",
@@ -968,7 +1053,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 2616,
+    "stars": 2617,
     "forks": 6639,
     "followers": null,
     "language": "TypeScript",
@@ -984,9 +1069,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T10:35:58Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.822Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.754Z"
+    "checkedAt": "2026-10-26T16:00:46.822Z"
   },
   {
     "id": "django-crm-26",
@@ -1017,11 +1105,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "django-rest-framework"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T06:35:45Z",
+    "pushedAt": "2026-10-26T15:52:03Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.983Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.098Z"
+    "checkedAt": "2026-10-26T16:00:45.983Z"
   },
   {
     "id": "crm-application-30",
@@ -1054,9 +1145,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-23T22:01:35Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.208Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.188Z"
+    "checkedAt": "2026-10-26T16:00:46.208Z"
   },
   {
     "id": "crm-33",
@@ -1089,9 +1183,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T06:43:23Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.485Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.446Z"
+    "checkedAt": "2026-10-26T16:00:46.485Z"
   },
   {
     "id": "slow-books-pro-2026-40",
@@ -1108,8 +1205,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 818,
-    "forks": 149,
+    "stars": 820,
+    "forks": 150,
     "followers": null,
     "language": "Python",
     "license": "NOASSERTION",
@@ -1122,11 +1219,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "invoicing"
     ],
     "archived": false,
-    "pushedAt": "2026-10-25T23:54:22Z",
+    "pushedAt": "2026-10-26T15:41:06Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.942Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.780Z"
+    "checkedAt": "2026-10-26T16:00:46.942Z"
   },
   {
     "id": "crm-28",
@@ -1159,9 +1259,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2024-11-28T09:04:06Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.061Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.149Z"
+    "checkedAt": "2026-10-26T16:00:46.061Z"
   },
   {
     "id": "crm-36",
@@ -1194,9 +1297,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-23T21:59:38Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.664Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.502Z"
+    "checkedAt": "2026-10-26T16:00:46.664Z"
   },
   {
     "id": "crash-course-crm-29",
@@ -1222,9 +1328,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-01-29T18:57:02Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.151Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.187Z"
+    "checkedAt": "2026-10-26T16:00:46.151Z"
   },
   {
     "id": "crm-27",
@@ -1250,9 +1359,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2017-01-03T12:30:24Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.040Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.114Z"
+    "checkedAt": "2026-10-26T16:00:46.040Z"
   },
   {
     "id": "ai-markting-crm-41",
@@ -1278,9 +1390,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "access-required",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:46.989Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.809Z"
+    "checkedAt": "2026-10-26T16:00:46.989Z"
   },
   {
     "id": "chatwoot-8",
@@ -1297,8 +1412,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 38328,
-    "forks": 9346,
+    "stars": 38346,
+    "forks": 9349,
     "followers": null,
     "language": "Ruby",
     "license": "NOASSERTION",
@@ -1311,11 +1426,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "design"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T11:04:38Z",
+    "pushedAt": "2026-10-26T15:54:27Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.736Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.152Z"
+    "checkedAt": "2026-10-26T16:00:44.736Z"
   },
   {
     "id": "cometchat-uikit-react-native-4",
@@ -1348,9 +1466,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-23T11:41:18Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.252Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:52.758Z"
+    "checkedAt": "2026-10-26T16:00:44.252Z"
   },
   {
     "id": "cometchat-uikit-react-1",
@@ -1383,9 +1504,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-09T06:39:06Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.249Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:52.753Z"
+    "checkedAt": "2026-10-26T16:00:44.249Z"
   },
   {
     "id": "cometchat-uikit-android-2",
@@ -1418,9 +1542,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-12T19:02:46Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.250Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:52.755Z"
+    "checkedAt": "2026-10-26T16:00:44.250Z"
   },
   {
     "id": "cometchat-uikit-ios-3",
@@ -1453,9 +1580,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-08T14:17:35Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.251Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:52.757Z"
+    "checkedAt": "2026-10-26T16:00:44.251Z"
   },
   {
     "id": "cometchat-skills-0",
@@ -1488,9 +1618,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-15T14:32:32Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.153Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:52.698Z"
+    "checkedAt": "2026-10-26T16:00:44.153Z"
   },
   {
     "id": "docs-mcp-5",
@@ -1523,9 +1656,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T09:36:35Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.253Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:52.760Z"
+    "checkedAt": "2026-10-26T16:00:44.253Z"
   },
   {
     "id": "electron-promise-ipc-9",
@@ -1555,9 +1691,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2023-03-04T02:44:15Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.741Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.157Z"
+    "checkedAt": "2026-10-26T16:00:44.741Z"
   },
   {
     "id": "android-java-chat-app-7",
@@ -1583,9 +1722,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2018-12-10T07:30:36Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.690Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.148Z"
+    "checkedAt": "2026-10-26T16:00:44.690Z"
   },
   {
     "id": "cometchat-6",
@@ -1611,9 +1753,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.684Z",
     "httpStatus": null,
     "origin": "profile",
-    "checkedAt": "2026-10-26T12:03:53.110Z"
+    "checkedAt": "2026-10-26T16:00:44.684Z"
   },
   {
     "id": "voice-studio-23",
@@ -1630,8 +1775,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 87926,
-    "forks": 9694,
+    "stars": 88381,
+    "forks": 9747,
     "followers": null,
     "language": "Python",
     "license": "AGPL-3.0",
@@ -1644,11 +1789,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "huggingface"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T11:50:54Z",
+    "pushedAt": "2026-10-26T15:32:55Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.664Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.874Z"
+    "checkedAt": "2026-10-26T16:00:45.664Z"
   },
   {
     "id": "call-center-ai-19",
@@ -1674,9 +1822,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-07-01T18:44:02Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.576Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.741Z"
+    "checkedAt": "2026-10-26T16:00:45.576Z"
   },
   {
     "id": "httpsms-13",
@@ -1693,8 +1844,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/app/api/sms/send/route.ts",
     "evidenceDetail": "HTTP SMS gateway delivery path with per-message failure records.",
-    "stars": 6106,
-    "forks": 1116,
+    "stars": 6108,
+    "forks": 1117,
     "followers": null,
     "language": "Go",
     "license": "AGPL-3.0",
@@ -1709,9 +1860,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-22T05:57:49Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.125Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.438Z"
+    "checkedAt": "2026-10-26T16:00:45.125Z"
   },
   {
     "id": "gibberlink-24",
@@ -1737,9 +1891,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2025-07-28T06:49:52Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.812Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.910Z"
+    "checkedAt": "2026-10-26T16:00:45.812Z"
   },
   {
     "id": "jitsi-videobridge-22",
@@ -1763,11 +1920,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "license": "Apache-2.0",
     "topics": [],
     "archived": false,
-    "pushedAt": "2026-10-23T21:39:50Z",
+    "pushedAt": "2026-10-26T15:21:36Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.637Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.851Z"
+    "checkedAt": "2026-10-26T16:00:45.637Z"
   },
   {
     "id": "call-md-18",
@@ -1784,8 +1944,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 1812,
-    "forks": 217,
+    "stars": 1836,
+    "forks": 216,
     "followers": null,
     "language": "TypeScript",
     "license": "NOASSERTION",
@@ -1800,9 +1960,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-08-19T06:24:36Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.405Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.577Z"
+    "checkedAt": "2026-10-26T16:00:45.405Z"
   },
   {
     "id": "linphone-iphone-21",
@@ -1835,9 +1998,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-22T14:15:32Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.630Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.821Z"
+    "checkedAt": "2026-10-26T16:00:45.630Z"
   },
   {
     "id": "ai-native-callcenter-17",
@@ -1854,8 +2020,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 401,
-    "forks": 74,
+    "stars": 404,
+    "forks": 75,
     "followers": null,
     "language": "Go",
     "license": "Apache-2.0",
@@ -1870,9 +2036,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T11:00:57Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.275Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.536Z"
+    "checkedAt": "2026-10-26T16:00:45.275Z"
   },
   {
     "id": "vo-ip-20",
@@ -1904,9 +2073,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-07-29T07:21:39Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.598Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.820Z"
+    "checkedAt": "2026-10-26T16:00:45.598Z"
   },
   {
     "id": "ai-powered-call-center-intelligence-16",
@@ -1932,9 +2104,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2023-06-29T17:26:53Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.252Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.504Z"
+    "checkedAt": "2026-10-26T16:00:45.252Z"
   },
   {
     "id": "web-rtc-kotlin-sample-11",
@@ -1960,9 +2135,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2021-05-02T22:24:18Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.851Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.208Z"
+    "checkedAt": "2026-10-26T16:00:44.851Z"
   },
   {
     "id": "awesome-phone-call-agents-15",
@@ -1980,7 +2158,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "evidence": null,
     "evidenceDetail": null,
     "stars": 112,
-    "forks": 521,
+    "forks": 520,
     "followers": null,
     "language": "TypeScript",
     "license": "MIT",
@@ -1988,9 +2166,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-25T06:04:41Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.158Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.501Z"
+    "checkedAt": "2026-10-26T16:00:45.158Z"
   },
   {
     "id": "httpsms-node-14",
@@ -2016,9 +2197,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-01T07:54:06Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:45.127Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.449Z"
+    "checkedAt": "2026-10-26T16:00:45.127Z"
   },
   {
     "id": "vo-ip-call-sample-10",
@@ -2044,9 +2228,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2022-07-16T12:19:40Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.787Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.185Z"
+    "checkedAt": "2026-10-26T16:00:44.787Z"
   },
   {
     "id": "sms-domovina-ai-12",
@@ -2072,9 +2259,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-05-11T15:37:04Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:44.979Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:53.288Z"
+    "checkedAt": "2026-10-26T16:00:44.979Z"
   },
   {
     "id": "youtube-dl-87",
@@ -2091,7 +2281,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 141400,
+    "stars": 141396,
     "forks": 10665,
     "followers": null,
     "language": "Python",
@@ -2100,9 +2290,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-02-19T16:45:25Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.989Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.300Z"
+    "checkedAt": "2026-10-26T16:00:48.989Z"
   },
   {
     "id": "money-printer-turbo-114",
@@ -2119,8 +2312,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 135262,
-    "forks": 21442,
+    "stars": 135353,
+    "forks": 21458,
     "followers": null,
     "language": "Python",
     "license": "MIT",
@@ -2133,11 +2326,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "python"
     ],
     "archived": false,
-    "pushedAt": "2026-10-25T11:11:41Z",
+    "pushedAt": "2026-10-26T14:01:14Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.751Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.739Z"
+    "checkedAt": "2026-10-26T16:00:50.751Z"
   },
   {
     "id": "hyperframes-113",
@@ -2154,8 +2350,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 72616,
-    "forks": 6561,
+    "stars": 72783,
+    "forks": 6578,
     "followers": null,
     "language": "TypeScript",
     "license": "Apache-2.0",
@@ -2168,11 +2364,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "framework"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T11:37:40Z",
+    "pushedAt": "2026-10-26T15:56:55Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.730Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.660Z"
+    "checkedAt": "2026-10-26T16:00:50.730Z"
   },
   {
     "id": "remotion-84",
@@ -2189,8 +2388,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 67670,
-    "forks": 5468,
+    "stars": 67770,
+    "forks": 5482,
     "followers": null,
     "language": "TypeScript",
     "license": "NOASSERTION",
@@ -2200,11 +2399,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "video"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T11:37:21Z",
+    "pushedAt": "2026-10-26T16:00:30Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.894Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.212Z"
+    "checkedAt": "2026-10-26T16:00:48.894Z"
   },
   {
     "id": "diagram-design-117",
@@ -2221,8 +2423,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/app/api/ai/diagram/route.ts",
     "evidenceDetail": "14 diagram grammars rendered as Mermaid from structured input.",
-    "stars": 61227,
-    "forks": 3978,
+    "stars": 61290,
+    "forks": 3987,
     "followers": null,
     "language": "HTML",
     "license": "MIT",
@@ -2237,9 +2439,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T08:34:58Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.099Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.871Z"
+    "checkedAt": "2026-10-26T16:00:51.099Z"
   },
   {
     "id": "pixelle-video-83",
@@ -2256,8 +2461,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 29405,
-    "forks": 4270,
+    "stars": 29411,
+    "forks": 4273,
     "followers": null,
     "language": "Python",
     "license": "Apache-2.0",
@@ -2271,9 +2476,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-06-14T12:40:58Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.812Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.207Z"
+    "checkedAt": "2026-10-26T16:00:48.812Z"
   },
   {
     "id": "cap-115",
@@ -2290,8 +2498,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 23812,
-    "forks": 2161,
+    "stars": 23821,
+    "forks": 2163,
     "followers": null,
     "language": "Rust",
     "license": "NOASSERTION",
@@ -2304,11 +2512,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "nextjs"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T12:00:47Z",
+    "pushedAt": "2026-10-26T15:58:33Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.811Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.768Z"
+    "checkedAt": "2026-10-26T16:00:50.811Z"
   },
   {
     "id": "claude-video-88",
@@ -2325,8 +2536,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 19281,
-    "forks": 2017,
+    "stars": 19304,
+    "forks": 2020,
     "followers": null,
     "language": "Python",
     "license": "MIT",
@@ -2334,9 +2545,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-25T01:25:54Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.143Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.482Z"
+    "checkedAt": "2026-10-26T16:00:49.143Z"
   },
   {
     "id": "digital-video-introduction-95",
@@ -2369,9 +2583,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-02T21:43:42Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.580Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.795Z"
+    "checkedAt": "2026-10-26T16:00:49.580Z"
   },
   {
     "id": "video-captioner-82",
@@ -2388,7 +2605,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/components/studio/video-captioner-panel.tsx",
     "evidenceDetail": "Transcription plus SRT/VTT export and translation.",
-    "stars": 16366,
+    "stars": 16370,
     "forks": 1425,
     "followers": null,
     "language": "Python",
@@ -2402,9 +2619,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-12T06:20:49Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.803Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.204Z"
+    "checkedAt": "2026-10-26T16:00:48.803Z"
   },
   {
     "id": "video-subtitle-remover-94",
@@ -2421,7 +2641,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 13446,
+    "stars": 13450,
     "forks": 1681,
     "followers": null,
     "language": "Python",
@@ -2436,9 +2656,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-06-30T01:06:52Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.521Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.782Z"
+    "checkedAt": "2026-10-26T16:00:49.521Z"
   },
   {
     "id": "cog-video-90",
@@ -2455,8 +2678,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 13109,
-    "forks": 1377,
+    "stars": 13111,
+    "forks": 1378,
     "followers": null,
     "language": "Python",
     "license": "Apache-2.0",
@@ -2471,9 +2694,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2025-11-04T11:19:04Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.265Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.509Z"
+    "checkedAt": "2026-10-26T16:00:49.265Z"
   },
   {
     "id": "hunyuan-video-91",
@@ -2490,7 +2716,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 12668,
+    "stars": 12669,
     "forks": 1364,
     "followers": null,
     "language": "Python",
@@ -2503,9 +2729,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-08T08:57:37Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.295Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.541Z"
+    "checkedAt": "2026-10-26T16:00:49.295Z"
   },
   {
     "id": "reddit-video-maker-bot-92",
@@ -2522,8 +2751,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "license-review",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 12556,
-    "forks": 2867,
+    "stars": 12557,
+    "forks": 2866,
     "followers": null,
     "language": "Python",
     "license": "GPL-3.0",
@@ -2531,9 +2760,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T10:20:40Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.347Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.542Z"
+    "checkedAt": "2026-10-26T16:00:49.347Z"
   },
   {
     "id": "videos-86",
@@ -2559,9 +2791,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-29T14:42:56Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.970Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.261Z"
+    "checkedAt": "2026-10-26T16:00:48.970Z"
   },
   {
     "id": "ltx-video-93",
@@ -2578,7 +2813,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 11184,
+    "stars": 11186,
     "forks": 1194,
     "followers": null,
     "language": "Python",
@@ -2594,9 +2829,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-01-05T22:37:07Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.356Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.579Z"
+    "checkedAt": "2026-10-26T16:00:49.356Z"
   },
   {
     "id": "long-cat-video-97",
@@ -2622,9 +2860,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-05-27T02:51:41Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.679Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.854Z"
+    "checkedAt": "2026-10-26T16:00:49.679Z"
   },
   {
     "id": "infinite-talk-119",
@@ -2642,7 +2883,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "evidence": null,
     "evidenceDetail": null,
     "stars": 8181,
-    "forks": 1407,
+    "forks": 1406,
     "followers": null,
     "language": "Python",
     "license": "Apache-2.0",
@@ -2650,9 +2891,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-05-22T02:35:51Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.172Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.952Z"
+    "checkedAt": "2026-10-26T16:00:51.172Z"
   },
   {
     "id": "video-retalking-96",
@@ -2683,9 +2927,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2024-08-05T05:59:59Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.656Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.843Z"
+    "checkedAt": "2026-10-26T16:00:49.656Z"
   },
   {
     "id": "audio-video-streaming-98",
@@ -2718,9 +2965,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2024-05-20T12:07:00Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.727Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.908Z"
+    "checkedAt": "2026-10-26T16:00:49.727Z"
   },
   {
     "id": "openreel-video-102",
@@ -2737,8 +2987,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 5468,
-    "forks": 805,
+    "stars": 5470,
+    "forks": 807,
     "followers": null,
     "language": "TypeScript",
     "license": "MIT",
@@ -2746,9 +2996,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-17T07:17:20Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.038Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.162Z"
+    "checkedAt": "2026-10-26T16:00:50.038Z"
   },
   {
     "id": "video-code-85",
@@ -2765,7 +3018,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 4294,
+    "stars": 4297,
     "forks": 1111,
     "followers": null,
     "language": "Jupyter Notebook",
@@ -2774,9 +3027,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2025-08-13T14:02:31Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:48.920Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.244Z"
+    "checkedAt": "2026-10-26T16:00:48.920Z"
   },
   {
     "id": "video-agent-100",
@@ -2809,9 +3065,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-07-22T01:44:05Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.873Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.051Z"
+    "checkedAt": "2026-10-26T16:00:49.873Z"
   },
   {
     "id": "comfy-ui-video-helper-suite-103",
@@ -2828,8 +3087,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "license-review",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 1896,
-    "forks": 390,
+    "stars": 1898,
+    "forks": 391,
     "followers": null,
     "language": "Python",
     "license": "GPL-3.0",
@@ -2837,9 +3096,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-02T06:48:06Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.048Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.174Z"
+    "checkedAt": "2026-10-26T16:00:50.048Z"
   },
   {
     "id": "video-claw-99",
@@ -2872,9 +3134,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-08-26T05:31:29Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.846Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.920Z"
+    "checkedAt": "2026-10-26T16:00:49.846Z"
   },
   {
     "id": "video-recorder-89",
@@ -2904,9 +3169,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2023-08-08T09:37:01Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.179Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:56.499Z"
+    "checkedAt": "2026-10-26T16:00:49.179Z"
   },
   {
     "id": "video-super-resolution-101",
@@ -2939,9 +3207,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2020-09-11T14:36:45Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:49.993Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.071Z"
+    "checkedAt": "2026-10-26T16:00:49.993Z"
   },
   {
     "id": "live-talk-118",
@@ -2967,9 +3238,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-01-02T05:29:40Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.110Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.874Z"
+    "checkedAt": "2026-10-26T16:00:51.110Z"
   },
   {
     "id": "comfy-ui-rh-apicall-120",
@@ -2995,9 +3269,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-05-09T13:15:17Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.173Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.053Z"
+    "checkedAt": "2026-10-26T16:00:51.173Z"
   },
   {
     "id": "doodle-note-116",
@@ -3028,11 +3305,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "meeting-notes"
     ],
     "archived": false,
-    "pushedAt": "2026-10-25T03:17:31Z",
+    "pushedAt": "2026-10-26T14:20:36Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.926Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.868Z"
+    "checkedAt": "2026-10-26T16:00:50.926Z"
   },
   {
     "id": "videomaker-helper-104",
@@ -3063,9 +3343,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2025-02-05T22:56:00Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.090Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.272Z"
+    "checkedAt": "2026-10-26T16:00:50.090Z"
   },
   {
     "id": "videomaker-105",
@@ -3091,9 +3374,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-04-30T19:56:23Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.226Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.296Z"
+    "checkedAt": "2026-10-26T16:00:50.226Z"
   },
   {
     "id": "video-maker-106",
@@ -3119,9 +3405,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2020-06-11T08:02:09Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.347Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.347Z"
+    "checkedAt": "2026-10-26T16:00:50.347Z"
   },
   {
     "id": "video-maker-108",
@@ -3147,9 +3436,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2025-03-04T09:05:09Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.368Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.416Z"
+    "checkedAt": "2026-10-26T16:00:50.368Z"
   },
   {
     "id": "animated-video-maker-109",
@@ -3175,9 +3467,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2022-06-02T16:23:34Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.446Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.438Z"
+    "checkedAt": "2026-10-26T16:00:50.446Z"
   },
   {
     "id": "slideshow-videomaker-107",
@@ -3209,9 +3504,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2022-06-08T00:46:00Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.355Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.414Z"
+    "checkedAt": "2026-10-26T16:00:50.355Z"
   },
   {
     "id": "video-maker-110",
@@ -3237,9 +3535,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-08-16T05:48:09Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.501Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.587Z"
+    "checkedAt": "2026-10-26T16:00:50.501Z"
   },
   {
     "id": "video-maker-bot-111",
@@ -3270,9 +3571,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2023-03-30T19:24:37Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.645Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.619Z"
+    "checkedAt": "2026-10-26T16:00:50.645Z"
   },
   {
     "id": "video-maker-pro-112",
@@ -3298,9 +3602,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2023-11-04T03:42:02Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:50.699Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:57.622Z"
+    "checkedAt": "2026-10-26T16:00:50.699Z"
   },
   {
     "id": "ecc-145",
@@ -3317,8 +3624,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 289232,
-    "forks": 42859,
+    "stars": 289454,
+    "forks": 42882,
     "followers": null,
     "language": "JavaScript",
     "license": "MIT",
@@ -3333,9 +3640,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T04:56:56Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.903Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.260Z"
+    "checkedAt": "2026-10-26T16:00:52.903Z"
   },
   {
     "id": "archify-121",
@@ -3352,8 +3662,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 89542,
-    "forks": 6060,
+    "stars": 89658,
+    "forks": 6072,
     "followers": null,
     "language": "JavaScript",
     "license": "Apache-2.0",
@@ -3368,9 +3678,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T05:59:06Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.225Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.089Z"
+    "checkedAt": "2026-10-26T16:00:51.225Z"
   },
   {
     "id": "ruflo-143",
@@ -3387,8 +3700,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 79399,
-    "forks": 9319,
+    "stars": 79443,
+    "forks": 9322,
     "followers": null,
     "language": "TypeScript",
     "license": "MIT",
@@ -3401,11 +3714,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "ai-assistant"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T09:39:41Z",
+    "pushedAt": "2026-10-26T15:52:45Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.753Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.191Z"
+    "checkedAt": "2026-10-26T16:00:52.753Z"
   },
   {
     "id": "meta-gpt-136",
@@ -3422,7 +3738,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 71022,
+    "stars": 71026,
     "forks": 9049,
     "followers": null,
     "language": "Python",
@@ -3437,9 +3753,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-01-21T10:12:33Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.364Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.838Z"
+    "checkedAt": "2026-10-26T16:00:52.364Z"
   },
   {
     "id": "cline-150",
@@ -3456,18 +3775,21 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 70864,
-    "forks": 7754,
+    "stars": 70882,
+    "forks": 7762,
     "followers": null,
     "language": "TypeScript",
     "license": "Apache-2.0",
     "topics": [],
     "archived": false,
-    "pushedAt": "2026-10-26T11:54:23Z",
+    "pushedAt": "2026-10-26T15:02:16Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.158Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.497Z"
+    "checkedAt": "2026-10-26T16:00:53.158Z"
   },
   {
     "id": "minimind-127",
@@ -3484,8 +3806,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 64438,
-    "forks": 8400,
+    "stars": 64443,
+    "forks": 8401,
     "followers": null,
     "language": "Python",
     "license": "Apache-2.0",
@@ -3496,9 +3818,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-22T16:07:34Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.618Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.343Z"
+    "checkedAt": "2026-10-26T16:00:51.618Z"
   },
   {
     "id": "gods-eye-view-122",
@@ -3515,8 +3840,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 60228,
-    "forks": 11756,
+    "stars": 60312,
+    "forks": 11771,
     "followers": null,
     "language": "JavaScript",
     "license": "NOASSERTION",
@@ -3529,11 +3854,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "gis"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T05:24:30Z",
+    "pushedAt": "2026-10-26T15:46:48Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.388Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.115Z"
+    "checkedAt": "2026-10-26T16:00:51.388Z"
   },
   {
     "id": "scientific-agent-skills-126",
@@ -3550,8 +3878,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 54696,
-    "forks": 4818,
+    "stars": 54737,
+    "forks": 4821,
     "followers": null,
     "language": "Python",
     "license": "MIT",
@@ -3566,9 +3894,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T09:36:15Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.548Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.324Z"
+    "checkedAt": "2026-10-26T16:00:51.548Z"
   },
   {
     "id": "open-maic-123",
@@ -3585,18 +3916,21 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 41515,
-    "forks": 6430,
+    "stars": 41542,
+    "forks": 6433,
     "followers": null,
     "language": "TypeScript",
     "license": "MIT",
     "topics": [],
     "archived": false,
-    "pushedAt": "2026-10-26T12:03:56Z",
+    "pushedAt": "2026-10-26T15:58:34Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.453Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.136Z"
+    "checkedAt": "2026-10-26T16:00:51.453Z"
   },
   {
     "id": "timesfm-128",
@@ -3613,8 +3947,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 34779,
-    "forks": 3361,
+    "stars": 34781,
+    "forks": 3359,
     "followers": null,
     "language": "Python",
     "license": "Apache-2.0",
@@ -3622,9 +3956,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-29T19:36:25Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.724Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.392Z"
+    "checkedAt": "2026-10-26T16:00:51.724Z"
   },
   {
     "id": "openclaude-125",
@@ -3641,8 +3978,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 34160,
-    "forks": 9130,
+    "stars": 34162,
+    "forks": 9129,
     "followers": null,
     "language": "TypeScript",
     "license": "NOASSERTION",
@@ -3654,11 +3991,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "coding"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T05:38:30Z",
+    "pushedAt": "2026-10-26T15:28:55Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.520Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.301Z"
+    "checkedAt": "2026-10-26T16:00:51.520Z"
   },
   {
     "id": "context-mode-144",
@@ -3675,7 +4015,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 32358,
+    "stars": 32387,
     "forks": 2234,
     "followers": null,
     "language": "TypeScript",
@@ -3689,11 +4029,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "claude-code-skill"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T08:55:25Z",
+    "pushedAt": "2026-10-26T15:55:47Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.857Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.201Z"
+    "checkedAt": "2026-10-26T16:00:52.857Z"
   },
   {
     "id": "plugins-149",
@@ -3710,18 +4053,21 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 14129,
-    "forks": 1414,
+    "stars": 14152,
+    "forks": 1419,
     "followers": null,
     "language": "TypeScript",
     "license": "NOASSERTION",
     "topics": [],
     "archived": false,
-    "pushedAt": "2026-10-26T11:39:17Z",
+    "pushedAt": "2026-10-26T15:32:03Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.120Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.445Z"
+    "checkedAt": "2026-10-26T16:00:53.120Z"
   },
   {
     "id": "ai-memory-147",
@@ -3738,18 +4084,21 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/app/api/ai/memory/route.ts",
     "evidenceDetail": "Scoped memory records that agents read before answering.",
-    "stars": 13650,
-    "forks": 965,
+    "stars": 13712,
+    "forks": 970,
     "followers": null,
     "language": "Rust",
     "license": "MIT",
     "topics": [],
     "archived": false,
-    "pushedAt": "2026-10-26T05:14:00Z",
+    "pushedAt": "2026-10-26T15:46:45Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.010Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.331Z"
+    "checkedAt": "2026-10-26T16:00:53.010Z"
   },
   {
     "id": "glm-5-141",
@@ -3780,9 +4129,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-15T01:36:08Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.609Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.037Z"
+    "checkedAt": "2026-10-26T16:00:52.609Z"
   },
   {
     "id": "freegpt-webui-137",
@@ -3815,9 +4167,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": true,
     "pushedAt": "2023-09-26T21:09:16Z",
     "verification": "verified-archived",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.378Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.899Z"
+    "checkedAt": "2026-10-26T16:00:52.378Z"
   },
   {
     "id": "dictionary-of-ai-coding-152",
@@ -3834,7 +4189,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 5280,
+    "stars": 5282,
     "forks": 591,
     "followers": null,
     "language": "TypeScript",
@@ -3843,9 +4198,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-24T11:59:42Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.306Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.537Z"
+    "checkedAt": "2026-10-26T16:00:53.306Z"
   },
   {
     "id": "claude-plugins-community-148",
@@ -3862,7 +4220,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 4769,
+    "stars": 4770,
     "forks": 346,
     "followers": null,
     "language": "JavaScript",
@@ -3871,9 +4229,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T08:16:07Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.048Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.432Z"
+    "checkedAt": "2026-10-26T16:00:53.048Z"
   },
   {
     "id": "go-modern-guidelines-124",
@@ -3890,7 +4251,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 3894,
+    "stars": 3895,
     "forks": 125,
     "followers": null,
     "language": "Go",
@@ -3906,9 +4267,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-15T16:24:05Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.510Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.218Z"
+    "checkedAt": "2026-10-26T16:00:51.510Z"
   },
   {
     "id": "clodds-bot-146",
@@ -3941,9 +4305,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-02T19:37:29Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.998Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.266Z"
+    "checkedAt": "2026-10-26T16:00:52.998Z"
   },
   {
     "id": "miro-fish-offline-151",
@@ -3960,7 +4327,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "license-review",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 2660,
+    "stars": 2661,
     "forks": 672,
     "followers": null,
     "language": "Python",
@@ -3976,9 +4343,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-03-24T18:52:43Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.219Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.504Z"
+    "checkedAt": "2026-10-26T16:00:53.219Z"
   },
   {
     "id": "doc-gpt-langchain-138",
@@ -4011,9 +4381,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2023-11-13T09:39:52Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.381Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.901Z"
+    "checkedAt": "2026-10-26T16:00:52.381Z"
   },
   {
     "id": "claude-code-gpt-5-codex-139",
@@ -4046,9 +4419,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-07-22T06:50:35Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.519Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.977Z"
+    "checkedAt": "2026-10-26T16:00:52.519Z"
   },
   {
     "id": "free-gpt-grok-gemini-claude-api-140",
@@ -4081,9 +4457,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2025-12-04T12:57:05Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.608Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.992Z"
+    "checkedAt": "2026-10-26T16:00:52.608Z"
   },
   {
     "id": "reimagine-it-134",
@@ -4116,9 +4495,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-24T14:13:34Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.159Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.719Z"
+    "checkedAt": "2026-10-26T16:00:52.159Z"
   },
   {
     "id": "youtube-subscriptions-ingest-133",
@@ -4144,9 +4526,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-08-14T18:07:33Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.157Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.699Z"
+    "checkedAt": "2026-10-26T16:00:52.157Z"
   },
   {
     "id": "meta-model-cookbook-189",
@@ -4163,7 +4548,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 181,
+    "stars": 183,
     "forks": 48,
     "followers": null,
     "language": "Python",
@@ -4172,9 +4557,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-24T04:05:26Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:55.485Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:01.289Z"
+    "checkedAt": "2026-10-26T16:00:55.485Z"
   },
   {
     "id": "hindsight-129",
@@ -4200,9 +4588,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-08-20T23:20:45Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.811Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.423Z"
+    "checkedAt": "2026-10-26T16:00:51.811Z"
   },
   {
     "id": "modeldeck-130",
@@ -4235,9 +4626,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-23T02:52:37Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.981Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.572Z"
+    "checkedAt": "2026-10-26T16:00:51.981Z"
   },
   {
     "id": "radiant-135",
@@ -4270,9 +4664,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-21T15:51:45Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.276Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.769Z"
+    "checkedAt": "2026-10-26T16:00:52.276Z"
   },
   {
     "id": "rta-smriti-brain-132",
@@ -4305,9 +4702,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T05:20:22Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.005Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.671Z"
+    "checkedAt": "2026-10-26T16:00:52.005Z"
   },
   {
     "id": "cortex-suite-131",
@@ -4333,9 +4733,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-25T05:11:00Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:51.994Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:58.621Z"
+    "checkedAt": "2026-10-26T16:00:51.994Z"
   },
   {
     "id": "unorouter-142",
@@ -4368,9 +4771,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T10:59:50Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:52.700Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.122Z"
+    "checkedAt": "2026-10-26T16:00:52.700Z"
   },
   {
     "id": "public-apis-155",
@@ -4387,8 +4793,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 492282,
-    "forks": 54815,
+    "stars": 492352,
+    "forks": 54827,
     "followers": null,
     "language": "Python",
     "license": "MIT",
@@ -4403,9 +4809,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-24T09:30:33Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.572Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.777Z"
+    "checkedAt": "2026-10-26T16:00:53.572Z"
   },
   {
     "id": "siyuan-154",
@@ -4422,8 +4831,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "license-review",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 46939,
-    "forks": 3090,
+    "stars": 46943,
+    "forks": 3091,
     "followers": null,
     "language": "TypeScript",
     "license": "AGPL-3.0",
@@ -4436,11 +4845,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "mcp"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T11:57:10Z",
+    "pushedAt": "2026-10-26T15:47:39Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.528Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.731Z"
+    "checkedAt": "2026-10-26T16:00:53.528Z"
   },
   {
     "id": "llm-wiki-153",
@@ -4457,7 +4869,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/app/api/knowledge/wiki/route.ts",
     "evidenceDetail": "Incremental wiki nodes with summaries and [[WikiLinks]].",
-    "stars": 20989,
+    "stars": 20991,
     "forks": 2382,
     "followers": null,
     "language": "TypeScript",
@@ -4466,9 +4878,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-21T11:17:29Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.340Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.663Z"
+    "checkedAt": "2026-10-26T16:00:53.340Z"
   },
   {
     "id": "vaultwarden-168",
@@ -4485,7 +4900,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 69697,
+    "stars": 69707,
     "forks": 3370,
     "followers": null,
     "language": "Rust",
@@ -4501,9 +4916,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-25T19:42:35Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.398Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.463Z"
+    "checkedAt": "2026-10-26T16:00:54.398Z"
   },
   {
     "id": "tool-jet-166",
@@ -4520,8 +4938,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 41127,
-    "forks": 5502,
+    "stars": 41128,
+    "forks": 5503,
     "followers": null,
     "language": "HTML",
     "license": "AGPL-3.0",
@@ -4534,11 +4952,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "internal-tools"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T11:48:49Z",
+    "pushedAt": "2026-10-26T15:47:43Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.240Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.277Z"
+    "checkedAt": "2026-10-26T16:00:54.240Z"
   },
   {
     "id": "open-viking-172",
@@ -4555,8 +4976,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "adopted",
     "evidence": "src/app/api/knowledge/wiki/route.ts",
     "evidenceDetail": "Context retrieval service pattern for agent knowledge.",
-    "stars": 40866,
-    "forks": 3310,
+    "stars": 40876,
+    "forks": 3312,
     "followers": null,
     "language": "Python",
     "license": "AGPL-3.0",
@@ -4569,11 +4990,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "dsh-plugin"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T11:51:39Z",
+    "pushedAt": "2026-10-26T16:00:19Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.588Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.608Z"
+    "checkedAt": "2026-10-26T16:00:54.588Z"
   },
   {
     "id": "server-167",
@@ -4590,8 +5014,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "blueprint",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 37303,
-    "forks": 5309,
+    "stars": 37302,
+    "forks": 5310,
     "followers": null,
     "language": "PHP",
     "license": "AGPL-3.0",
@@ -4604,11 +5028,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "enterprise"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T11:40:55Z",
+    "pushedAt": "2026-10-26T15:59:32Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.392Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.393Z"
+    "checkedAt": "2026-10-26T16:00:54.392Z"
   },
   {
     "id": "pi-desktop-171",
@@ -4625,8 +5052,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "license-review",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 7313,
-    "forks": 707,
+    "stars": 7324,
+    "forks": 709,
     "followers": null,
     "language": "TypeScript",
     "license": "LGPL-3.0",
@@ -4639,11 +5066,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "i18n"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T07:51:53Z",
+    "pushedAt": "2026-10-26T13:46:49Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.490Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.531Z"
+    "checkedAt": "2026-10-26T16:00:54.490Z"
   },
   {
     "id": "natural-language-to-robot-framework-169",
@@ -4676,9 +5106,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-26T05:33:57Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.441Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.465Z"
+    "checkedAt": "2026-10-26T16:00:54.441Z"
   },
   {
     "id": "aitest-case-generator-170",
@@ -4708,9 +5141,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2025-09-22T14:21:26Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.441Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.490Z"
+    "checkedAt": "2026-10-26T16:00:54.441Z"
   },
   {
     "id": "bugcrowd-university-161",
@@ -4736,9 +5172,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-08-26T04:29:07Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.938Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.056Z"
+    "checkedAt": "2026-10-26T16:00:53.938Z"
   },
   {
     "id": "university-160",
@@ -4755,7 +5194,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 1229,
+    "stars": 1230,
     "forks": 90,
     "followers": null,
     "language": null,
@@ -4771,9 +5210,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-28T05:32:27Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.918Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.021Z"
+    "checkedAt": "2026-10-26T16:00:53.918Z"
   },
   {
     "id": "hi-kid-164",
@@ -4806,9 +5248,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-04-24T16:25:53Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.104Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.195Z"
+    "checkedAt": "2026-10-26T16:00:54.104Z"
   },
   {
     "id": "education-toolkit-156",
@@ -4834,9 +5279,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": true,
     "pushedAt": "2023-09-29T03:58:40Z",
     "verification": "verified-archived",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.586Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.779Z"
+    "checkedAt": "2026-10-26T16:00:53.586Z"
   },
   {
     "id": "magic-english-buddy-163",
@@ -4867,9 +5315,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-15T12:02:41Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.014Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.162Z"
+    "checkedAt": "2026-10-26T16:00:54.014Z"
   },
   {
     "id": "toeicbert-165",
@@ -4902,9 +5353,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2019-06-18T02:01:47Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.149Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.264Z"
+    "checkedAt": "2026-10-26T16:00:54.149Z"
   },
   {
     "id": "chat-gpt-ai-english-tutor-162",
@@ -4930,9 +5384,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2023-05-23T02:28:45Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.985Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.126Z"
+    "checkedAt": "2026-10-26T16:00:53.985Z"
   },
   {
     "id": "studytra-158",
@@ -4958,9 +5415,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-07-03T06:34:09Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.652Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.836Z"
+    "checkedAt": "2026-10-26T16:00:53.652Z"
   },
   {
     "id": "next-step-abroad-159",
@@ -4986,9 +5446,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-07-06T15:14:39Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.680Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.969Z"
+    "checkedAt": "2026-10-26T16:00:53.680Z"
   },
   {
     "id": "education-consultancy-website-157",
@@ -5014,9 +5477,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-09-18T04:24:17Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:53.592Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:59.818Z"
+    "checkedAt": "2026-10-26T16:00:53.592Z"
   },
   {
     "id": "alo-education-uk-final-42",
@@ -5042,9 +5508,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "access-required",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.027Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.829Z"
+    "checkedAt": "2026-10-26T16:00:47.027Z"
   },
   {
     "id": "ukvi-ai-markting-n8n-43",
@@ -5070,9 +5539,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "access-required",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:47.183Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:03:54.990Z"
+    "checkedAt": "2026-10-26T16:00:47.183Z"
   },
   {
     "id": "omarchy-175",
@@ -5089,18 +5561,21 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 45719,
-    "forks": 5721,
+    "stars": 45729,
+    "forks": 5725,
     "followers": null,
     "language": "Shell",
     "license": "MIT",
     "topics": [],
     "archived": false,
-    "pushedAt": "2026-10-26T11:15:46Z",
+    "pushedAt": "2026-10-26T15:18:00Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.811Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.744Z"
+    "checkedAt": "2026-10-26T16:00:54.811Z"
   },
   {
     "id": "fmt-177",
@@ -5133,9 +5608,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-25T16:49:29Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.831Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.840Z"
+    "checkedAt": "2026-10-26T16:00:54.831Z"
   },
   {
     "id": "open-logi-174",
@@ -5152,7 +5630,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 24140,
+    "stars": 24157,
     "forks": 852,
     "followers": null,
     "language": "Rust",
@@ -5166,11 +5644,14 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
       "logitech"
     ],
     "archived": false,
-    "pushedAt": "2026-10-26T09:38:27Z",
+    "pushedAt": "2026-10-26T14:56:00Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.793Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.723Z"
+    "checkedAt": "2026-10-26T16:00:54.793Z"
   },
   {
     "id": "vphone-cli-173",
@@ -5187,18 +5668,21 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
-    "stars": 16023,
-    "forks": 1903,
+    "stars": 16030,
+    "forks": 1904,
     "followers": null,
     "language": "Swift",
     "license": "MIT",
     "topics": [],
     "archived": false,
-    "pushedAt": "2026-10-26T05:25:10Z",
+    "pushedAt": "2026-10-26T15:53:38Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.720Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.665Z"
+    "checkedAt": "2026-10-26T16:00:54.720Z"
   },
   {
     "id": "armorpaint-176",
@@ -5216,7 +5700,7 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "evidence": null,
     "evidenceDetail": null,
     "stars": 5417,
-    "forks": 645,
+    "forks": 646,
     "followers": null,
     "language": "C",
     "license": "NOASSERTION",
@@ -5231,9 +5715,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-10-25T22:21:31Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.813Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.802Z"
+    "checkedAt": "2026-10-26T16:00:54.813Z"
   },
   {
     "id": "ipftrace2-178",
@@ -5265,9 +5752,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2024-04-14T02:35:14Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:54.949Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.884Z"
+    "checkedAt": "2026-10-26T16:00:54.949Z"
   },
   {
     "id": "smalltalk-179",
@@ -5300,9 +5790,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": "2026-08-15T16:33:20Z",
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:55.086Z",
     "httpStatus": null,
     "origin": "repository",
-    "checkedAt": "2026-10-26T12:04:00.941Z"
+    "checkedAt": "2026-10-26T16:00:55.086Z"
   },
   {
     "id": "aipraktor-com-68",
@@ -5315,8 +5808,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Workflow Studio",
     "note": "Vertical AI practice-management product.",
-    "description": "Vertical AI practice-management product.",
-    "status": "external-reference",
+    "description": "Bangladesh-focused AI sales agent for Messenger, Instagram, WhatsApp and Facebook comments: catalogue lookup by photo, order taking, voice-note orders, Steadfast/Pathao courier tracking, review requests and human handoff.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5327,10 +5820,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "page-fetch",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.107Z"
+    "checkedAt": "2026-10-26T16:00:48.543Z"
   },
   {
     "id": "astryx-atmeta-com-81",
@@ -5343,8 +5839,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Media Studio",
     "note": "Meta AI experience reference.",
-    "description": "Meta AI experience reference.",
-    "status": "external-reference",
+    "description": "Meta-hosted creative tooling site (has a playground area and component library).",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5355,10 +5851,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "host-probe",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.201Z"
+    "checkedAt": "2026-10-26T16:00:48.732Z"
   },
   {
     "id": "buffer-com-63",
@@ -5371,8 +5870,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Content & Queue",
     "note": "Social scheduling product reference — queue and channel UX.",
-    "description": "Social scheduling product reference — queue and channel UX.",
-    "status": "external-reference",
+    "description": "Social media workspace for publishing, ideas, community replies and analytics across Facebook, Instagram, TikTok, LinkedIn, Threads, Bluesky, YouTube Shorts, Pinterest, Mastodon, X and Substack.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5383,10 +5882,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "page-fetch",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.008Z"
+    "checkedAt": "2026-10-26T16:00:48.468Z"
   },
   {
     "id": "cline-bot-79",
@@ -5399,8 +5901,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "AI Command",
     "note": "Autonomous coding agent product.",
-    "description": "Autonomous coding agent product.",
-    "status": "external-reference",
+    "description": "Autonomous coding agent for the editor and terminal; robots.txt disallows /dashboard, /account and /api/.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5411,10 +5913,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "host-probe",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.199Z"
+    "checkedAt": "2026-10-26T16:00:48.714Z"
   },
   {
     "id": "coder-qwen-ai-78",
@@ -5427,8 +5932,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "AI Command",
     "note": "Qwen coding assistant product reference.",
-    "description": "Qwen coding assistant product reference.",
-    "status": "external-reference",
+    "description": "Qwen coding assistant web application.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5439,10 +5944,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "host-probe",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.196Z"
+    "checkedAt": "2026-10-26T16:00:48.702Z"
   },
   {
     "id": "developer-meta-com-77",
@@ -5455,8 +5963,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Free AI Agent Hub",
     "note": "Meta AI developer platform.",
-    "description": "Meta AI developer platform.",
-    "status": "external-reference",
+    "description": "Meta's AI developer documentation. Automated requests are refused (HTTP 403), so the page could not be read; the URL is reachable but gated behind bot protection. Treat as access-restricted rather than verified.",
+    "status": "unavailable",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5467,10 +5975,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "access-required",
+    "verifiedBy": "page-fetch",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 403,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.191Z"
+    "checkedAt": "2026-10-26T16:00:48.692Z"
   },
   {
     "id": "enerpize-com-67",
@@ -5483,8 +5994,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Finance",
     "note": "AI ERP product reference.",
-    "description": "AI ERP product reference.",
-    "status": "external-reference",
+    "description": "Cloud all-in-one ERP: sales and POS, accounting, inventory, HRM and payroll, CRM, projects and industry-specific configurations.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5495,10 +6006,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "page-fetch",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.087Z"
+    "checkedAt": "2026-10-26T16:00:48.529Z"
   },
   {
     "id": "hatchable-com-65",
@@ -5511,8 +6025,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Marketing Studio",
     "note": "AI website builder product reference.",
-    "description": "AI website builder product reference.",
-    "status": "external-reference",
+    "description": "Hosted app/site publishing console (robots.txt exposes app, sites, announcements and content sitemaps).",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5523,10 +6037,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "host-probe",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.068Z"
+    "checkedAt": "2026-10-26T16:00:48.504Z"
   },
   {
     "id": "hetrixtools-com-64",
@@ -5539,8 +6056,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "SEO & Live Crawler",
     "note": "Uptime and blacklist monitoring service.",
-    "description": "Uptime and blacklist monitoring service.",
-    "status": "external-reference",
+    "description": "Server and uptime monitoring, blacklist monitoring and infrastructure alerts.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5551,10 +6068,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "host-probe",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.025Z"
+    "checkedAt": "2026-10-26T16:00:48.490Z"
   },
   {
     "id": "join-supercool-com-70",
@@ -5567,8 +6087,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Marketing Studio",
     "note": "Onboarding/join flow reference.",
-    "description": "Onboarding/join flow reference.",
-    "status": "external-reference",
+    "description": "One-chat AI film studio: screenplay, scenes, voices, score, trailer and poster, with dubbing into 30+ languages.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5579,10 +6099,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "page-fetch",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.146Z"
+    "checkedAt": "2026-10-26T16:00:48.565Z"
   },
   {
     "id": "larksuite-com-66",
@@ -5595,8 +6118,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Workflow Studio",
     "note": "All-in-one workspace — docs, base, automation UX.",
-    "description": "All-in-one workspace — docs, base, automation UX.",
-    "status": "external-reference",
+    "description": "Collaboration suite: docs, sheets, base, IM and approvals (Lark Suite by ByteDance).",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5607,10 +6130,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "host-probe",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.082Z"
+    "checkedAt": "2026-10-26T16:00:48.507Z"
   },
   {
     "id": "mat3ra-com-72",
@@ -5623,8 +6149,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "AI Command",
     "note": "Materials-science simulation platform (domain AI).",
-    "description": "Materials-science simulation platform (domain AI).",
-    "status": "external-reference",
+    "description": "Cloud materials R&D ecosystem: structure design, simulation workflows (Quantum ESPRESSO, VASP, LAMMPS, GROMACS), data standards and ML models.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5635,10 +6161,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "page-fetch",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.177Z"
+    "checkedAt": "2026-10-26T16:00:48.632Z"
   },
   {
     "id": "mureka-ai-80",
@@ -5651,8 +6180,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Media Studio",
     "note": "AI music generation product.",
-    "description": "AI music generation product.",
-    "status": "external-reference",
+    "description": "AI music generation: songs, instrumentals, reference-audio style transfer and API access.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5663,10 +6192,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "host-probe",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.200Z"
+    "checkedAt": "2026-10-26T16:00:48.716Z"
   },
   {
     "id": "openrouter-ai-75",
@@ -5679,8 +6211,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Free AI Agent Hub",
     "note": "Multi-model gateway — BYO-key routing option.",
-    "description": "Multi-model gateway — BYO-key routing option.",
-    "status": "external-reference",
+    "description": "Single API and model catalogue across many providers, with ordered model fallback and provider routing.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5691,10 +6223,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "host-probe",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.186Z"
+    "checkedAt": "2026-10-26T16:00:48.673Z"
   },
   {
     "id": "openrouter-ai-76",
@@ -5707,8 +6242,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "AI Command",
     "note": "Tutorial for a tool-calling agent loop.",
-    "description": "Tutorial for a tool-calling agent loop.",
-    "status": "external-reference",
+    "description": "Reference implementation of a capped tool-calling loop: send tool definitions on every turn, return one result per tool-call id, stop on no-calls, repeat and iteration caps, plus fallback and concurrency controls. Published 2026-09-17, updated 2026-09-24.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5719,10 +6254,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "page-fetch",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.189Z"
+    "checkedAt": "2026-10-26T16:00:48.675Z"
   },
   {
     "id": "platform-mat3ra-com-73",
@@ -5735,8 +6273,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "AI Command",
     "note": "Materials-science platform console.",
-    "description": "Materials-science platform console.",
-    "status": "external-reference",
+    "description": "Hosted Mat3ra account, simulation and data platform (REST API, CLI and remote desktop).",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5747,10 +6285,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "host-probe",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.179Z"
+    "checkedAt": "2026-10-26T16:00:48.642Z"
   },
   {
     "id": "refine-ink-71",
@@ -5763,8 +6304,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Marketing Studio",
     "note": "Content refinement tool reference.",
-    "description": "Content refinement tool reference.",
-    "status": "external-reference",
+    "description": "Writing/editing workspace with an /app application area.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5775,10 +6316,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "host-probe",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.174Z"
+    "checkedAt": "2026-10-26T16:00:48.619Z"
   },
   {
     "id": "stackoverflow-com-74",
@@ -5791,8 +6335,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Knowledge Wiki & RAG",
     "note": "Q&A knowledge source for developer support.",
-    "description": "Q&A knowledge source for developer support.",
-    "status": "external-reference",
+    "description": "Q&A reference for implementation problems. robots.txt publishes Content-signal: search=no, ai-train=no — cite and link, do not scrape or train on it.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5803,10 +6347,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "host-probe",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.181Z"
+    "checkedAt": "2026-10-26T16:00:48.644Z"
   },
   {
     "id": "supercool-com-69",
@@ -5819,8 +6366,8 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "category": "Websites & Platforms",
     "module": "Marketing Studio",
     "note": "AI website product reference.",
-    "description": "AI website product reference.",
-    "status": "external-reference",
+    "description": "Conversational 'Humanoid' agents with a face and voice that can join Zoom/Meet/Teams/Webex calls, hold their own phone number and build artifacts while you talk.",
+    "status": "evaluated",
     "evidence": null,
     "evidenceDetail": null,
     "stars": null,
@@ -5831,10 +6378,13 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "topics": [],
     "archived": false,
     "pushedAt": null,
-    "verification": "external",
-    "httpStatus": null,
+    "verification": "verified",
+    "verifiedBy": "page-fetch",
+    "sandboxProbe": "blocked",
+    "verifiedAt": "2026-10-26",
+    "httpStatus": 200,
     "origin": "website",
-    "checkedAt": "2026-10-26T12:03:56.136Z"
+    "checkedAt": "2026-10-26T16:00:48.546Z"
   },
   {
     "id": "callum-leslie-183",
@@ -5860,9 +6410,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:55.193Z",
     "httpStatus": null,
     "origin": "profile",
-    "checkedAt": "2026-10-26T12:04:01.104Z"
+    "checkedAt": "2026-10-26T16:00:55.193Z"
   },
   {
     "id": "cordlesscoder-184",
@@ -5888,9 +6441,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:55.275Z",
     "httpStatus": null,
     "origin": "profile",
-    "checkedAt": "2026-10-26T12:04:01.152Z"
+    "checkedAt": "2026-10-26T16:00:55.275Z"
   },
   {
     "id": "cyteon-188",
@@ -5916,9 +6472,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:55.484Z",
     "httpStatus": null,
     "origin": "profile",
-    "checkedAt": "2026-10-26T12:04:01.279Z"
+    "checkedAt": "2026-10-26T16:00:55.484Z"
   },
   {
     "id": "freebie-186",
@@ -5944,9 +6503,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:55.381Z",
     "httpStatus": null,
     "origin": "profile",
-    "checkedAt": "2026-10-26T12:04:01.209Z"
+    "checkedAt": "2026-10-26T16:00:55.381Z"
   },
   {
     "id": "jason-cameron-181",
@@ -5972,9 +6534,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:55.151Z",
     "httpStatus": null,
     "origin": "profile",
-    "checkedAt": "2026-10-26T12:04:01.039Z"
+    "checkedAt": "2026-10-26T16:00:55.151Z"
   },
   {
     "id": "lewis-menelaws-180",
@@ -6000,9 +6565,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:55.146Z",
     "httpStatus": null,
     "origin": "profile",
-    "checkedAt": "2026-10-26T12:04:00.977Z"
+    "checkedAt": "2026-10-26T16:00:55.146Z"
   },
   {
     "id": "luka-hietala-185",
@@ -6028,9 +6596,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:55.378Z",
     "httpStatus": null,
     "origin": "profile",
-    "checkedAt": "2026-10-26T12:04:01.153Z"
+    "checkedAt": "2026-10-26T16:00:55.378Z"
   },
   {
     "id": "simon-182",
@@ -6056,9 +6627,12 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:55.157Z",
     "httpStatus": null,
     "origin": "profile",
-    "checkedAt": "2026-10-26T12:04:01.101Z"
+    "checkedAt": "2026-10-26T16:00:55.157Z"
   },
   {
     "id": "syed-aman-raza-187",
@@ -6084,18 +6658,21 @@ export const REFERENCE_LIBRARY: ReferenceEntry[] = [
     "archived": false,
     "pushedAt": null,
     "verification": "verified",
+    "verifiedBy": "github-api",
+    "sandboxProbe": null,
+    "verifiedAt": "2026-10-26T16:00:55.412Z",
     "httpStatus": null,
     "origin": "profile",
-    "checkedAt": "2026-10-26T12:04:01.263Z"
+    "checkedAt": "2026-10-26T16:00:55.412Z"
   }
 ];
 
 export const REFERENCE_STATS = {
   total: 190,
-  stars: 3340984,
-  verifiedAt: '2026-10-26T12:04:02.148Z',
-  byStatus: {"adopted":18,"blueprint":54,"evaluated":87,"license-review":9,"unavailable":3,"external-reference":19},
-  byVerification: {"verified":166,"access-required":3,"verified-archived":2,"external":19},
+  stars: 3343067,
+  verifiedAt: '2026-10-26T16:00:55.921Z',
+  byStatus: {"adopted":18,"blueprint":54,"evaluated":105,"license-review":9,"unavailable":4},
+  byVerification: {"verified":184,"access-required":4,"verified-archived":2},
   byCategory: {"Marketing, SEO & Growth":19,"CRM & Sales":17,"Conversational AI & Chat":10,"Voice, Telephony & Contact Center":15,"Content, Video & Media":39,"AI Models, Agents & Skills":33,"Knowledge, Docs & Data":3,"Automation, ERP & Business Ops":7,"Education & Study Abroad":12,"Developer Tooling & Infrastructure":7,"Websites & Platforms":19,"Community & Credits":9},
   byModule: {"SMS, VoIP & Scraper":14,"Marketing Studio":11,"Content & Queue":2,"News Feeds":2,"Analytics & UTM":2,"SEO & Live Crawler":2,"Media Studio":45,"CRM":19,"Market Intelligence":4,"Finance":3,"Messages":7,"AI Command":22,"Knowledge Wiki & RAG":14,"Integrations":5,"Workflow Studio":7,"Free AI Agent Hub":8,"Settings":5,"Students":2,"Study Abroad & UKVI":6,"Exams & Results":1,"Ecosystem":9},
 } as const;

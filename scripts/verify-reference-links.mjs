@@ -9,6 +9,11 @@
  *   outbound access to a small allowlist, so an unreachable host is recorded as
  *   `blocked` rather than treated as a dead link.
  *
+ * - Sites outside that allowlist are additionally merged with
+ *   scripts/data/external-verification.json, which records checks performed
+ *   from a network that can reach them. The sandbox probe result is preserved
+ *   under `sandboxProbe` so nothing is overstated.
+ *
  * Output: docs/link-verification.json (machine readable, used to build
  * src/data/reference-library.ts) and a human summary on stdout.
  */
@@ -16,6 +21,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
 
 const INPUT = 'scripts/data/reference-links.json';
+const EXTERNAL = 'scripts/data/external-verification.json';
 const OUTPUT = 'docs/link-verification.json';
 const CONCURRENCY = 6;
 
@@ -136,6 +142,21 @@ async function check(entry) {
   }
 }
 
+// Out-of-band checks for hosts the sandbox cannot reach. Only applied to URLs
+// the sandbox itself could not confirm, so a stale override can never mask a
+// real regression that the sandbox *did* see.
+let externalChecks = { checkedAt: null, entries: [] };
+try {
+  externalChecks = JSON.parse(await readFile(EXTERNAL, 'utf8'));
+} catch {
+  console.log(`No ${EXTERNAL}; external hosts will be reported as unreachable from this sandbox.`);
+}
+const overrides = new Map((externalChecks.entries || []).map((e) => [e.url, e]));
+
+function normalize(url) {
+  return url.replace(/\/+$/, '');
+}
+
 const results = new Array(entries.length);
 let cursor = 0;
 async function worker() {
@@ -148,10 +169,37 @@ async function worker() {
 await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 process.stdout.write('\n');
 
+let externalApplied = 0;
+for (let i = 0; i < results.length; i += 1) {
+  const result = results[i];
+  const override = overrides.get(normalize(result.url)) || overrides.get(result.url);
+  if (!override) continue;
+  if (!['blocked', 'error'].includes(result.status)) continue;
+  results[i] = {
+    ...result,
+    status: override.status,
+    httpStatus: override.httpStatus ?? result.httpStatus ?? null,
+    title: result.title || override.title || null,
+    description: result.description || override.description || '',
+    verifiedBy: override.method,
+    verifiedAt: override.checkedAt || externalChecks.checkedAt,
+    verifiedNote: override.note || null,
+    // Kept for transparency: what this sandbox itself observed.
+    sandboxProbe: { status: result.status, error: result.error ?? null },
+  };
+  externalApplied += 1;
+}
+
 const summary = results.reduce((acc, r) => {
   acc[r.status] = (acc[r.status] || 0) + 1;
   return acc;
 }, {});
+const stillUnreachable = results.filter((r) => ['blocked', 'error'].includes(r.status));
+console.log(`Merged ${externalApplied} out-of-band check(s) from ${EXTERNAL}.`);
+if (stillUnreachable.length > 0) {
+  console.log(`Still unverified from any network (${stillUnreachable.length}):`);
+  for (const r of stillUnreachable) console.log(`  - ${r.status} ${r.url}`);
+}
 
 await mkdir('docs', { recursive: true });
 await writeFile(
@@ -161,6 +209,11 @@ await writeFile(
       generatedAt: new Date().toISOString(),
       total: results.length,
       authenticated: Boolean(token),
+      externalVerification: {
+        source: EXTERNAL,
+        checkedAt: externalChecks.checkedAt ?? null,
+        applied: externalApplied,
+      },
       summary,
       entries: results,
     },

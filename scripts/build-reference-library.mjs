@@ -320,6 +320,11 @@ const entries = verification.entries.map((entry, index) => {
     archived: Boolean(entry.archived),
     pushedAt: entry.pushedAt ?? null,
     verification: verificationLabel(entry.status, entry.kind),
+    /** How the link was actually checked: github-api | page-fetch | host-probe | sandbox-probe. */
+    verifiedBy: entry.verifiedBy ?? (isRepo || isProfile ? 'github-api' : 'sandbox-probe'),
+    /** Set when the build sandbox could not reach the host and an out-of-band check was merged in. */
+    sandboxProbe: entry.sandboxProbe?.status ?? null,
+    verifiedAt: entry.verifiedAt ?? entry.checkedAt ?? null,
     httpStatus: typeof entry.httpStatus === 'number' ? entry.httpStatus : null,
     origin: isRepo ? 'repository' : isProfile ? 'profile' : 'website',
     checkedAt: entry.checkedAt,
@@ -404,6 +409,8 @@ export type ReferenceStatus =
 
 export type ReferenceOrigin = 'repository' | 'profile' | 'website';
 
+export type ReferenceVerifiedBy = 'github-api' | 'page-fetch' | 'host-probe' | 'sandbox-probe';
+
 export type ReferenceVerification =
   | 'verified'
   | 'verified-archived'
@@ -437,6 +444,11 @@ export interface ReferenceEntry {
   archived: boolean;
   pushedAt: string | null;
   verification: ReferenceVerification;
+  /** How the link was actually checked. */
+  verifiedBy: ReferenceVerifiedBy;
+  /** Sandbox probe result when an out-of-band check supplied the verdict. */
+  sandboxProbe: string | null;
+  verifiedAt: string | null;
   httpStatus: number | null;
   origin: ReferenceOrigin;
   checkedAt: string;
@@ -552,7 +564,7 @@ node scripts/build-reference-library.mjs  # rebuild data + this document
 | Evaluated | Reviewed against product scope; kept as a reference, not integrated. |
 | Licence review | Copyleft or unasserted licence/asset terms must be reviewed before any reuse. |
 | Access required | The link exists in the request but returned HTTP 403 from the audit account. |
-| External site | A live product/site outside the build sandbox network allowlist; not fetched here. |
+| Verified externally | A live site the build sandbox cannot reach, checked from a general network; the probe result and method are recorded per entry. |
 
 **No upstream source, asset, model weight or dataset is bundled.** A link in this table is a reference, not a dependency.
 
@@ -564,10 +576,11 @@ node scripts/build-reference-library.mjs  # rebuild data + this document
 | Adopted with evidence | ${adoptedRows.length} |
 | Blueprints | ${blueprintRows.length} |
 | Licence review | ${licenceRows.length} |
-| Verified through the GitHub API | ${verificationCounts.verified ?? 0} |
+| Verified | ${verificationCounts.verified ?? 0} |
+| … of which checked outside the build sandbox | ${entries.filter((entry) => entry.sandboxProbe && entry.verification === 'verified').length} |
 | Verified but archived upstream | ${verificationCounts['verified-archived'] ?? 0} |
 | Access required (HTTP 403) | ${unavailableRows.length} |
-| External sites (not fetchable here) | ${externalRows.length} |
+| External sites still unverified anywhere | ${externalRows.length} |
 | Categories | ${Object.keys(categoryCounts).length} |
 
 ## Adopted patterns and their evidence
@@ -580,7 +593,22 @@ ${licenceRows.map((entry) => `- [${entry.fullName}](${entry.url}) — ${entry.li
 
 ## Links needing a manual check
 
-${[...unavailableRows, ...externalRows].map((entry) => `- [${entry.fullName}](${entry.url}) — ${REFERENCE_VERIFICATION_LABELS[entry.verification]}`).join('\n')}
+${[...unavailableRows, ...externalRows].length ? [...unavailableRows, ...externalRows].map((entry) => `- [${entry.fullName}](${entry.url}) — ${REFERENCE_VERIFICATION_LABELS[entry.verification]}`).join('\n') : '- None. Every link in this catalogue has a recorded check.'}
+
+## Verified outside the build sandbox
+
+The build environment only allows outbound traffic to GitHub, npm and PyPI, so other websites were previously recorded as
+"not fetched here". Those hosts are now checked from a general network and merged in from
+\`scripts/data/external-verification.json\`; the sandbox's own probe result is preserved per entry.
+
+${entries.filter((entry) => entry.sandboxProbe && entry.verification === 'verified').length ? entries.filter((entry) => entry.sandboxProbe && entry.verification === 'verified').map((entry) => `- [${entry.fullName}](${entry.url}) — ${entry.verifiedBy}, ${entry.verifiedAt}`).join('\n') : '- None.'}
+
+Audit of a submitted link batch (duplicates, typos and all):
+
+\`\`\`bash
+node scripts/audit-submitted-links.mjs scripts/data/submitted-links-2026-10-26.txt
+\`\`\`
+→ \`docs/SUBMITTED-LINKS-AUDIT.md\`
 
 ## Renamed upstream (links still resolve)
 

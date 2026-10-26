@@ -394,6 +394,12 @@ export function EcosystemView() {
     []
   );
 
+  /** Links the build sandbox could not reach but which were confirmed from a general network. */
+  const verifiedOutsideSandbox = useMemo(
+    () => REFERENCE_LIBRARY.filter((entry) => entry.sandboxProbe && entry.verification === 'verified'),
+    []
+  );
+
   const unverified = useMemo(
     () => REFERENCE_LIBRARY.filter((entry) => entry.verification === 'access-required' || entry.verification === 'external'),
     []
@@ -428,8 +434,15 @@ export function EcosystemView() {
     toast.success(`Exported ${filtered.length} references as JSON`);
   };
 
+  const VERIFIED_BY_LABEL: Record<string, string> = {
+    'github-api': 'GitHub REST API',
+    'page-fetch': 'Fetched outside sandbox',
+    'host-probe': 'Host probed outside sandbox',
+    'sandbox-probe': 'Build sandbox probe',
+  };
+
   const exportCsv = () => {
-    const header = ['title', 'repository', 'url', 'category', 'module', 'status', 'verification', 'stars', 'license', 'language', 'evidence', 'verified_at'];
+    const header = ['title', 'repository', 'url', 'category', 'module', 'status', 'verification', 'stars', 'license', 'language', 'evidence', 'verified_at', 'verified_by'];
     const escape = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
     const lines = [header.join(','), ...filtered.map((entry) => [
       entry.title,
@@ -443,7 +456,8 @@ export function EcosystemView() {
       entry.license ?? '',
       entry.language ?? '',
       entry.evidence ?? '',
-      entry.checkedAt,
+      entry.verifiedAt ?? entry.checkedAt,
+      entry.verifiedBy,
     ].map(escape).join(','))];
     downloadFile('marketingos-reference-library.csv', lines.join('\n'), 'text/csv;charset=utf-8');
     toast.success(`Exported ${filtered.length} references as CSV`);
@@ -865,7 +879,7 @@ export function EcosystemView() {
             <StatCard icon={CheckCircle2} label="Verified" value={String(byVerification.verified ?? 0)} hint="GitHub API returned 200 with metadata." accent="from-emerald-500 to-teal-500" />
             <StatCard icon={FileJson} label="Archived" value={String(byVerification['verified-archived'] ?? 0)} hint="Reachable but archived upstream." accent="from-amber-500 to-orange-500" />
             <StatCard icon={Lock} label="Access required" value={String(byVerification['access-required'] ?? 0)} hint="Private or renamed — kept with the link intact." accent="from-rose-500 to-pink-500" />
-            <StatCard icon={Globe2} label="External sites" value={String(byVerification.external ?? 0)} hint="Live products outside the sandbox network allowlist." accent="from-sky-500 to-cyan-500" />
+            <StatCard icon={Globe2} label="Verified externally" value={String(verifiedOutsideSandbox.length)} hint="Site reachable, confirmed from a general network outside the sandbox egress allowlist." accent="from-sky-500 to-cyan-500" />
           </div>
 
           <Card className="border-border/60">
@@ -914,6 +928,13 @@ export function EcosystemView() {
               <p>
                 <span className="font-medium text-foreground">2. Check.</span> Every GitHub repository is queried through the REST
                 API for description, stars, licence, language, archive state and last push. Profiles use the users endpoint.
+              </p>
+              <p>
+                <span className="font-medium text-foreground">2b. Reach the sites the sandbox cannot.</span> This build
+                environment only allows outbound traffic to GitHub, npm and PyPI, so every other website used to be recorded as
+                <span className="font-medium text-foreground"> not fetched here</span>. Sites are now checked from a general
+                network and merged in from <code className="font-mono text-[10px]">scripts/data/external-verification.json</code>;
+                the sandbox probe result is kept per entry, and nothing is upgraded without a recorded check.
               </p>
               <p>
                 <span className="font-medium text-foreground">3. Classify.</span> Status reflects this product: adopted (with a code
@@ -1030,7 +1051,8 @@ node scripts/build-reference-library.mjs`}
                       { label: 'Language', value: selected.language ?? '—', icon: Code2 },
                       { label: 'Licence', value: selected.license ?? '—', icon: ShieldAlert },
                       { label: 'Last push', value: formatDate(selected.pushedAt), icon: Rocket },
-                      { label: 'Checked', value: formatDate(selected.checkedAt), icon: ClipboardCheck },
+                      { label: 'Checked', value: formatDate(selected.verifiedAt ?? selected.checkedAt), icon: ClipboardCheck },
+                      { label: 'Checked by', value: VERIFIED_BY_LABEL[selected.verifiedBy] ?? selected.verifiedBy, icon: Globe2 },
                     ].map((item) => (
                       <div key={item.label} className="rounded-lg border border-border/60 p-2">
                         <p className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">

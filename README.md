@@ -86,18 +86,26 @@ Every repository, maintainer profile and product site from the project brief is 
 ```bash
 node scripts/verify-reference-links.mjs   # re-checks every link via the GitHub API
 node scripts/build-reference-library.mjs  # rebuilds the typed catalogue + inventory doc
+node scripts/audit-submitted-links.mjs    # audits a submitted batch, duplicates and typos included
 ```
 
 - Source list: `scripts/data/reference-links.json` (190 unique URLs, de-duplicated)
 - Verification snapshot: `docs/link-verification.json`
+- Out-of-band checks for hosts the build sandbox cannot reach: `scripts/data/external-verification.json`
 - Typed catalogue used by the UI: `src/data/reference-library.ts`
+- Per-batch audit: `docs/SUBMITTED-LINKS-AUDIT.md` (79 unique links from the 2026-10-26 submission)
 - Read-only JSON API: `GET /api/ecosystem?q=&category=&module=&status=&sort=&limit=`
 
 Statuses describe **this** repository: `adopted` patterns point at the implementing code path,
 `blueprint` items are scheduled, `evaluated` items are reference-only, and copyleft licences are
-flagged for review. No upstream source, model weights, datasets or assets are bundled. Links that
-returned HTTP 403 or sit outside the build sandbox network allowlist stay in the catalogue marked
-`access required` / `external site` — they are not silently dropped.
+flagged for review. No upstream source, model weights, datasets or assets are bundled.
+
+Every link now carries **how** it was checked (`github-api`, `page-fetch`, `host-probe`) and when.
+The build sandbox can only reach GitHub, npm and PyPI, so other websites used to be marked
+`external site` without being fetched; they are now checked from a general network and merged in from
+`scripts/data/external-verification.json`, with the sandbox's own probe result kept alongside. Only
+links that genuinely cannot be read stay marked `access required` (private repositories and
+bot-protected pages) — they are never silently dropped.
 
 ## Platform areas
 

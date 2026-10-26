@@ -1,11 +1,15 @@
 {
-  "generatedAt": "2026-10-26T12:04:02.148Z",
+  "generatedAt": "2026-10-26T16:00:55.921Z",
   "total": 190,
   "authenticated": true,
+  "externalVerification": {
+    "source": "scripts/data/external-verification.json",
+    "checkedAt": "2026-10-26",
+    "applied": 19
+  },
   "summary": {
-    "ok": 166,
-    "http-403": 3,
-    "blocked": 19,
+    "ok": 184,
+    "http-403": 4,
     "archived": 2
   },
   "entries": [
@@ -17,7 +21,7 @@
       "kind": "github-repo",
       "owner": "cometchat",
       "repo": "cometchat-skills",
-      "checkedAt": "2026-10-26T12:03:52.698Z",
+      "checkedAt": "2026-10-26T16:00:44.153Z",
       "status": "ok",
       "name": "cometchat/cometchat-skills",
       "title": "cometchat-skills",
@@ -54,7 +58,7 @@
       "pushedAt": "2026-10-15T14:32:32Z",
       "createdAt": "2026-04-03T08:57:51Z",
       "openIssues": 1,
-      "rateRemaining": "6157"
+      "rateRemaining": "6342"
     },
     {
       "url": "https://github.com/cometchat/cometchat-uikit-react",
@@ -64,7 +68,7 @@
       "kind": "github-repo",
       "owner": "cometchat",
       "repo": "cometchat-uikit-react",
-      "checkedAt": "2026-10-26T12:03:52.753Z",
+      "checkedAt": "2026-10-26T16:00:44.249Z",
       "status": "ok",
       "name": "cometchat/cometchat-uikit-react",
       "title": "cometchat-uikit-react",
@@ -92,7 +96,7 @@
       "pushedAt": "2026-10-09T06:39:06Z",
       "createdAt": "2018-12-04T14:09:51Z",
       "openIssues": 3,
-      "rateRemaining": "6156"
+      "rateRemaining": "6341"
     },
     {
       "url": "https://github.com/cometchat/cometchat-uikit-android",
@@ -102,7 +106,7 @@
       "kind": "github-repo",
       "owner": "cometchat",
       "repo": "cometchat-uikit-android",
-      "checkedAt": "2026-10-26T12:03:52.755Z",
+      "checkedAt": "2026-10-26T16:00:44.250Z",
       "status": "ok",
       "name": "cometchat/cometchat-uikit-android",
       "title": "cometchat-uikit-android",
@@ -131,7 +135,7 @@
       "pushedAt": "2026-10-12T19:02:46Z",
       "createdAt": "2019-01-15T19:40:13Z",
       "openIssues": 0,
-      "rateRemaining": "6161"
+      "rateRemaining": "6343"
     },
     {
       "url": "https://github.com/cometchat/cometchat-uikit-ios",
@@ -141,7 +145,7 @@
       "kind": "github-repo",
       "owner": "cometchat",
       "repo": "cometchat-uikit-ios",
-      "checkedAt": "2026-10-26T12:03:52.757Z",
+      "checkedAt": "2026-10-26T16:00:44.251Z",
       "status": "ok",
       "name": "cometchat/cometchat-uikit-ios",
       "title": "cometchat-uikit-ios",
@@ -169,7 +173,7 @@
       "pushedAt": "2026-10-08T14:17:35Z",
       "createdAt": "2019-12-17T08:01:15Z",
       "openIssues": 1,
-      "rateRemaining": "6160"
+      "rateRemaining": "6344"
     },
     {
       "url": "https://github.com/cometchat/cometchat-uikit-react-native",
@@ -179,7 +183,7 @@
       "kind": "github-repo",
       "owner": "cometchat",
       "repo": "cometchat-uikit-react-native",
-      "checkedAt": "2026-10-26T12:03:52.758Z",
+      "checkedAt": "2026-10-26T16:00:44.252Z",
       "status": "ok",
       "name": "cometchat/cometchat-uikit-react-native",
       "title": "cometchat-uikit-react-native",
@@ -204,7 +208,7 @@
       "pushedAt": "2026-10-23T11:41:18Z",
       "createdAt": "2019-04-12T16:46:09Z",
       "openIssues": 1,
-      "rateRemaining": "6158"
+      "rateRemaining": "6339"
     },
     {
       "url": "https://github.com/cometchat/docs-mcp",
@@ -214,7 +218,7 @@
       "kind": "github-repo",
       "owner": "cometchat",
       "repo": "docs-mcp",
-      "checkedAt": "2026-10-26T12:03:52.760Z",
+      "checkedAt": "2026-10-26T16:00:44.253Z",
       "status": "ok",
       "name": "cometchat/docs-mcp",
       "title": "docs-mcp",
@@ -251,7 +255,7 @@
       "pushedAt": "2026-10-26T09:36:35Z",
       "createdAt": "2026-05-14T10:18:08Z",
       "openIssues": 4,
-      "rateRemaining": "6159"
+      "rateRemaining": "6340"
     },
     {
       "url": "https://github.com/cometchat",
@@ -260,7 +264,7 @@
       "note": "Vendor organisation — reference for chat SDK architecture.",
       "kind": "github-user",
       "login": "cometchat",
-      "checkedAt": "2026-10-26T12:03:53.110Z",
+      "checkedAt": "2026-10-26T16:00:44.684Z",
       "status": "ok",
       "name": "cometchat",
       "title": "CometChat",
@@ -278,7 +282,7 @@
       "kind": "github-repo",
       "owner": "ketanyekale",
       "repo": "android-java-chat-app",
-      "checkedAt": "2026-10-26T12:03:53.148Z",
+      "checkedAt": "2026-10-26T16:00:44.690Z",
       "status": "ok",
       "name": "ketanyekale/android-java-chat-app",
       "title": "android-java-chat-app",
@@ -294,7 +298,7 @@
       "pushedAt": "2018-12-10T07:30:36Z",
       "createdAt": "2018-12-10T07:34:09Z",
       "openIssues": 0,
-      "rateRemaining": "6151"
+      "rateRemaining": "6337"
     },
     {
       "url": "https://github.com/chatwoot/chatwoot",
@@ -304,13 +308,13 @@
       "kind": "github-repo",
       "owner": "chatwoot",
       "repo": "chatwoot",
-      "checkedAt": "2026-10-26T12:03:53.152Z",
+      "checkedAt": "2026-10-26T16:00:44.736Z",
       "status": "ok",
       "name": "chatwoot/chatwoot",
       "title": "chatwoot",
       "description": "Open-source live-chat, email support, omni-channel desk. An alternative to Intercom, Zendesk, Salesforce Service Cloud etc. 🔥💬",
-      "stars": 38328,
-      "forks": 9346,
+      "stars": 38346,
+      "forks": 9349,
       "language": "Ruby",
       "license": "NOASSERTION",
       "licenseName": "Other",
@@ -337,10 +341,10 @@
       ],
       "homepage": "https://www.chatwoot.com/help-center",
       "archived": false,
-      "pushedAt": "2026-10-26T11:04:38Z",
+      "pushedAt": "2026-10-26T15:54:27Z",
       "createdAt": "2019-08-14T06:50:51Z",
-      "openIssues": 1578,
-      "rateRemaining": "6154"
+      "openIssues": 1581,
+      "rateRemaining": "6336"
     },
     {
       "url": "https://github.com/sibnerian/electron-promise-ipc",
@@ -350,7 +354,7 @@
       "kind": "github-repo",
       "owner": "sibnerian",
       "repo": "electron-promise-ipc",
-      "checkedAt": "2026-10-26T12:03:53.157Z",
+      "checkedAt": "2026-10-26T16:00:44.741Z",
       "status": "ok",
       "name": "sibnerian/electron-promise-ipc",
       "title": "electron-promise-ipc",
@@ -370,7 +374,7 @@
       "pushedAt": "2023-03-04T02:44:15Z",
       "createdAt": "2017-02-17T09:15:40Z",
       "openIssues": 11,
-      "rateRemaining": "6153"
+      "rateRemaining": "6335"
     },
     {
       "url": "https://github.com/developerspace-samples/VoIP-Call-Sample",
@@ -380,7 +384,7 @@
       "kind": "github-repo",
       "owner": "developerspace-samples",
       "repo": "VoIP-Call-Sample",
-      "checkedAt": "2026-10-26T12:03:53.185Z",
+      "checkedAt": "2026-10-26T16:00:44.787Z",
       "status": "ok",
       "name": "developerspace-samples/VoIP-Call-Sample",
       "title": "VoIP-Call-Sample",
@@ -396,7 +400,7 @@
       "pushedAt": "2022-07-16T12:19:40Z",
       "createdAt": "2021-04-12T08:26:45Z",
       "openIssues": 6,
-      "rateRemaining": "6152"
+      "rateRemaining": "6334"
     },
     {
       "url": "https://github.com/developerspace-samples/WebRTC-Kotlin-Sample",
@@ -406,7 +410,7 @@
       "kind": "github-repo",
       "owner": "developerspace-samples",
       "repo": "WebRTC-Kotlin-Sample",
-      "checkedAt": "2026-10-26T12:03:53.208Z",
+      "checkedAt": "2026-10-26T16:00:44.851Z",
       "status": "ok",
       "name": "developerspace-samples/WebRTC-Kotlin-Sample",
       "title": "WebRTC-Kotlin-Sample",
@@ -422,7 +426,7 @@
       "pushedAt": "2021-05-02T22:24:18Z",
       "createdAt": "2021-04-26T11:26:22Z",
       "openIssues": 5,
-      "rateRemaining": "6150"
+      "rateRemaining": "6333"
     },
     {
       "url": "https://github.com/domovinatv/sms.domovina.ai",
@@ -432,7 +436,7 @@
       "kind": "github-repo",
       "owner": "domovinatv",
       "repo": "sms.domovina.ai",
-      "checkedAt": "2026-10-26T12:03:53.288Z",
+      "checkedAt": "2026-10-26T16:00:44.979Z",
       "status": "ok",
       "name": "domovinatv/sms.domovina.ai",
       "title": "sms.domovina.ai",
@@ -448,7 +452,7 @@
       "pushedAt": "2026-05-11T15:37:04Z",
       "createdAt": "2026-05-07T11:28:48Z",
       "openIssues": 1,
-      "rateRemaining": "6149"
+      "rateRemaining": "6332"
     },
     {
       "url": "https://github.com/NdoleStudio/httpsms",
@@ -458,13 +462,13 @@
       "kind": "github-repo",
       "owner": "NdoleStudio",
       "repo": "httpsms",
-      "checkedAt": "2026-10-26T12:03:53.438Z",
+      "checkedAt": "2026-10-26T16:00:45.125Z",
       "status": "ok",
       "name": "NdoleStudio/httpsms",
       "title": "httpsms",
       "description": "Send and receive SMS messages using your Android phone programmatically via a simple HTTP API",
-      "stars": 6106,
-      "forks": 1116,
+      "stars": 6108,
+      "forks": 1117,
       "language": "Go",
       "license": "AGPL-3.0",
       "licenseName": "GNU Affero General Public License v3.0",
@@ -483,7 +487,7 @@
       "pushedAt": "2026-10-22T05:57:49Z",
       "createdAt": "2022-05-29T14:02:55Z",
       "openIssues": 8,
-      "rateRemaining": "6148"
+      "rateRemaining": "6329"
     },
     {
       "url": "https://github.com/NdoleStudio/httpsms-node",
@@ -493,7 +497,7 @@
       "kind": "github-repo",
       "owner": "NdoleStudio",
       "repo": "httpsms-node",
-      "checkedAt": "2026-10-26T12:03:53.449Z",
+      "checkedAt": "2026-10-26T16:00:45.127Z",
       "status": "ok",
       "name": "NdoleStudio/httpsms-node",
       "title": "httpsms-node",
@@ -509,7 +513,7 @@
       "pushedAt": "2026-10-01T07:54:06Z",
       "createdAt": "2024-01-21T12:59:16Z",
       "openIssues": 0,
-      "rateRemaining": "6147"
+      "rateRemaining": "6331"
     },
     {
       "url": "https://github.com/CALLE-AI/awesome-phone-call-agents",
@@ -519,13 +523,13 @@
       "kind": "github-repo",
       "owner": "CALLE-AI",
       "repo": "awesome-phone-call-agents",
-      "checkedAt": "2026-10-26T12:03:53.501Z",
+      "checkedAt": "2026-10-26T16:00:45.158Z",
       "status": "ok",
       "name": "CALLE-AI/awesome-phone-call-agents",
       "title": "awesome-phone-call-agents",
       "description": "Portable phone-call Agent Skills, apps, examples, adapters, and scheduler recipes for AI agents.",
       "stars": 112,
-      "forks": 521,
+      "forks": 520,
       "language": "TypeScript",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -534,8 +538,8 @@
       "archived": false,
       "pushedAt": "2026-10-25T06:04:41Z",
       "createdAt": "2026-05-08T06:45:28Z",
-      "openIssues": 118,
-      "rateRemaining": "6146"
+      "openIssues": 119,
+      "rateRemaining": "6330"
     },
     {
       "url": "https://github.com/amulchapla/AI-Powered-Call-Center-Intelligence",
@@ -545,7 +549,7 @@
       "kind": "github-repo",
       "owner": "amulchapla",
       "repo": "AI-Powered-Call-Center-Intelligence",
-      "checkedAt": "2026-10-26T12:03:53.504Z",
+      "checkedAt": "2026-10-26T16:00:45.252Z",
       "status": "ok",
       "name": "amulchapla/AI-Powered-Call-Center-Intelligence",
       "title": "AI-Powered-Call-Center-Intelligence",
@@ -561,7 +565,7 @@
       "pushedAt": "2023-06-29T17:26:53Z",
       "createdAt": "2023-01-31T21:06:12Z",
       "openIssues": 0,
-      "rateRemaining": "6143"
+      "rateRemaining": "6328"
     },
     {
       "url": "https://github.com/rasonyang/ai-native-callcenter",
@@ -571,13 +575,13 @@
       "kind": "github-repo",
       "owner": "rasonyang",
       "repo": "ai-native-callcenter",
-      "checkedAt": "2026-10-26T12:03:53.536Z",
+      "checkedAt": "2026-10-26T16:00:45.275Z",
       "status": "ok",
       "name": "rasonyang/ai-native-callcenter",
       "title": "ai-native-callcenter",
       "description": "Self-hosted AI call center: AI talks, code controls the call. AI agents answer every call; humans take over without dropping it. Runs on FreeSWITCH with your SIP trunk and realtime model (OpenAI, Grok, Qwen, Doubao, or any compatible gateway). API-first, with a built-in agent desktop.",
-      "stars": 401,
-      "forks": 74,
+      "stars": 404,
+      "forks": 75,
       "language": "Go",
       "license": "Apache-2.0",
       "licenseName": "Apache License 2.0",
@@ -606,7 +610,7 @@
       "pushedAt": "2026-10-26T11:00:57Z",
       "createdAt": "2026-08-11T23:48:21Z",
       "openIssues": 50,
-      "rateRemaining": "6145"
+      "rateRemaining": "6327"
     },
     {
       "url": "https://github.com/video-db/call.md",
@@ -616,13 +620,13 @@
       "kind": "github-repo",
       "owner": "video-db",
       "repo": "call.md",
-      "checkedAt": "2026-10-26T12:03:53.577Z",
+      "checkedAt": "2026-10-26T16:00:45.405Z",
       "status": "ok",
       "name": "video-db/call.md",
       "title": "call.md",
       "description": "Turn meetings into live agent loops. Record, transcribe, and analyze meetings with real-time AI intelligence — before, during, and after calls.",
-      "stars": 1812,
-      "forks": 217,
+      "stars": 1836,
+      "forks": 216,
       "language": "TypeScript",
       "license": "NOASSERTION",
       "licenseName": null,
@@ -642,7 +646,7 @@
       "pushedAt": "2026-08-19T06:24:36Z",
       "createdAt": "2026-02-25T12:05:19Z",
       "openIssues": 8,
-      "rateRemaining": "6144"
+      "rateRemaining": "6326"
     },
     {
       "url": "https://github.com/microsoft/call-center-ai",
@@ -652,7 +656,7 @@
       "kind": "github-repo",
       "owner": "microsoft",
       "repo": "call-center-ai",
-      "checkedAt": "2026-10-26T12:03:53.741Z",
+      "checkedAt": "2026-10-26T16:00:45.576Z",
       "status": "ok",
       "name": "microsoft/call-center-ai",
       "title": "call-center-ai",
@@ -668,7 +672,7 @@
       "pushedAt": "2026-07-01T18:44:02Z",
       "createdAt": "2024-01-09T10:03:55Z",
       "openIssues": 40,
-      "rateRemaining": "6142"
+      "rateRemaining": "6325"
     },
     {
       "url": "https://github.com/0perationPrivacy/VoIP",
@@ -678,7 +682,7 @@
       "kind": "github-repo",
       "owner": "0perationPrivacy",
       "repo": "VoIP",
-      "checkedAt": "2026-10-26T12:03:53.820Z",
+      "checkedAt": "2026-10-26T16:00:45.598Z",
       "status": "ok",
       "name": "0perationPrivacy/VoIP",
       "title": "VoIP",
@@ -700,7 +704,7 @@
       "pushedAt": "2026-07-29T07:21:39Z",
       "createdAt": "2021-08-22T17:34:21Z",
       "openIssues": 20,
-      "rateRemaining": "6141"
+      "rateRemaining": "6324"
     },
     {
       "url": "https://github.com/BelledonneCommunications/linphone-iphone",
@@ -710,7 +714,7 @@
       "kind": "github-repo",
       "owner": "BelledonneCommunications",
       "repo": "linphone-iphone",
-      "checkedAt": "2026-10-26T12:03:53.821Z",
+      "checkedAt": "2026-10-26T16:00:45.630Z",
       "status": "ok",
       "name": "BelledonneCommunications/linphone-iphone",
       "title": "linphone-iphone",
@@ -737,7 +741,7 @@
       "pushedAt": "2026-10-22T14:15:32Z",
       "createdAt": "2015-01-14T10:23:05Z",
       "openIssues": 41,
-      "rateRemaining": "6140"
+      "rateRemaining": "6323"
     },
     {
       "url": "https://github.com/jitsi/jitsi-videobridge",
@@ -747,7 +751,7 @@
       "kind": "github-repo",
       "owner": "jitsi",
       "repo": "jitsi-videobridge",
-      "checkedAt": "2026-10-26T12:03:53.851Z",
+      "checkedAt": "2026-10-26T16:00:45.637Z",
       "status": "ok",
       "name": "jitsi/jitsi-videobridge",
       "title": "jitsi-videobridge",
@@ -760,10 +764,10 @@
       "topics": [],
       "homepage": "https://jitsi.org/jitsi-videobridge",
       "archived": false,
-      "pushedAt": "2026-10-23T21:39:50Z",
+      "pushedAt": "2026-10-26T15:21:36Z",
       "createdAt": "2013-04-24T21:21:59Z",
       "openIssues": 189,
-      "rateRemaining": "6139"
+      "rateRemaining": "6321"
     },
     {
       "url": "https://github.com/debpalash/VoiceStudio",
@@ -773,13 +777,13 @@
       "kind": "github-repo",
       "owner": "debpalash",
       "repo": "VoiceStudio",
-      "checkedAt": "2026-10-26T12:03:53.874Z",
+      "checkedAt": "2026-10-26T16:00:45.664Z",
       "status": "ok",
       "name": "debpalash/VoiceStudio",
       "title": "VoiceStudio",
       "description": "VoiceStudio is the open-source, fully-local ElevenLabs alternative — voice cloning, voice design, video dubbing, dictation, transcription & audiobook creation in 646 languages.",
-      "stars": 87926,
-      "forks": 9694,
+      "stars": 88381,
+      "forks": 9747,
       "language": "Python",
       "license": "AGPL-3.0",
       "licenseName": "GNU Affero General Public License v3.0",
@@ -806,10 +810,10 @@
       ],
       "homepage": "https://voicestudio.sh",
       "archived": false,
-      "pushedAt": "2026-10-26T11:50:54Z",
+      "pushedAt": "2026-10-26T15:32:55Z",
       "createdAt": "2026-04-09T21:40:26Z",
-      "openIssues": 189,
-      "rateRemaining": "6138"
+      "openIssues": 188,
+      "rateRemaining": "6322"
     },
     {
       "url": "https://github.com/PennyroyalTea/gibberlink",
@@ -819,7 +823,7 @@
       "kind": "github-repo",
       "owner": "PennyroyalTea",
       "repo": "gibberlink",
-      "checkedAt": "2026-10-26T12:03:53.910Z",
+      "checkedAt": "2026-10-26T16:00:45.812Z",
       "status": "ok",
       "name": "PennyroyalTea/gibberlink",
       "title": "gibberlink",
@@ -835,7 +839,7 @@
       "pushedAt": "2025-07-28T06:49:52Z",
       "createdAt": "2025-02-23T11:03:29Z",
       "openIssues": 14,
-      "rateRemaining": "6137"
+      "rateRemaining": "6320"
     },
     {
       "url": "https://github.com/melgarafael/DeskcommCRM",
@@ -845,13 +849,13 @@
       "kind": "github-repo",
       "owner": "melgarafael",
       "repo": "DeskcommCRM",
-      "checkedAt": "2026-10-26T12:03:54.072Z",
+      "checkedAt": "2026-10-26T16:00:45.970Z",
       "status": "ok",
       "name": "melgarafael/DeskcommCRM",
       "title": "DeskcommCRM",
       "description": "Open-source AI sales OS — self-hosted CRM with native AI agents + WhatsApp (WAHA). Open alternative to Kommo, Octadesk & Intercom for any business that sells by chat. MCP-ready, multi-tenant, LGPD.",
       "stars": 4855,
-      "forks": 1354,
+      "forks": 1356,
       "language": "TypeScript",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -879,10 +883,10 @@
       ],
       "homepage": "https://deskcomm.com.br",
       "archived": false,
-      "pushedAt": "2026-10-24T19:43:53Z",
+      "pushedAt": "2026-10-26T15:54:19Z",
       "createdAt": "2026-04-28T20:00:33Z",
-      "openIssues": 344,
-      "rateRemaining": "6135"
+      "openIssues": 356,
+      "rateRemaining": "6319"
     },
     {
       "url": "https://github.com/Django-CRM/Django-CRM",
@@ -892,7 +896,7 @@
       "kind": "github-repo",
       "owner": "Django-CRM",
       "repo": "Django-CRM",
-      "checkedAt": "2026-10-26T12:03:54.098Z",
+      "checkedAt": "2026-10-26T16:00:45.983Z",
       "status": "ok",
       "name": "Django-CRM/Django-CRM",
       "title": "Django-CRM",
@@ -926,10 +930,10 @@
       ],
       "homepage": "https://bottlecrm.io",
       "archived": false,
-      "pushedAt": "2026-10-26T06:35:45Z",
+      "pushedAt": "2026-10-26T15:52:03Z",
       "createdAt": "2017-05-24T11:15:47Z",
       "openIssues": 72,
-      "rateRemaining": "6136"
+      "rateRemaining": "6318"
     },
     {
       "url": "https://github.com/Odoo-mobile/crm",
@@ -939,7 +943,7 @@
       "kind": "github-repo",
       "owner": "Odoo-mobile",
       "repo": "crm",
-      "checkedAt": "2026-10-26T12:03:54.114Z",
+      "checkedAt": "2026-10-26T16:00:46.040Z",
       "status": "ok",
       "name": "Odoo-mobile/crm",
       "title": "crm",
@@ -955,7 +959,7 @@
       "pushedAt": "2017-01-03T12:30:24Z",
       "createdAt": "2014-05-17T20:25:29Z",
       "openIssues": 38,
-      "rateRemaining": "6134"
+      "rateRemaining": "6317"
     },
     {
       "url": "https://github.com/thu-ml/CRM",
@@ -965,7 +969,7 @@
       "kind": "github-repo",
       "owner": "thu-ml",
       "repo": "CRM",
-      "checkedAt": "2026-10-26T12:03:54.149Z",
+      "checkedAt": "2026-10-26T16:00:46.061Z",
       "status": "ok",
       "name": "thu-ml/CRM",
       "title": "CRM",
@@ -988,7 +992,7 @@
       "pushedAt": "2024-11-28T09:04:06Z",
       "createdAt": "2024-03-10T14:28:50Z",
       "openIssues": 26,
-      "rateRemaining": "6133"
+      "rateRemaining": "6315"
     },
     {
       "url": "https://github.com/dennisivy/crash-course-CRM",
@@ -998,7 +1002,7 @@
       "kind": "github-repo",
       "owner": "dennisivy",
       "repo": "crash-course-CRM",
-      "checkedAt": "2026-10-26T12:03:54.187Z",
+      "checkedAt": "2026-10-26T16:00:46.151Z",
       "status": "ok",
       "name": "dennisivy/crash-course-CRM",
       "title": "crash-course-CRM",
@@ -1014,7 +1018,7 @@
       "pushedAt": "2026-01-29T18:57:02Z",
       "createdAt": "2019-11-28T05:45:12Z",
       "openIssues": 20,
-      "rateRemaining": "6132"
+      "rateRemaining": "6316"
     },
     {
       "url": "https://github.com/oroinc/crm-application",
@@ -1024,7 +1028,7 @@
       "kind": "github-repo",
       "owner": "oroinc",
       "repo": "crm-application",
-      "checkedAt": "2026-10-26T12:03:54.188Z",
+      "checkedAt": "2026-10-26T16:00:46.208Z",
       "status": "ok",
       "name": "oroinc/crm-application",
       "title": "crm-application",
@@ -1051,7 +1055,7 @@
       "pushedAt": "2026-10-23T22:01:35Z",
       "createdAt": "2013-06-03T09:02:57Z",
       "openIssues": 11,
-      "rateRemaining": "6131"
+      "rateRemaining": "6314"
     },
     {
       "url": "https://github.com/trycompai/crm",
@@ -1061,13 +1065,13 @@
       "kind": "github-repo",
       "owner": "trycompai",
       "repo": "crm",
-      "checkedAt": "2026-10-26T12:03:54.371Z",
+      "checkedAt": "2026-10-26T16:00:46.305Z",
       "status": "ok",
       "name": "trycompai/crm",
       "title": "crm",
       "description": "Comp AI CRM is an open source, CRM designed for AI agents. Agentic-first CRM.",
-      "stars": 11687,
-      "forks": 1722,
+      "stars": 11690,
+      "forks": 1723,
       "language": "TypeScript",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -1077,7 +1081,7 @@
       "pushedAt": "2026-10-23T20:00:53Z",
       "createdAt": "2026-07-31T21:38:51Z",
       "openIssues": 21,
-      "rateRemaining": "6130"
+      "rateRemaining": "6313"
     },
     {
       "url": "https://github.com/frappe/crm",
@@ -1087,12 +1091,12 @@
       "kind": "github-repo",
       "owner": "frappe",
       "repo": "crm",
-      "checkedAt": "2026-10-26T12:03:54.437Z",
+      "checkedAt": "2026-10-26T16:00:46.432Z",
       "status": "ok",
       "name": "frappe/crm",
       "title": "crm",
       "description": "Fully featured, open source CRM",
-      "stars": 3858,
+      "stars": 3861,
       "forks": 1545,
       "language": "Vue",
       "license": "AGPL-3.0",
@@ -1120,10 +1124,10 @@
       ],
       "homepage": "https://frappe.io/crm",
       "archived": false,
-      "pushedAt": "2026-10-26T10:07:19Z",
+      "pushedAt": "2026-10-26T14:45:30Z",
       "createdAt": "2023-07-19T08:53:35Z",
-      "openIssues": 282,
-      "rateRemaining": "6129"
+      "openIssues": 281,
+      "rateRemaining": "6312"
     },
     {
       "url": "https://github.com/ChurchCRM/CRM",
@@ -1133,7 +1137,7 @@
       "kind": "github-repo",
       "owner": "ChurchCRM",
       "repo": "CRM",
-      "checkedAt": "2026-10-26T12:03:54.446Z",
+      "checkedAt": "2026-10-26T16:00:46.485Z",
       "status": "ok",
       "name": "ChurchCRM/CRM",
       "title": "CRM",
@@ -1160,7 +1164,7 @@
       "pushedAt": "2026-10-26T06:43:23Z",
       "createdAt": "2015-02-16T06:38:40Z",
       "openIssues": 240,
-      "rateRemaining": "6128"
+      "rateRemaining": "6311"
     },
     {
       "url": "https://github.com/crmeb/CRMEB",
@@ -1170,7 +1174,7 @@
       "kind": "github-repo",
       "owner": "crmeb",
       "repo": "CRMEB",
-      "checkedAt": "2026-10-26T12:03:54.468Z",
+      "checkedAt": "2026-10-26T16:00:46.537Z",
       "status": "ok",
       "name": "crmeb/CRMEB",
       "title": "CRMEB",
@@ -1197,7 +1201,7 @@
       "pushedAt": "2026-09-05T07:55:58Z",
       "createdAt": "2018-10-27T08:39:45Z",
       "openIssues": 47,
-      "rateRemaining": "6127"
+      "rateRemaining": "6310"
     },
     {
       "url": "https://github.com/idurar/idurar-erp-crm",
@@ -1207,12 +1211,12 @@
       "kind": "github-repo",
       "owner": "idurar",
       "repo": "idurar-erp-crm",
-      "checkedAt": "2026-10-26T12:03:54.497Z",
+      "checkedAt": "2026-10-26T16:00:46.578Z",
       "status": "ok",
       "name": "idurar/idurar-erp-crm",
       "title": "idurar-erp-crm",
       "description": "Free Open Source ERP CRM Software Accounting Invoicing | Node.Js React",
-      "stars": 8918,
+      "stars": 8920,
       "forks": 3155,
       "language": "JavaScript",
       "license": "AGPL-3.0",
@@ -1244,7 +1248,7 @@
       "pushedAt": "2026-08-14T23:02:15Z",
       "createdAt": "2020-10-17T22:38:36Z",
       "openIssues": 483,
-      "rateRemaining": "6126"
+      "rateRemaining": "6309"
     },
     {
       "url": "https://github.com/oroinc/crm",
@@ -1254,7 +1258,7 @@
       "kind": "github-repo",
       "owner": "oroinc",
       "repo": "crm",
-      "checkedAt": "2026-10-26T12:03:54.502Z",
+      "checkedAt": "2026-10-26T16:00:46.664Z",
       "status": "ok",
       "name": "oroinc/crm",
       "title": "crm",
@@ -1278,7 +1282,7 @@
       "pushedAt": "2026-10-23T21:59:38Z",
       "createdAt": "2013-06-03T09:13:47Z",
       "openIssues": 61,
-      "rateRemaining": "6125"
+      "rateRemaining": "6308"
     },
     {
       "url": "https://github.com/fatfreecrm/fat_free_crm",
@@ -1288,7 +1292,7 @@
       "kind": "github-repo",
       "owner": "fatfreecrm",
       "repo": "fat_free_crm",
-      "checkedAt": "2026-10-26T12:03:54.710Z",
+      "checkedAt": "2026-10-26T16:00:46.767Z",
       "status": "ok",
       "name": "fatfreecrm/fat_free_crm",
       "title": "fat_free_crm",
@@ -1304,7 +1308,7 @@
       "pushedAt": "2026-10-26T08:09:03Z",
       "createdAt": "2008-11-25T03:09:44Z",
       "openIssues": 72,
-      "rateRemaining": "6124"
+      "rateRemaining": "6307"
     },
     {
       "url": "https://github.com/ArnasDon/wacrm",
@@ -1314,12 +1318,12 @@
       "kind": "github-repo",
       "owner": "ArnasDon",
       "repo": "wacrm",
-      "checkedAt": "2026-10-26T12:03:54.754Z",
+      "checkedAt": "2026-10-26T16:00:46.822Z",
       "status": "ok",
       "name": "ArnasDon/wacrm",
       "title": "wacrm",
       "description": "Self-hostable CRM template for WhatsApp — shared inbox, contacts, sales pipelines, broadcasts, and no-code automations. Fork it, brand it, host it.",
-      "stars": 2616,
+      "stars": 2617,
       "forks": 6639,
       "language": "TypeScript",
       "license": "MIT",
@@ -1341,7 +1345,7 @@
       "pushedAt": "2026-10-26T10:35:58Z",
       "createdAt": "2026-04-16T14:04:40Z",
       "openIssues": 29,
-      "rateRemaining": "6123"
+      "rateRemaining": "6306"
     },
     {
       "url": "https://github.com/twentyhq/twenty",
@@ -1351,13 +1355,13 @@
       "kind": "github-repo",
       "owner": "twentyhq",
       "repo": "twenty",
-      "checkedAt": "2026-10-26T12:03:54.775Z",
+      "checkedAt": "2026-10-26T16:00:46.913Z",
       "status": "ok",
       "name": "twentyhq/twenty",
       "title": "twenty",
       "description": "The open alternative to Salesforce, designed for AI.",
-      "stars": 59777,
-      "forks": 9767,
+      "stars": 59802,
+      "forks": 9770,
       "language": "TypeScript",
       "license": "NOASSERTION",
       "licenseName": "Other",
@@ -1382,10 +1386,10 @@
       ],
       "homepage": "https://twenty.com",
       "archived": false,
-      "pushedAt": "2026-10-26T12:02:40Z",
+      "pushedAt": "2026-10-26T15:57:43Z",
       "createdAt": "2022-12-01T13:04:40Z",
-      "openIssues": 145,
-      "rateRemaining": "6122"
+      "openIssues": 147,
+      "rateRemaining": "6305"
     },
     {
       "url": "https://github.com/VonHoltenCodes/SlowBooks-Pro-2026",
@@ -1395,13 +1399,13 @@
       "kind": "github-repo",
       "owner": "VonHoltenCodes",
       "repo": "SlowBooks-Pro-2026",
-      "checkedAt": "2026-10-26T12:03:54.780Z",
+      "checkedAt": "2026-10-26T16:00:46.942Z",
       "status": "ok",
       "name": "VonHoltenCodes/SlowBooks-Pro-2026",
       "title": "SlowBooks-Pro-2026",
       "description": "Free, source-available accounting: double-entry bookkeeping, invoicing, US payroll, inventory, bank feeds - desktop app with built-in multi-user Server Edition (no Docker needed). A QuickBooks replacement. No cloud, no caps.",
-      "stars": 818,
-      "forks": 149,
+      "stars": 820,
+      "forks": 150,
       "language": "Python",
       "license": "NOASSERTION",
       "licenseName": "Other",
@@ -1425,10 +1429,10 @@
       ],
       "homepage": "https://www.slowbookspro.com",
       "archived": false,
-      "pushedAt": "2026-10-25T23:54:22Z",
+      "pushedAt": "2026-10-26T15:41:06Z",
       "createdAt": "2026-04-11T16:30:04Z",
-      "openIssues": 14,
-      "rateRemaining": "6121"
+      "openIssues": 35,
+      "rateRemaining": "6304"
     },
     {
       "url": "https://github.com/engralaminn-collab/Ai-Markting-crm",
@@ -1438,9 +1442,9 @@
       "kind": "github-repo",
       "owner": "engralaminn-collab",
       "repo": "Ai-Markting-crm",
-      "checkedAt": "2026-10-26T12:03:54.809Z",
+      "checkedAt": "2026-10-26T16:00:46.989Z",
       "status": "http-403",
-      "rateRemaining": "6120"
+      "rateRemaining": "6303"
     },
     {
       "url": "https://github.com/engralaminn-collab/alo-education-uk-final",
@@ -1450,9 +1454,9 @@
       "kind": "github-repo",
       "owner": "engralaminn-collab",
       "repo": "alo-education-uk-final",
-      "checkedAt": "2026-10-26T12:03:54.829Z",
+      "checkedAt": "2026-10-26T16:00:47.027Z",
       "status": "http-403",
-      "rateRemaining": "6119"
+      "rateRemaining": "6302"
     },
     {
       "url": "https://github.com/engralaminn-collab/ukvi-ai-markting_n8n",
@@ -1462,9 +1466,9 @@
       "kind": "github-repo",
       "owner": "engralaminn-collab",
       "repo": "ukvi-ai-markting_n8n",
-      "checkedAt": "2026-10-26T12:03:54.990Z",
+      "checkedAt": "2026-10-26T16:00:47.183Z",
       "status": "http-403",
-      "rateRemaining": "6118"
+      "rateRemaining": "6301"
     },
     {
       "url": "https://github.com/every-app/open-seo",
@@ -1474,13 +1478,13 @@
       "kind": "github-repo",
       "owner": "every-app",
       "repo": "open-seo",
-      "checkedAt": "2026-10-26T12:03:55.019Z",
+      "checkedAt": "2026-10-26T16:00:47.272Z",
       "status": "ok",
       "name": "every-app/open-seo",
       "title": "open-seo",
       "description": "Open source alternative to Semrush and Ahrefs",
-      "stars": 25021,
-      "forks": 3414,
+      "stars": 25037,
+      "forks": 3416,
       "language": "TypeScript",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -1501,8 +1505,8 @@
       "archived": false,
       "pushedAt": "2026-10-26T10:39:41Z",
       "createdAt": "2026-02-27T18:57:41Z",
-      "openIssues": 121,
-      "rateRemaining": "6116"
+      "openIssues": 124,
+      "rateRemaining": "6300"
     },
     {
       "url": "https://github.com/coreyhaines31/marketingskills",
@@ -1512,13 +1516,13 @@
       "kind": "github-repo",
       "owner": "coreyhaines31",
       "repo": "marketingskills",
-      "checkedAt": "2026-10-26T12:03:55.033Z",
+      "checkedAt": "2026-10-26T16:00:47.315Z",
       "status": "ok",
       "name": "coreyhaines31/marketingskills",
       "title": "marketingskills",
       "description": "Marketing skills for Claude Code and AI agents. CRO, copywriting, SEO, analytics, and growth engineering.",
-      "stars": 56603,
-      "forks": 8369,
+      "stars": 56640,
+      "forks": 8370,
       "language": "JavaScript",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -1549,7 +1553,7 @@
       "pushedAt": "2026-10-22T16:57:46Z",
       "createdAt": "2026-01-15T19:45:23Z",
       "openIssues": 58,
-      "rateRemaining": "6117"
+      "rateRemaining": "6297"
     },
     {
       "url": "https://github.com/guifav/market-intelligence-radar",
@@ -1559,7 +1563,7 @@
       "kind": "github-repo",
       "owner": "guifav",
       "repo": "market-intelligence-radar",
-      "checkedAt": "2026-10-26T12:03:55.075Z",
+      "checkedAt": "2026-10-26T16:00:47.318Z",
       "status": "ok",
       "name": "guifav/market-intelligence-radar",
       "title": "market-intelligence-radar",
@@ -1575,7 +1579,7 @@
       "pushedAt": "2026-09-25T19:36:07Z",
       "createdAt": "2026-04-26T21:15:54Z",
       "openIssues": 3,
-      "rateRemaining": "6115"
+      "rateRemaining": "6298"
     },
     {
       "url": "https://github.com/parthasarathy123/n8n-gtm-lead-enrichment",
@@ -1585,7 +1589,7 @@
       "kind": "github-repo",
       "owner": "parthasarathy123",
       "repo": "n8n-gtm-lead-enrichment",
-      "checkedAt": "2026-10-26T12:03:55.092Z",
+      "checkedAt": "2026-10-26T16:00:47.322Z",
       "status": "ok",
       "name": "parthasarathy123/n8n-gtm-lead-enrichment",
       "title": "n8n-gtm-lead-enrichment",
@@ -1612,7 +1616,7 @@
       "pushedAt": "2026-07-13T11:11:27Z",
       "createdAt": "2026-07-13T10:39:37Z",
       "openIssues": 0,
-      "rateRemaining": "6114"
+      "rateRemaining": "6299"
     },
     {
       "url": "https://github.com/brightdata/open-enrich",
@@ -1622,7 +1626,7 @@
       "kind": "github-repo",
       "owner": "brightdata",
       "repo": "open-enrich",
-      "checkedAt": "2026-10-26T12:03:55.114Z",
+      "checkedAt": "2026-10-26T16:00:47.333Z",
       "status": "ok",
       "name": "brightdata/open-enrich",
       "title": "open-enrich",
@@ -1638,7 +1642,7 @@
       "pushedAt": "2026-05-30T14:24:40Z",
       "createdAt": "2026-05-16T08:41:57Z",
       "openIssues": 1,
-      "rateRemaining": "6113"
+      "rateRemaining": "6296"
     },
     {
       "url": "https://github.com/clawnify/OpenProspector",
@@ -1648,7 +1652,7 @@
       "kind": "github-repo",
       "owner": "clawnify",
       "repo": "OpenProspector",
-      "checkedAt": "2026-10-26T12:03:55.210Z",
+      "checkedAt": "2026-10-26T16:00:47.404Z",
       "status": "ok",
       "name": "clawnify/OpenProspector",
       "title": "OpenProspector",
@@ -1664,7 +1668,7 @@
       "pushedAt": "2026-10-25T21:53:30Z",
       "createdAt": "2026-07-30T13:32:08Z",
       "openIssues": 3,
-      "rateRemaining": "6112"
+      "rateRemaining": "6295"
     },
     {
       "url": "https://github.com/workwithlos-ui/dave",
@@ -1674,7 +1678,7 @@
       "kind": "github-repo",
       "owner": "workwithlos-ui",
       "repo": "dave",
-      "checkedAt": "2026-10-26T12:03:55.266Z",
+      "checkedAt": "2026-10-26T16:00:47.690Z",
       "status": "ok",
       "name": "workwithlos-ui/dave",
       "title": "dave",
@@ -1690,7 +1694,7 @@
       "pushedAt": "2026-06-17T03:36:27Z",
       "createdAt": "2026-06-10T22:58:27Z",
       "openIssues": 1,
-      "rateRemaining": "6111"
+      "rateRemaining": "6291"
     },
     {
       "url": "https://github.com/BraaMohammed/bricks",
@@ -1700,7 +1704,7 @@
       "kind": "github-repo",
       "owner": "BraaMohammed",
       "repo": "bricks",
-      "checkedAt": "2026-10-26T12:03:55.309Z",
+      "checkedAt": "2026-10-26T16:00:47.691Z",
       "status": "ok",
       "name": "BraaMohammed/bricks",
       "title": "bricks",
@@ -1734,7 +1738,7 @@
       "pushedAt": "2026-10-23T20:01:56Z",
       "createdAt": "2025-08-21T13:45:09Z",
       "openIssues": 2,
-      "rateRemaining": "6110"
+      "rateRemaining": "6294"
     },
     {
       "url": "https://github.com/firecrawl/firecrawl",
@@ -1744,13 +1748,13 @@
       "kind": "github-repo",
       "owner": "firecrawl",
       "repo": "firecrawl",
-      "checkedAt": "2026-10-26T12:03:55.347Z",
+      "checkedAt": "2026-10-26T16:00:47.702Z",
       "status": "ok",
       "name": "firecrawl/firecrawl",
       "title": "firecrawl",
       "description": "Supercharge your AI agents with data from the web and beyond. Building the library for superintelligence. 🔥",
-      "stars": 195491,
-      "forks": 10318,
+      "stars": 195566,
+      "forks": 10317,
       "language": "TypeScript",
       "license": "AGPL-3.0",
       "licenseName": "GNU Affero General Public License v3.0",
@@ -1777,10 +1781,10 @@
       ],
       "homepage": "https://firecrawl.dev",
       "archived": false,
-      "pushedAt": "2026-10-26T04:20:44Z",
+      "pushedAt": "2026-10-26T15:48:07Z",
       "createdAt": "2024-04-15T21:02:29Z",
-      "openIssues": 683,
-      "rateRemaining": "6109"
+      "openIssues": 685,
+      "rateRemaining": "6293"
     },
     {
       "url": "https://github.com/firecrawl/web-agent",
@@ -1790,7 +1794,7 @@
       "kind": "github-repo",
       "owner": "firecrawl",
       "repo": "web-agent",
-      "checkedAt": "2026-10-26T12:03:55.454Z",
+      "checkedAt": "2026-10-26T16:00:47.719Z",
       "status": "ok",
       "name": "firecrawl/web-agent",
       "title": "web-agent",
@@ -1806,7 +1810,7 @@
       "pushedAt": "2026-10-22T17:55:17Z",
       "createdAt": "2026-03-27T21:25:42Z",
       "openIssues": 3,
-      "rateRemaining": "6108"
+      "rateRemaining": "6292"
     },
     {
       "url": "https://github.com/ioi-labs/molx",
@@ -1816,7 +1820,7 @@
       "kind": "github-repo",
       "owner": "ioi-labs",
       "repo": "molx",
-      "checkedAt": "2026-10-26T12:03:55.456Z",
+      "checkedAt": "2026-10-26T16:00:47.769Z",
       "status": "ok",
       "name": "ioi-labs/molx",
       "title": "molx",
@@ -1836,7 +1840,7 @@
       "pushedAt": "2026-08-07T16:12:07Z",
       "createdAt": "2026-07-16T17:07:46Z",
       "openIssues": 0,
-      "rateRemaining": "6107"
+      "rateRemaining": "6290"
     },
     {
       "url": "https://github.com/blader/humanizer",
@@ -1846,13 +1850,13 @@
       "kind": "github-repo",
       "owner": "blader",
       "repo": "humanizer",
-      "checkedAt": "2026-10-26T12:03:55.591Z",
+      "checkedAt": "2026-10-26T16:00:47.785Z",
       "status": "ok",
       "name": "blader/humanizer",
       "title": "humanizer",
       "description": "Agent skill that removes signs of AI-generated writing from text",
-      "stars": 60818,
-      "forks": 4831,
+      "stars": 60913,
+      "forks": 4836,
       "language": "Python",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -1875,8 +1879,8 @@
       "archived": false,
       "pushedAt": "2026-10-16T19:12:03Z",
       "createdAt": "2026-01-18T05:30:15Z",
-      "openIssues": 10,
-      "rateRemaining": "6106"
+      "openIssues": 11,
+      "rateRemaining": "6289"
     },
     {
       "url": "https://github.com/languagetool-org/languagetool",
@@ -1886,13 +1890,13 @@
       "kind": "github-repo",
       "owner": "languagetool-org",
       "repo": "languagetool",
-      "checkedAt": "2026-10-26T12:03:55.654Z",
+      "checkedAt": "2026-10-26T16:00:48.025Z",
       "status": "ok",
       "name": "languagetool-org/languagetool",
       "title": "languagetool",
       "description": "Style and Grammar Checker for 25+ Languages",
-      "stars": 15195,
-      "forks": 1592,
+      "stars": 15197,
+      "forks": 1593,
       "language": "Java",
       "license": "LGPL-2.1",
       "licenseName": "GNU Lesser General Public License v2.1",
@@ -1909,7 +1913,7 @@
       "pushedAt": "2026-10-25T04:05:35Z",
       "createdAt": "2013-08-08T16:37:22Z",
       "openIssues": 2155,
-      "rateRemaining": "6105"
+      "rateRemaining": "6288"
     },
     {
       "url": "https://github.com/songguoxs/gpt4o-image-prompts",
@@ -1919,7 +1923,7 @@
       "kind": "github-repo",
       "owner": "songguoxs",
       "repo": "gpt4o-image-prompts",
-      "checkedAt": "2026-10-26T12:03:55.752Z",
+      "checkedAt": "2026-10-26T16:00:48.064Z",
       "status": "ok",
       "name": "songguoxs/gpt4o-image-prompts",
       "title": "gpt4o-image-prompts",
@@ -1935,7 +1939,7 @@
       "pushedAt": "2026-01-08T13:39:25Z",
       "createdAt": "2025-04-28T03:26:44Z",
       "openIssues": 2,
-      "rateRemaining": "6104"
+      "rateRemaining": "6286"
     },
     {
       "url": "https://github.com/mohamed11sk/Email-markting",
@@ -1945,7 +1949,7 @@
       "kind": "github-repo",
       "owner": "mohamed11sk",
       "repo": "Email-markting",
-      "checkedAt": "2026-10-26T12:03:55.790Z",
+      "checkedAt": "2026-10-26T16:00:48.101Z",
       "status": "ok",
       "name": "mohamed11sk/Email-markting",
       "title": "Email-markting",
@@ -1961,7 +1965,7 @@
       "pushedAt": "2026-06-01T01:07:51Z",
       "createdAt": "2026-06-01T01:01:08Z",
       "openIssues": 0,
-      "rateRemaining": "6103"
+      "rateRemaining": "6287"
     },
     {
       "url": "https://github.com/knsoftic/Email_Markting",
@@ -1971,7 +1975,7 @@
       "kind": "github-repo",
       "owner": "knsoftic",
       "repo": "Email_Markting",
-      "checkedAt": "2026-10-26T12:03:55.811Z",
+      "checkedAt": "2026-10-26T16:00:48.145Z",
       "status": "ok",
       "name": "knsoftic/Email_Markting",
       "title": "Email_Markting",
@@ -1987,7 +1991,7 @@
       "pushedAt": "2026-09-08T07:56:34Z",
       "createdAt": "2026-09-07T03:46:49Z",
       "openIssues": 0,
-      "rateRemaining": "6102"
+      "rateRemaining": "6285"
     },
     {
       "url": "https://github.com/DIYgod/RSSHub",
@@ -1997,13 +2001,13 @@
       "kind": "github-repo",
       "owner": "DIYgod",
       "repo": "RSSHub",
-      "checkedAt": "2026-10-26T12:03:55.869Z",
+      "checkedAt": "2026-10-26T16:00:48.175Z",
       "status": "ok",
       "name": "DIYgod/RSSHub",
       "title": "RSSHub",
       "description": "🧡 Everything is RSSible",
-      "stars": 46669,
-      "forks": 10288,
+      "stars": 46672,
+      "forks": 10287,
       "language": "TypeScript",
       "license": "AGPL-3.0",
       "licenseName": "GNU Affero General Public License v3.0",
@@ -2029,10 +2033,10 @@
       ],
       "homepage": "https://docs.rsshub.app",
       "archived": false,
-      "pushedAt": "2026-10-26T11:25:37Z",
+      "pushedAt": "2026-10-26T15:14:21Z",
       "createdAt": "2018-04-02T14:43:21Z",
-      "openIssues": 43,
-      "rateRemaining": "6101"
+      "openIssues": 40,
+      "rateRemaining": "6284"
     },
     {
       "url": "https://github.com/umami-software/umami",
@@ -2042,13 +2046,13 @@
       "kind": "github-repo",
       "owner": "umami-software",
       "repo": "umami",
-      "checkedAt": "2026-10-26T12:03:55.870Z",
+      "checkedAt": "2026-10-26T16:00:48.202Z",
       "status": "ok",
       "name": "umami-software/umami",
       "title": "umami",
       "description": "Umami is a privacy-first web and product analytics platform. Traffic, campaigns, behavior, conversions, and revenue in one place. No cookies, no surveillance, self-hosted or in the cloud.",
-      "stars": 39700,
-      "forks": 8415,
+      "stars": 39710,
+      "forks": 8419,
       "language": "TypeScript",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -2068,7 +2072,7 @@
       "pushedAt": "2026-10-23T21:58:32Z",
       "createdAt": "2020-07-17T07:59:00Z",
       "openIssues": 142,
-      "rateRemaining": "6100"
+      "rateRemaining": "6283"
     },
     {
       "url": "https://github.com/TryGhost/Ghost",
@@ -2078,13 +2082,13 @@
       "kind": "github-repo",
       "owner": "TryGhost",
       "repo": "Ghost",
-      "checkedAt": "2026-10-26T12:03:55.923Z",
+      "checkedAt": "2026-10-26T16:00:48.449Z",
       "status": "ok",
       "name": "TryGhost/Ghost",
       "title": "Ghost",
       "description": "Independent technology for modern publishing, memberships, subscriptions and newsletters.",
-      "stars": 55608,
-      "forks": 12024,
+      "stars": 55611,
+      "forks": 12027,
       "language": "TypeScript",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -2100,10 +2104,10 @@
       ],
       "homepage": "https://ghost.org",
       "archived": false,
-      "pushedAt": "2026-10-26T11:52:12Z",
+      "pushedAt": "2026-10-26T15:49:30Z",
       "createdAt": "2013-05-04T11:09:13Z",
-      "openIssues": 245,
-      "rateRemaining": "6099"
+      "openIssues": 228,
+      "rateRemaining": "6282"
     },
     {
       "url": "https://buffer.com",
@@ -2111,13 +2115,22 @@
       "module": "Content & Queue",
       "note": "Social scheduling product reference — queue and channel UX.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.008Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.468Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "buffer.com",
-      "description": "",
+      "description": "Social media workspace for publishing, ideas, community replies and analytics across Facebook, Instagram, TikTok, LinkedIn, Threads, Bluesky, YouTube Shorts, Pinterest, Mastodon, X and Substack.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Buffer: Social media management for everyone",
+      "verifiedBy": "page-fetch",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://hetrixtools.com",
@@ -2125,13 +2138,22 @@
       "module": "SEO & Live Crawler",
       "note": "Uptime and blacklist monitoring service.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.025Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.490Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "hetrixtools.com",
-      "description": "",
+      "description": "Server and uptime monitoring, blacklist monitoring and infrastructure alerts.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "HetrixTools",
+      "verifiedBy": "host-probe",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://hatchable.com",
@@ -2139,13 +2161,22 @@
       "module": "Marketing Studio",
       "note": "AI website builder product reference.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.068Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.504Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "hatchable.com",
-      "description": "",
+      "description": "Hosted app/site publishing console (robots.txt exposes app, sites, announcements and content sitemaps).",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Hatchable",
+      "verifiedBy": "host-probe",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://www.larksuite.com",
@@ -2153,13 +2184,22 @@
       "module": "Workflow Studio",
       "note": "All-in-one workspace — docs, base, automation UX.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.082Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.507Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "larksuite.com",
-      "description": "",
+      "description": "Collaboration suite: docs, sheets, base, IM and approvals (Lark Suite by ByteDance).",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Lark",
+      "verifiedBy": "host-probe",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://www.enerpize.com",
@@ -2167,13 +2207,22 @@
       "module": "Finance",
       "note": "AI ERP product reference.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.087Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.529Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "enerpize.com",
-      "description": "",
+      "description": "Cloud all-in-one ERP: sales and POS, accounting, inventory, HRM and payroll, CRM, projects and industry-specific configurations.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Accounting, Sales, Cloud Business Management Software",
+      "verifiedBy": "page-fetch",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://www.aipraktor.com",
@@ -2181,13 +2230,22 @@
       "module": "Workflow Studio",
       "note": "Vertical AI practice-management product.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.107Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.543Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "aipraktor.com",
-      "description": "",
+      "description": "Bangladesh-focused AI sales agent for Messenger, Instagram, WhatsApp and Facebook comments: catalogue lookup by photo, order taking, voice-note orders, Steadfast/Pathao courier tracking, review requests and human handoff.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "AiPraktor — ব্যবসা চালান আপনি, ঝামেলা সামলাবে AI",
+      "verifiedBy": "page-fetch",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://supercool.com",
@@ -2195,13 +2253,22 @@
       "module": "Marketing Studio",
       "note": "AI website product reference.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.136Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.546Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "supercool.com",
-      "description": "",
+      "description": "Conversational 'Humanoid' agents with a face and voice that can join Zoom/Meet/Teams/Webex calls, hold their own phone number and build artifacts while you talk.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "SuperCool",
+      "verifiedBy": "page-fetch",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://join.supercool.com",
@@ -2209,13 +2276,22 @@
       "module": "Marketing Studio",
       "note": "Onboarding/join flow reference.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.146Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.565Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "join.supercool.com",
-      "description": "",
+      "description": "One-chat AI film studio: screenplay, scenes, voices, score, trailer and poster, with dubbing into 30+ languages.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "SuperCool System",
+      "verifiedBy": "page-fetch",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://www.refine.ink",
@@ -2223,13 +2299,22 @@
       "module": "Marketing Studio",
       "note": "Content refinement tool reference.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.174Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.619Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "refine.ink",
-      "description": "",
+      "description": "Writing/editing workspace with an /app application area.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Refine",
+      "verifiedBy": "host-probe",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://mat3ra.com",
@@ -2237,13 +2322,22 @@
       "module": "AI Command",
       "note": "Materials-science simulation platform (domain AI).",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.177Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.632Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "mat3ra.com",
-      "description": "",
+      "description": "Cloud materials R&D ecosystem: structure design, simulation workflows (Quantum ESPRESSO, VASP, LAMMPS, GROMACS), data standards and ML models.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Mat3ra: Materials R&D Cloud",
+      "verifiedBy": "page-fetch",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://platform.mat3ra.com",
@@ -2251,13 +2345,22 @@
       "module": "AI Command",
       "note": "Materials-science platform console.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.179Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.642Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "platform.mat3ra.com",
-      "description": "",
+      "description": "Hosted Mat3ra account, simulation and data platform (REST API, CLI and remote desktop).",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Mat3ra Platform",
+      "verifiedBy": "host-probe",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://stackoverflow.com",
@@ -2265,13 +2368,22 @@
       "module": "Knowledge Wiki & RAG",
       "note": "Q&A knowledge source for developer support.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.181Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.644Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "stackoverflow.com",
-      "description": "",
+      "description": "Q&A reference for implementation problems. robots.txt publishes Content-signal: search=no, ai-train=no — cite and link, do not scrape or train on it.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Stack Overflow",
+      "verifiedBy": "host-probe",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://openrouter.ai",
@@ -2279,13 +2391,22 @@
       "module": "Free AI Agent Hub",
       "note": "Multi-model gateway — BYO-key routing option.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.186Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.673Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "openrouter.ai",
-      "description": "",
+      "description": "Single API and model catalogue across many providers, with ordered model fallback and provider routing.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "OpenRouter",
+      "verifiedBy": "host-probe",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://openrouter.ai/blog/tutorials/build-tool-calling-agent-loop",
@@ -2293,13 +2414,22 @@
       "module": "AI Command",
       "note": "Tutorial for a tool-calling agent loop.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.189Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.675Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "openrouter.ai",
-      "description": "",
+      "description": "Reference implementation of a capped tool-calling loop: send tool definitions on every turn, return one result per tool-call id, stop on no-calls, repeat and iteration caps, plus fallback and concurrency controls. Published 2026-09-17, updated 2026-09-24.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Build a Reliable Tool-Calling Agent Loop on OpenRouter",
+      "verifiedBy": "page-fetch",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://developer.meta.com/ai",
@@ -2307,13 +2437,22 @@
       "module": "Free AI Agent Hub",
       "note": "Meta AI developer platform.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.191Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.692Z",
+      "status": "http-403",
       "error": "ECONNRESET",
       "name": "developer.meta.com",
-      "description": "",
+      "description": "Meta's AI developer documentation. Automated requests are refused (HTTP 403), so the page could not be read; the URL is reachable but gated behind bot protection. Treat as access-restricted rather than verified.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 403,
+      "title": "Meta for Developers — AI",
+      "verifiedBy": "page-fetch",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://coder.qwen.ai",
@@ -2321,13 +2460,22 @@
       "module": "AI Command",
       "note": "Qwen coding assistant product reference.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.196Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.702Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "coder.qwen.ai",
-      "description": "",
+      "description": "Qwen coding assistant web application.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Qwen Coder",
+      "verifiedBy": "host-probe",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://cline.bot",
@@ -2335,13 +2483,22 @@
       "module": "AI Command",
       "note": "Autonomous coding agent product.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.199Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.714Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "cline.bot",
-      "description": "",
+      "description": "Autonomous coding agent for the editor and terminal; robots.txt disallows /dashboard, /account and /api/.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Cline",
+      "verifiedBy": "host-probe",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://www.mureka.ai",
@@ -2349,13 +2506,22 @@
       "module": "Media Studio",
       "note": "AI music generation product.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.200Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.716Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "mureka.ai",
-      "description": "",
+      "description": "AI music generation: songs, instrumentals, reference-audio style transfer and API access.",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Mureka",
+      "verifiedBy": "host-probe",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://astryx.atmeta.com",
@@ -2363,13 +2529,22 @@
       "module": "Media Studio",
       "note": "Meta AI experience reference.",
       "kind": "external",
-      "checkedAt": "2026-10-26T12:03:56.201Z",
-      "status": "blocked",
+      "checkedAt": "2026-10-26T16:00:48.732Z",
+      "status": "ok",
       "error": "ECONNRESET",
       "name": "astryx.atmeta.com",
-      "description": "",
+      "description": "Meta-hosted creative tooling site (has a playground area and component library).",
       "stars": null,
-      "license": null
+      "license": null,
+      "httpStatus": 200,
+      "title": "Astryx",
+      "verifiedBy": "host-probe",
+      "verifiedAt": "2026-10-26",
+      "verifiedNote": null,
+      "sandboxProbe": {
+        "status": "blocked",
+        "error": "ECONNRESET"
+      }
     },
     {
       "url": "https://github.com/WEIFENG2333/VideoCaptioner",
@@ -2379,12 +2554,12 @@
       "kind": "github-repo",
       "owner": "WEIFENG2333",
       "repo": "VideoCaptioner",
-      "checkedAt": "2026-10-26T12:03:56.204Z",
+      "checkedAt": "2026-10-26T16:00:48.803Z",
       "status": "ok",
       "name": "WEIFENG2333/VideoCaptioner",
       "title": "VideoCaptioner",
       "description": "🎬 卡卡字幕助手 | VideoCaptioner - 基于 LLM 的智能字幕助手 - 视频字幕生成、断句、校正、字幕翻译全流程处理！- A powered tool for easy and efficient video subtitling.",
-      "stars": 16366,
+      "stars": 16370,
       "forks": 1425,
       "language": "Python",
       "license": "GPL-3.0",
@@ -2400,7 +2575,7 @@
       "pushedAt": "2026-09-12T06:20:49Z",
       "createdAt": "2024-10-31T03:06:23Z",
       "openIssues": 217,
-      "rateRemaining": "6098"
+      "rateRemaining": "6281"
     },
     {
       "url": "https://github.com/ATH-MaaS/Pixelle-Video",
@@ -2410,13 +2585,13 @@
       "kind": "github-repo",
       "owner": "ATH-MaaS",
       "repo": "Pixelle-Video",
-      "checkedAt": "2026-10-26T12:03:56.207Z",
+      "checkedAt": "2026-10-26T16:00:48.812Z",
       "status": "ok",
       "name": "ATH-MaaS/Pixelle-Video",
       "title": "Pixelle-Video",
       "description": "🚀 AI 全自动短视频引擎 | AI Fully Automated Short Video Engine",
-      "stars": 29405,
-      "forks": 4270,
+      "stars": 29411,
+      "forks": 4273,
       "language": "Python",
       "license": "Apache-2.0",
       "licenseName": "Apache License 2.0",
@@ -2432,7 +2607,7 @@
       "pushedAt": "2026-06-14T12:40:58Z",
       "createdAt": "2025-11-07T06:34:27Z",
       "openIssues": 171,
-      "rateRemaining": "6097"
+      "rateRemaining": "6280"
     },
     {
       "url": "https://github.com/remotion-dev/remotion",
@@ -2442,13 +2617,13 @@
       "kind": "github-repo",
       "owner": "remotion-dev",
       "repo": "remotion",
-      "checkedAt": "2026-10-26T12:03:56.212Z",
+      "checkedAt": "2026-10-26T16:00:48.894Z",
       "status": "ok",
       "name": "remotion-dev/remotion",
       "title": "remotion",
       "description": "🎥      Make videos programmatically with React",
-      "stars": 67670,
-      "forks": 5468,
+      "stars": 67770,
+      "forks": 5482,
       "language": "TypeScript",
       "license": "NOASSERTION",
       "licenseName": "Other",
@@ -2459,10 +2634,10 @@
       ],
       "homepage": "https://remotion.dev",
       "archived": false,
-      "pushedAt": "2026-10-26T11:37:21Z",
+      "pushedAt": "2026-10-26T16:00:30Z",
       "createdAt": "2020-06-23T19:49:10Z",
-      "openIssues": 210,
-      "rateRemaining": "6096"
+      "openIssues": 202,
+      "rateRemaining": "6279"
     },
     {
       "url": "https://github.com/MarkTechStation/VideoCode",
@@ -2472,12 +2647,12 @@
       "kind": "github-repo",
       "owner": "MarkTechStation",
       "repo": "VideoCode",
-      "checkedAt": "2026-10-26T12:03:56.244Z",
+      "checkedAt": "2026-10-26T16:00:48.920Z",
       "status": "ok",
       "name": "MarkTechStation/VideoCode",
       "title": "VideoCode",
       "description": "",
-      "stars": 4294,
+      "stars": 4297,
       "forks": 1111,
       "language": "Jupyter Notebook",
       "license": "NOASSERTION",
@@ -2488,7 +2663,7 @@
       "pushedAt": "2025-08-13T14:02:31Z",
       "createdAt": "2025-04-18T12:58:40Z",
       "openIssues": 10,
-      "rateRemaining": "6095"
+      "rateRemaining": "6278"
     },
     {
       "url": "https://github.com/3b1b/videos",
@@ -2498,7 +2673,7 @@
       "kind": "github-repo",
       "owner": "3b1b",
       "repo": "videos",
-      "checkedAt": "2026-10-26T12:03:56.261Z",
+      "checkedAt": "2026-10-26T16:00:48.970Z",
       "status": "ok",
       "name": "3b1b/videos",
       "title": "videos",
@@ -2514,7 +2689,7 @@
       "pushedAt": "2026-09-29T14:42:56Z",
       "createdAt": "2020-12-31T21:07:33Z",
       "openIssues": 52,
-      "rateRemaining": "6094"
+      "rateRemaining": "6276"
     },
     {
       "url": "https://github.com/ytdl-org/youtube-dl",
@@ -2524,12 +2699,12 @@
       "kind": "github-repo",
       "owner": "ytdl-org",
       "repo": "youtube-dl",
-      "checkedAt": "2026-10-26T12:03:56.300Z",
+      "checkedAt": "2026-10-26T16:00:48.989Z",
       "status": "ok",
       "name": "ytdl-org/youtube-dl",
       "title": "youtube-dl",
       "description": "Command-line program to download videos from YouTube.com and other video sites",
-      "stars": 141400,
+      "stars": 141396,
       "forks": 10665,
       "language": "Python",
       "license": "Unlicense",
@@ -2540,7 +2715,7 @@
       "pushedAt": "2026-02-19T16:45:25Z",
       "createdAt": "2010-10-31T14:35:07Z",
       "openIssues": 4124,
-      "rateRemaining": "6093"
+      "rateRemaining": "6277"
     },
     {
       "url": "https://github.com/bradautomates/claude-video",
@@ -2550,13 +2725,13 @@
       "kind": "github-repo",
       "owner": "bradautomates",
       "repo": "claude-video",
-      "checkedAt": "2026-10-26T12:03:56.482Z",
+      "checkedAt": "2026-10-26T16:00:49.143Z",
       "status": "ok",
       "name": "bradautomates/claude-video",
       "title": "claude-video",
       "description": "Give Claude the ability to watch any video. /watch downloads, extracts frames, transcribes, hands it all to Claude.",
-      "stars": 19281,
-      "forks": 2017,
+      "stars": 19304,
+      "forks": 2020,
       "language": "Python",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -2566,7 +2741,7 @@
       "pushedAt": "2026-09-25T01:25:54Z",
       "createdAt": "2026-04-24T04:40:43Z",
       "openIssues": 210,
-      "rateRemaining": "6092"
+      "rateRemaining": "6275"
     },
     {
       "url": "https://github.com/qdrzwd/VideoRecorder",
@@ -2576,7 +2751,7 @@
       "kind": "github-repo",
       "owner": "qdrzwd",
       "repo": "VideoRecorder",
-      "checkedAt": "2026-10-26T12:03:56.499Z",
+      "checkedAt": "2026-10-26T16:00:49.179Z",
       "status": "ok",
       "name": "qdrzwd/VideoRecorder",
       "title": "VideoRecorder",
@@ -2596,7 +2771,7 @@
       "pushedAt": "2023-08-08T09:37:01Z",
       "createdAt": "2014-03-22T14:44:01Z",
       "openIssues": 58,
-      "rateRemaining": "6091"
+      "rateRemaining": "6274"
     },
     {
       "url": "https://github.com/zai-org/CogVideo",
@@ -2606,13 +2781,13 @@
       "kind": "github-repo",
       "owner": "zai-org",
       "repo": "CogVideo",
-      "checkedAt": "2026-10-26T12:03:56.509Z",
+      "checkedAt": "2026-10-26T16:00:49.265Z",
       "status": "ok",
       "name": "zai-org/CogVideo",
       "title": "CogVideo",
       "description": "text and image to video generation: CogVideoX (2024) and CogVideo (ICLR 2023)",
-      "stars": 13109,
-      "forks": 1377,
+      "stars": 13111,
+      "forks": 1378,
       "language": "Python",
       "license": "Apache-2.0",
       "licenseName": "Apache License 2.0",
@@ -2629,7 +2804,7 @@
       "pushedAt": "2025-11-04T11:19:04Z",
       "createdAt": "2022-05-29T06:46:18Z",
       "openIssues": 115,
-      "rateRemaining": "6090"
+      "rateRemaining": "6272"
     },
     {
       "url": "https://github.com/Tencent-Hunyuan/HunyuanVideo",
@@ -2639,12 +2814,12 @@
       "kind": "github-repo",
       "owner": "Tencent-Hunyuan",
       "repo": "HunyuanVideo",
-      "checkedAt": "2026-10-26T12:03:56.541Z",
+      "checkedAt": "2026-10-26T16:00:49.295Z",
       "status": "ok",
       "name": "Tencent-Hunyuan/HunyuanVideo",
       "title": "HunyuanVideo",
       "description": "HunyuanVideo: A Systematic Framework For Large Video Generation Model",
-      "stars": 12668,
+      "stars": 12669,
       "forks": 1364,
       "language": "Python",
       "license": "NOASSERTION",
@@ -2659,7 +2834,7 @@
       "pushedAt": "2026-10-08T08:57:37Z",
       "createdAt": "2024-11-28T08:38:31Z",
       "openIssues": 187,
-      "rateRemaining": "6089"
+      "rateRemaining": "6273"
     },
     {
       "url": "https://github.com/elebumm/RedditVideoMakerBot",
@@ -2669,13 +2844,13 @@
       "kind": "github-repo",
       "owner": "elebumm",
       "repo": "RedditVideoMakerBot",
-      "checkedAt": "2026-10-26T12:03:56.542Z",
+      "checkedAt": "2026-10-26T16:00:49.347Z",
       "status": "ok",
       "name": "elebumm/RedditVideoMakerBot",
       "title": "RedditVideoMakerBot",
       "description": "Create Reddit Videos with just✨ one command ✨",
-      "stars": 12556,
-      "forks": 2867,
+      "stars": 12557,
+      "forks": 2866,
       "language": "Python",
       "license": "GPL-3.0",
       "licenseName": "GNU General Public License v3.0",
@@ -2685,7 +2860,7 @@
       "pushedAt": "2026-10-26T10:20:40Z",
       "createdAt": "2022-05-26T15:48:10Z",
       "openIssues": 29,
-      "rateRemaining": "6088"
+      "rateRemaining": "6271"
     },
     {
       "url": "https://github.com/Lightricks/LTX-Video",
@@ -2695,12 +2870,12 @@
       "kind": "github-repo",
       "owner": "Lightricks",
       "repo": "LTX-Video",
-      "checkedAt": "2026-10-26T12:03:56.579Z",
+      "checkedAt": "2026-10-26T16:00:49.356Z",
       "status": "ok",
       "name": "Lightricks/LTX-Video",
       "title": "LTX-Video",
       "description": "Official repository for LTX-Video",
-      "stars": 11184,
+      "stars": 11186,
       "forks": 1194,
       "language": "Python",
       "license": "Apache-2.0",
@@ -2718,7 +2893,7 @@
       "pushedAt": "2026-01-05T22:37:07Z",
       "createdAt": "2024-11-20T20:06:28Z",
       "openIssues": 104,
-      "rateRemaining": "6087"
+      "rateRemaining": "6270"
     },
     {
       "url": "https://github.com/YaoFANGUK/video-subtitle-remover",
@@ -2728,12 +2903,12 @@
       "kind": "github-repo",
       "owner": "YaoFANGUK",
       "repo": "video-subtitle-remover",
-      "checkedAt": "2026-10-26T12:03:56.782Z",
+      "checkedAt": "2026-10-26T16:00:49.521Z",
       "status": "ok",
       "name": "YaoFANGUK/video-subtitle-remover",
       "title": "video-subtitle-remover",
       "description": "基于AI的图片/视频硬字幕去除、文本水印去除，无损分辨率生成去字幕、去水印后的图片/视频文件。无需申请第三方API，本地实现。AI-based tool for removing hard-coded subtitles and text-like watermarks from videos or Pictures.",
-      "stars": 13446,
+      "stars": 13450,
       "forks": 1681,
       "language": "Python",
       "license": "Apache-2.0",
@@ -2750,7 +2925,7 @@
       "pushedAt": "2026-06-30T01:06:52Z",
       "createdAt": "2023-10-25T02:50:01Z",
       "openIssues": 193,
-      "rateRemaining": "6086"
+      "rateRemaining": "6269"
     },
     {
       "url": "https://github.com/leandromoreira/digital_video_introduction",
@@ -2760,7 +2935,7 @@
       "kind": "github-repo",
       "owner": "leandromoreira",
       "repo": "digital_video_introduction",
-      "checkedAt": "2026-10-26T12:03:56.795Z",
+      "checkedAt": "2026-10-26T16:00:49.580Z",
       "status": "ok",
       "name": "leandromoreira/digital_video_introduction",
       "title": "digital_video_introduction",
@@ -2797,7 +2972,7 @@
       "pushedAt": "2026-09-02T21:43:42Z",
       "createdAt": "2017-01-28T00:12:05Z",
       "openIssues": 19,
-      "rateRemaining": "6085"
+      "rateRemaining": "6268"
     },
     {
       "url": "https://github.com/OpenTalker/video-retalking",
@@ -2807,7 +2982,7 @@
       "kind": "github-repo",
       "owner": "OpenTalker",
       "repo": "video-retalking",
-      "checkedAt": "2026-10-26T12:03:56.843Z",
+      "checkedAt": "2026-10-26T16:00:49.656Z",
       "status": "ok",
       "name": "OpenTalker/video-retalking",
       "title": "video-retalking",
@@ -2828,7 +3003,7 @@
       "pushedAt": "2024-08-05T05:59:59Z",
       "createdAt": "2022-09-14T04:24:49Z",
       "openIssues": 215,
-      "rateRemaining": "6084"
+      "rateRemaining": "6267"
     },
     {
       "url": "https://github.com/meituan-longcat/LongCat-Video",
@@ -2838,7 +3013,7 @@
       "kind": "github-repo",
       "owner": "meituan-longcat",
       "repo": "LongCat-Video",
-      "checkedAt": "2026-10-26T12:03:56.854Z",
+      "checkedAt": "2026-10-26T16:00:49.679Z",
       "status": "ok",
       "name": "meituan-longcat/LongCat-Video",
       "title": "LongCat-Video",
@@ -2854,7 +3029,7 @@
       "pushedAt": "2026-05-27T02:51:41Z",
       "createdAt": "2025-10-25T06:49:49Z",
       "openIssues": 81,
-      "rateRemaining": "6083"
+      "rateRemaining": "6266"
     },
     {
       "url": "https://github.com/0voice/audio_video_streaming",
@@ -2864,7 +3039,7 @@
       "kind": "github-repo",
       "owner": "0voice",
       "repo": "audio_video_streaming",
-      "checkedAt": "2026-10-26T12:03:56.908Z",
+      "checkedAt": "2026-10-26T16:00:49.727Z",
       "status": "ok",
       "name": "0voice/audio_video_streaming",
       "title": "audio_video_streaming",
@@ -2890,7 +3065,7 @@
       "pushedAt": "2024-05-20T12:07:00Z",
       "createdAt": "2021-07-26T07:47:49Z",
       "openIssues": 2,
-      "rateRemaining": "6082"
+      "rateRemaining": "6265"
     },
     {
       "url": "https://github.com/HITsz-TMG/VideoClaw",
@@ -2900,7 +3075,7 @@
       "kind": "github-repo",
       "owner": "HITsz-TMG",
       "repo": "VideoClaw",
-      "checkedAt": "2026-10-26T12:03:56.920Z",
+      "checkedAt": "2026-10-26T16:00:49.846Z",
       "status": "ok",
       "name": "HITsz-TMG/VideoClaw",
       "title": "VideoClaw",
@@ -2926,7 +3101,7 @@
       "pushedAt": "2026-08-26T05:31:29Z",
       "createdAt": "2024-08-29T13:58:59Z",
       "openIssues": 14,
-      "rateRemaining": "6081"
+      "rateRemaining": "6264"
     },
     {
       "url": "https://github.com/HKUDS/VideoAgent",
@@ -2936,7 +3111,7 @@
       "kind": "github-repo",
       "owner": "HKUDS",
       "repo": "VideoAgent",
-      "checkedAt": "2026-10-26T12:03:57.051Z",
+      "checkedAt": "2026-10-26T16:00:49.873Z",
       "status": "ok",
       "name": "HKUDS/VideoAgent",
       "title": "VideoAgent",
@@ -2961,7 +3136,7 @@
       "pushedAt": "2026-07-22T01:44:05Z",
       "createdAt": "2025-07-16T11:35:25Z",
       "openIssues": 14,
-      "rateRemaining": "6080"
+      "rateRemaining": "6263"
     },
     {
       "url": "https://github.com/LoSealL/VideoSuperResolution",
@@ -2971,7 +3146,7 @@
       "kind": "github-repo",
       "owner": "LoSealL",
       "repo": "VideoSuperResolution",
-      "checkedAt": "2026-10-26T12:03:57.071Z",
+      "checkedAt": "2026-10-26T16:00:49.993Z",
       "status": "ok",
       "name": "LoSealL/VideoSuperResolution",
       "title": "VideoSuperResolution",
@@ -3005,7 +3180,7 @@
       "pushedAt": "2020-09-11T14:36:45Z",
       "createdAt": "2018-06-04T08:42:05Z",
       "openIssues": 8,
-      "rateRemaining": "6079"
+      "rateRemaining": "6262"
     },
     {
       "url": "https://github.com/Augani/openreel-video",
@@ -3015,13 +3190,13 @@
       "kind": "github-repo",
       "owner": "Augani",
       "repo": "openreel-video",
-      "checkedAt": "2026-10-26T12:03:57.162Z",
+      "checkedAt": "2026-10-26T16:00:50.038Z",
       "status": "ok",
       "name": "Augani/openreel-video",
       "title": "openreel-video",
       "description": "OpenReel Video - Professional browser-based video editor. Open source CapCut alternative. 100% browser-based, no installation, no cloud uploads, no watermarks.",
-      "stars": 5468,
-      "forks": 805,
+      "stars": 5470,
+      "forks": 807,
       "language": "TypeScript",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -3030,8 +3205,8 @@
       "archived": false,
       "pushedAt": "2026-10-17T07:17:20Z",
       "createdAt": "2026-01-19T11:24:02Z",
-      "openIssues": 25,
-      "rateRemaining": "6077"
+      "openIssues": 26,
+      "rateRemaining": "6260"
     },
     {
       "url": "https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite",
@@ -3041,13 +3216,13 @@
       "kind": "github-repo",
       "owner": "Kosinkadink",
       "repo": "ComfyUI-VideoHelperSuite",
-      "checkedAt": "2026-10-26T12:03:57.174Z",
+      "checkedAt": "2026-10-26T16:00:50.048Z",
       "status": "ok",
       "name": "Kosinkadink/ComfyUI-VideoHelperSuite",
       "title": "ComfyUI-VideoHelperSuite",
       "description": "Nodes related to video workflows",
-      "stars": 1896,
-      "forks": 390,
+      "stars": 1898,
+      "forks": 391,
       "language": "Python",
       "license": "GPL-3.0",
       "licenseName": "GNU General Public License v3.0",
@@ -3056,8 +3231,8 @@
       "archived": false,
       "pushedAt": "2026-09-02T06:48:06Z",
       "createdAt": "2023-09-23T23:57:29Z",
-      "openIssues": 334,
-      "rateRemaining": "6078"
+      "openIssues": 335,
+      "rateRemaining": "6261"
     },
     {
       "url": "https://github.com/dunossauro/videomaker-helper",
@@ -3067,7 +3242,7 @@
       "kind": "github-repo",
       "owner": "dunossauro",
       "repo": "videomaker-helper",
-      "checkedAt": "2026-10-26T12:03:57.272Z",
+      "checkedAt": "2026-10-26T16:00:50.090Z",
       "status": "ok",
       "name": "dunossauro/videomaker-helper",
       "title": "videomaker-helper",
@@ -3088,7 +3263,7 @@
       "pushedAt": "2025-02-05T22:56:00Z",
       "createdAt": "2023-02-26T15:53:43Z",
       "openIssues": 15,
-      "rateRemaining": "6076"
+      "rateRemaining": "6259"
     },
     {
       "url": "https://github.com/burhankocabiyik/videomaker",
@@ -3098,7 +3273,7 @@
       "kind": "github-repo",
       "owner": "burhankocabiyik",
       "repo": "videomaker",
-      "checkedAt": "2026-10-26T12:03:57.296Z",
+      "checkedAt": "2026-10-26T16:00:50.226Z",
       "status": "ok",
       "name": "burhankocabiyik/videomaker",
       "title": "videomaker",
@@ -3114,7 +3289,7 @@
       "pushedAt": "2026-04-30T19:56:23Z",
       "createdAt": "2026-04-29T13:07:36Z",
       "openIssues": 0,
-      "rateRemaining": "6075"
+      "rateRemaining": "6258"
     },
     {
       "url": "https://github.com/wtz2017/VideoMaker",
@@ -3124,7 +3299,7 @@
       "kind": "github-repo",
       "owner": "wtz2017",
       "repo": "VideoMaker",
-      "checkedAt": "2026-10-26T12:03:57.347Z",
+      "checkedAt": "2026-10-26T16:00:50.347Z",
       "status": "ok",
       "name": "wtz2017/VideoMaker",
       "title": "VideoMaker",
@@ -3140,7 +3315,7 @@
       "pushedAt": "2020-06-11T08:02:09Z",
       "createdAt": "2020-03-10T04:28:22Z",
       "openIssues": 0,
-      "rateRemaining": "6074"
+      "rateRemaining": "6257"
     },
     {
       "url": "https://github.com/viniciusenari/slideshow-videomaker",
@@ -3150,7 +3325,7 @@
       "kind": "github-repo",
       "owner": "viniciusenari",
       "repo": "slideshow-videomaker",
-      "checkedAt": "2026-10-26T12:03:57.414Z",
+      "checkedAt": "2026-10-26T16:00:50.355Z",
       "status": "ok",
       "name": "viniciusenari/slideshow-videomaker",
       "title": "slideshow-videomaker",
@@ -3172,7 +3347,7 @@
       "pushedAt": "2022-06-08T00:46:00Z",
       "createdAt": "2022-05-13T21:02:53Z",
       "openIssues": 0,
-      "rateRemaining": "6073"
+      "rateRemaining": "6255"
     },
     {
       "url": "https://github.com/WuTao-CS/VideoMaker",
@@ -3182,7 +3357,7 @@
       "kind": "github-repo",
       "owner": "WuTao-CS",
       "repo": "VideoMaker",
-      "checkedAt": "2026-10-26T12:03:57.416Z",
+      "checkedAt": "2026-10-26T16:00:50.368Z",
       "status": "ok",
       "name": "WuTao-CS/VideoMaker",
       "title": "VideoMaker",
@@ -3198,7 +3373,7 @@
       "pushedAt": "2025-03-04T09:05:09Z",
       "createdAt": "2025-03-04T07:52:43Z",
       "openIssues": 2,
-      "rateRemaining": "6072"
+      "rateRemaining": "6256"
     },
     {
       "url": "https://github.com/shubhamdevhouse/Animated-VideoMaker",
@@ -3208,7 +3383,7 @@
       "kind": "github-repo",
       "owner": "shubhamdevhouse",
       "repo": "Animated-VideoMaker",
-      "checkedAt": "2026-10-26T12:03:57.438Z",
+      "checkedAt": "2026-10-26T16:00:50.446Z",
       "status": "ok",
       "name": "shubhamdevhouse/Animated-VideoMaker",
       "title": "Animated-VideoMaker",
@@ -3224,7 +3399,7 @@
       "pushedAt": "2022-06-02T16:23:34Z",
       "createdAt": "2021-12-05T18:25:51Z",
       "openIssues": 1,
-      "rateRemaining": "6071"
+      "rateRemaining": "6254"
     },
     {
       "url": "https://github.com/seed0001/videoMaker",
@@ -3234,7 +3409,7 @@
       "kind": "github-repo",
       "owner": "seed0001",
       "repo": "videoMaker",
-      "checkedAt": "2026-10-26T12:03:57.587Z",
+      "checkedAt": "2026-10-26T16:00:50.501Z",
       "status": "ok",
       "name": "seed0001/videoMaker",
       "title": "videoMaker",
@@ -3250,7 +3425,7 @@
       "pushedAt": "2026-08-16T05:48:09Z",
       "createdAt": "2026-08-16T05:48:05Z",
       "openIssues": 0,
-      "rateRemaining": "6070"
+      "rateRemaining": "6253"
     },
     {
       "url": "https://github.com/Bilal-Belli/videoMakerBOT",
@@ -3260,7 +3435,7 @@
       "kind": "github-repo",
       "owner": "Bilal-Belli",
       "repo": "videoMakerBOT",
-      "checkedAt": "2026-10-26T12:03:57.619Z",
+      "checkedAt": "2026-10-26T16:00:50.645Z",
       "status": "ok",
       "name": "Bilal-Belli/videoMakerBOT",
       "title": "videoMakerBOT",
@@ -3281,7 +3456,7 @@
       "pushedAt": "2023-03-30T19:24:37Z",
       "createdAt": "2023-02-26T19:59:15Z",
       "openIssues": 0,
-      "rateRemaining": "6069"
+      "rateRemaining": "6249"
     },
     {
       "url": "https://github.com/Nncstudio/VideoMakerPro",
@@ -3291,7 +3466,7 @@
       "kind": "github-repo",
       "owner": "Nncstudio",
       "repo": "VideoMakerPro",
-      "checkedAt": "2026-10-26T12:03:57.622Z",
+      "checkedAt": "2026-10-26T16:00:50.699Z",
       "status": "ok",
       "name": "Nncstudio/VideoMakerPro",
       "title": "VideoMakerPro",
@@ -3307,7 +3482,7 @@
       "pushedAt": "2023-11-04T03:42:02Z",
       "createdAt": "2023-11-04T03:40:45Z",
       "openIssues": 1,
-      "rateRemaining": "6068"
+      "rateRemaining": "6252"
     },
     {
       "url": "https://github.com/heygen-com/hyperframes",
@@ -3317,13 +3492,13 @@
       "kind": "github-repo",
       "owner": "heygen-com",
       "repo": "hyperframes",
-      "checkedAt": "2026-10-26T12:03:57.660Z",
+      "checkedAt": "2026-10-26T16:00:50.730Z",
       "status": "ok",
       "name": "heygen-com/hyperframes",
       "title": "hyperframes",
       "description": "Write HTML. Render video. Built for agents.",
-      "stars": 72616,
-      "forks": 6561,
+      "stars": 72783,
+      "forks": 6578,
       "language": "TypeScript",
       "license": "Apache-2.0",
       "licenseName": "Apache License 2.0",
@@ -3346,10 +3521,10 @@
       ],
       "homepage": "https://hyperframes.heygen.com",
       "archived": false,
-      "pushedAt": "2026-10-26T11:37:40Z",
+      "pushedAt": "2026-10-26T15:56:55Z",
       "createdAt": "2026-03-10T01:51:06Z",
-      "openIssues": 207,
-      "rateRemaining": "6067"
+      "openIssues": 185,
+      "rateRemaining": "6251"
     },
     {
       "url": "https://github.com/harry0703/MoneyPrinterTurbo",
@@ -3359,13 +3534,13 @@
       "kind": "github-repo",
       "owner": "harry0703",
       "repo": "MoneyPrinterTurbo",
-      "checkedAt": "2026-10-26T12:03:57.739Z",
+      "checkedAt": "2026-10-26T16:00:50.751Z",
       "status": "ok",
       "name": "harry0703/MoneyPrinterTurbo",
       "title": "MoneyPrinterTurbo",
       "description": "利用 AI 大模型和自动化工作流，根据主题或关键词一键生成高清短视频。Generate HD short videos from a topic or keyword with an automated AI workflow.",
-      "stars": 135262,
-      "forks": 21442,
+      "stars": 135353,
+      "forks": 21458,
       "language": "Python",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -3387,10 +3562,10 @@
       ],
       "homepage": null,
       "archived": false,
-      "pushedAt": "2026-10-25T11:11:41Z",
+      "pushedAt": "2026-10-26T14:01:14Z",
       "createdAt": "2024-03-11T02:57:34Z",
-      "openIssues": 79,
-      "rateRemaining": "6066"
+      "openIssues": 78,
+      "rateRemaining": "6250"
     },
     {
       "url": "https://github.com/CapSoftware/Cap",
@@ -3400,13 +3575,13 @@
       "kind": "github-repo",
       "owner": "CapSoftware",
       "repo": "Cap",
-      "checkedAt": "2026-10-26T12:03:57.768Z",
+      "checkedAt": "2026-10-26T16:00:50.811Z",
       "status": "ok",
       "name": "CapSoftware/Cap",
       "title": "Cap",
       "description": "Open source Loom alternative. Beautiful, shareable screen recordings.",
-      "stars": 23812,
-      "forks": 2161,
+      "stars": 23821,
+      "forks": 2163,
       "language": "Rust",
       "license": "NOASSERTION",
       "licenseName": "Other",
@@ -3434,10 +3609,10 @@
       ],
       "homepage": "https://cap.so",
       "archived": false,
-      "pushedAt": "2026-10-26T12:00:47Z",
+      "pushedAt": "2026-10-26T15:58:33Z",
       "createdAt": "2023-11-17T20:31:46Z",
-      "openIssues": 405,
-      "rateRemaining": "6065"
+      "openIssues": 420,
+      "rateRemaining": "6248"
     },
     {
       "url": "https://github.com/Onyx-Dev-Labs/doodle-note",
@@ -3447,7 +3622,7 @@
       "kind": "github-repo",
       "owner": "Onyx-Dev-Labs",
       "repo": "doodle-note",
-      "checkedAt": "2026-10-26T12:03:57.868Z",
+      "checkedAt": "2026-10-26T16:00:50.926Z",
       "status": "ok",
       "name": "Onyx-Dev-Labs/doodle-note",
       "title": "doodle-note",
@@ -3473,10 +3648,10 @@
       ],
       "homepage": "https://www.doodlenote.ai",
       "archived": false,
-      "pushedAt": "2026-10-25T03:17:31Z",
+      "pushedAt": "2026-10-26T14:20:36Z",
       "createdAt": "2026-07-04T18:39:47Z",
       "openIssues": 40,
-      "rateRemaining": "6063"
+      "rateRemaining": "6247"
     },
     {
       "url": "https://github.com/cathrynlavery/diagram-design",
@@ -3486,13 +3661,13 @@
       "kind": "github-repo",
       "owner": "cathrynlavery",
       "repo": "diagram-design",
-      "checkedAt": "2026-10-26T12:03:57.871Z",
+      "checkedAt": "2026-10-26T16:00:51.099Z",
       "status": "ok",
       "name": "cathrynlavery/diagram-design",
       "title": "diagram-design",
       "description": "Editorial diagram design for Claude Code, Codex, GitHub Copilot, Cursor, Factory Droid, Qoder, and Pi. 45 diagram types. Self-contained HTML + SVG. No shadows. No Mermaid slop.",
-      "stars": 61227,
-      "forks": 3978,
+      "stars": 61290,
+      "forks": 3987,
       "language": "HTML",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -3511,7 +3686,7 @@
       "pushedAt": "2026-10-26T08:34:58Z",
       "createdAt": "2026-04-16T18:01:16Z",
       "openIssues": 46,
-      "rateRemaining": "6062"
+      "rateRemaining": "6245"
     },
     {
       "url": "https://github.com/GAIR-NLP/LiveTalk",
@@ -3521,7 +3696,7 @@
       "kind": "github-repo",
       "owner": "GAIR-NLP",
       "repo": "LiveTalk",
-      "checkedAt": "2026-10-26T12:03:57.874Z",
+      "checkedAt": "2026-10-26T16:00:51.110Z",
       "status": "ok",
       "name": "GAIR-NLP/LiveTalk",
       "title": "LiveTalk",
@@ -3537,7 +3712,7 @@
       "pushedAt": "2026-01-02T05:29:40Z",
       "createdAt": "2025-12-10T07:13:06Z",
       "openIssues": 9,
-      "rateRemaining": "6064"
+      "rateRemaining": "6246"
     },
     {
       "url": "https://github.com/MeiGen-AI/InfiniteTalk",
@@ -3547,13 +3722,13 @@
       "kind": "github-repo",
       "owner": "MeiGen-AI",
       "repo": "InfiniteTalk",
-      "checkedAt": "2026-10-26T12:03:57.952Z",
+      "checkedAt": "2026-10-26T16:00:51.172Z",
       "status": "ok",
       "name": "MeiGen-AI/InfiniteTalk",
       "title": "InfiniteTalk",
       "description": "​​Unlimited-length talking video generation​​ that supports image-to-video and video-to-video generation",
       "stars": 8181,
-      "forks": 1407,
+      "forks": 1406,
       "language": "Python",
       "license": "Apache-2.0",
       "licenseName": "Apache License 2.0",
@@ -3563,7 +3738,7 @@
       "pushedAt": "2026-05-22T02:35:51Z",
       "createdAt": "2025-08-14T01:04:53Z",
       "openIssues": 169,
-      "rateRemaining": "6061"
+      "rateRemaining": "6243"
     },
     {
       "url": "https://github.com/HM-RunningHub/ComfyUI_RH_APICall",
@@ -3573,7 +3748,7 @@
       "kind": "github-repo",
       "owner": "HM-RunningHub",
       "repo": "ComfyUI_RH_APICall",
-      "checkedAt": "2026-10-26T12:03:58.053Z",
+      "checkedAt": "2026-10-26T16:00:51.173Z",
       "status": "ok",
       "name": "HM-RunningHub/ComfyUI_RH_APICall",
       "title": "ComfyUI_RH_APICall",
@@ -3589,7 +3764,7 @@
       "pushedAt": "2026-05-09T13:15:17Z",
       "createdAt": "2024-12-24T12:40:51Z",
       "openIssues": 16,
-      "rateRemaining": "6060"
+      "rateRemaining": "6244"
     },
     {
       "url": "https://github.com/tt-a1i/archify",
@@ -3599,13 +3774,13 @@
       "kind": "github-repo",
       "owner": "tt-a1i",
       "repo": "archify",
-      "checkedAt": "2026-10-26T12:03:58.089Z",
+      "checkedAt": "2026-10-26T16:00:51.225Z",
       "status": "ok",
       "name": "tt-a1i/archify",
       "title": "archify",
       "description": "Turn any idea, plan, or codebase into a beautiful interactive diagram. An agent skill for Claude Code, Codex, and more.",
-      "stars": 89542,
-      "forks": 6060,
+      "stars": 89658,
+      "forks": 6072,
       "language": "JavaScript",
       "license": "Apache-2.0",
       "licenseName": "Apache License 2.0",
@@ -3636,7 +3811,7 @@
       "pushedAt": "2026-10-26T05:59:06Z",
       "createdAt": "2026-04-15T05:27:37Z",
       "openIssues": 241,
-      "rateRemaining": "6059"
+      "rateRemaining": "6242"
     },
     {
       "url": "https://github.com/bilawalsidhu/gods-eye-view",
@@ -3646,13 +3821,13 @@
       "kind": "github-repo",
       "owner": "bilawalsidhu",
       "repo": "gods-eye-view",
-      "checkedAt": "2026-10-26T12:03:58.115Z",
+      "checkedAt": "2026-10-26T16:00:51.388Z",
       "status": "ok",
       "name": "bilawalsidhu/gods-eye-view",
       "title": "gods-eye-view",
       "description": "A spy satellite simulator in your browser, except the data is real. Live open source spatial intelligence on a photorealistic 3D globe.",
-      "stars": 60228,
-      "forks": 11756,
+      "stars": 60312,
+      "forks": 11771,
       "language": "JavaScript",
       "license": "NOASSERTION",
       "licenseName": "Other",
@@ -3672,10 +3847,10 @@
       ],
       "homepage": "https://maptheworld.ai/",
       "archived": false,
-      "pushedAt": "2026-10-26T05:24:30Z",
+      "pushedAt": "2026-10-26T15:46:48Z",
       "createdAt": "2026-06-22T23:37:22Z",
       "openIssues": 405,
-      "rateRemaining": "6058"
+      "rateRemaining": "6241"
     },
     {
       "url": "https://github.com/THU-MAIC/OpenMAIC",
@@ -3685,23 +3860,23 @@
       "kind": "github-repo",
       "owner": "THU-MAIC",
       "repo": "OpenMAIC",
-      "checkedAt": "2026-10-26T12:03:58.136Z",
+      "checkedAt": "2026-10-26T16:00:51.453Z",
       "status": "ok",
       "name": "THU-MAIC/OpenMAIC",
       "title": "OpenMAIC",
       "description": "Open Multi-Agent Interactive Classroom — Get an immersive, multi-agent learning experience in just one click",
-      "stars": 41515,
-      "forks": 6430,
+      "stars": 41542,
+      "forks": 6433,
       "language": "TypeScript",
       "license": "MIT",
       "licenseName": "MIT License",
       "topics": [],
       "homepage": null,
       "archived": false,
-      "pushedAt": "2026-10-26T12:03:56Z",
+      "pushedAt": "2026-10-26T15:58:34Z",
       "createdAt": "2026-03-11T10:13:16Z",
       "openIssues": 206,
-      "rateRemaining": "6057"
+      "rateRemaining": "6240"
     },
     {
       "url": "https://github.com/JetBrains/go-modern-guidelines",
@@ -3711,12 +3886,12 @@
       "kind": "github-repo",
       "owner": "JetBrains",
       "repo": "go-modern-guidelines",
-      "checkedAt": "2026-10-26T12:03:58.218Z",
+      "checkedAt": "2026-10-26T16:00:51.510Z",
       "status": "ok",
       "name": "JetBrains/go-modern-guidelines",
       "title": "go-modern-guidelines",
       "description": "Help AI coding agents write modern Go",
-      "stars": 3894,
+      "stars": 3895,
       "forks": 125,
       "language": "Go",
       "license": "Apache-2.0",
@@ -3734,7 +3909,7 @@
       "pushedAt": "2026-10-15T16:24:05Z",
       "createdAt": "2025-11-24T12:46:31Z",
       "openIssues": 12,
-      "rateRemaining": "6056"
+      "rateRemaining": "6239"
     },
     {
       "url": "https://github.com/Gitlawb/openclaude",
@@ -3744,13 +3919,13 @@
       "kind": "github-repo",
       "owner": "Gitlawb",
       "repo": "openclaude",
-      "checkedAt": "2026-10-26T12:03:58.301Z",
+      "checkedAt": "2026-10-26T16:00:51.520Z",
       "status": "ok",
       "name": "Twigpine/openclaude",
       "title": "openclaude",
       "description": "runs anywhere. uses anything",
-      "stars": 34160,
-      "forks": 9130,
+      "stars": 34162,
+      "forks": 9129,
       "language": "TypeScript",
       "license": "NOASSERTION",
       "licenseName": "Other",
@@ -3763,10 +3938,10 @@
       ],
       "homepage": "https://openclaude.twigpine.com",
       "archived": false,
-      "pushedAt": "2026-10-26T05:38:30Z",
+      "pushedAt": "2026-10-26T15:28:55Z",
       "createdAt": "2026-04-01T03:15:49Z",
-      "openIssues": 55,
-      "rateRemaining": "6050"
+      "openIssues": 56,
+      "rateRemaining": "6233"
     },
     {
       "url": "https://github.com/K-Dense-AI/scientific-agent-skills",
@@ -3776,13 +3951,13 @@
       "kind": "github-repo",
       "owner": "K-Dense-AI",
       "repo": "scientific-agent-skills",
-      "checkedAt": "2026-10-26T12:03:58.324Z",
+      "checkedAt": "2026-10-26T16:00:51.548Z",
       "status": "ok",
       "name": "K-Dense-AI/scientific-agent-skills",
       "title": "scientific-agent-skills",
       "description": "Turn any AI agent into an AI Scientist. The #1 Agent Skills library for science, used by 250,000+ scientists worldwide. 177 ready-to-use validated skills plus 100+ scientific databases covering biology, chemistry, medicine, and drug discovery. Compatible with Cursor, Claude Code, Codex, Pi, Antigravity, and the open Agent Skills standard.",
-      "stars": 54696,
-      "forks": 4818,
+      "stars": 54737,
+      "forks": 4821,
       "language": "Python",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -3810,7 +3985,7 @@
       "pushedAt": "2026-10-26T09:36:15Z",
       "createdAt": "2025-10-19T20:54:15Z",
       "openIssues": 72,
-      "rateRemaining": "6054"
+      "rateRemaining": "6237"
     },
     {
       "url": "https://github.com/jingyaogong/minimind",
@@ -3820,13 +3995,13 @@
       "kind": "github-repo",
       "owner": "jingyaogong",
       "repo": "minimind",
-      "checkedAt": "2026-10-26T12:03:58.343Z",
+      "checkedAt": "2026-10-26T16:00:51.618Z",
       "status": "ok",
       "name": "jingyaogong/minimind",
       "title": "minimind",
       "description": "🧠 Train a 64M-parameter LLM from scratch in just 2h!",
-      "stars": 64438,
-      "forks": 8400,
+      "stars": 64443,
+      "forks": 8401,
       "language": "Python",
       "license": "Apache-2.0",
       "licenseName": "Apache License 2.0",
@@ -3839,7 +4014,7 @@
       "pushedAt": "2026-09-22T16:07:34Z",
       "createdAt": "2024-07-27T04:34:12Z",
       "openIssues": 69,
-      "rateRemaining": "6053"
+      "rateRemaining": "6236"
     },
     {
       "url": "https://github.com/google-research/timesfm",
@@ -3849,13 +4024,13 @@
       "kind": "github-repo",
       "owner": "google-research",
       "repo": "timesfm",
-      "checkedAt": "2026-10-26T12:03:58.392Z",
+      "checkedAt": "2026-10-26T16:00:51.724Z",
       "status": "ok",
       "name": "google-research/timesfm",
       "title": "timesfm",
       "description": "TimesFM (Time Series Foundation Model) is a pretrained time-series foundation model developed by Google Research for time-series forecasting.",
-      "stars": 34779,
-      "forks": 3361,
+      "stars": 34781,
+      "forks": 3359,
       "language": "Python",
       "license": "Apache-2.0",
       "licenseName": "Apache License 2.0",
@@ -3865,7 +4040,7 @@
       "pushedAt": "2026-09-29T19:36:25Z",
       "createdAt": "2024-04-29T21:26:26Z",
       "openIssues": 269,
-      "rateRemaining": "6052"
+      "rateRemaining": "6235"
     },
     {
       "url": "https://github.com/EfficientStreet/hindsight",
@@ -3875,7 +4050,7 @@
       "kind": "github-repo",
       "owner": "EfficientStreet",
       "repo": "hindsight",
-      "checkedAt": "2026-10-26T12:03:58.423Z",
+      "checkedAt": "2026-10-26T16:00:51.811Z",
       "status": "ok",
       "name": "EfficientStreet/hindsight",
       "title": "hindsight",
@@ -3891,7 +4066,7 @@
       "pushedAt": "2026-08-20T23:20:45Z",
       "createdAt": "2026-08-20T20:36:46Z",
       "openIssues": 0,
-      "rateRemaining": "6051"
+      "rateRemaining": "6234"
     },
     {
       "url": "https://github.com/timharris707/modeldeck",
@@ -3901,7 +4076,7 @@
       "kind": "github-repo",
       "owner": "timharris707",
       "repo": "modeldeck",
-      "checkedAt": "2026-10-26T12:03:58.572Z",
+      "checkedAt": "2026-10-26T16:00:51.981Z",
       "status": "ok",
       "name": "timharris707/modeldeck",
       "title": "modeldeck",
@@ -3926,7 +4101,7 @@
       "pushedAt": "2026-10-23T02:52:37Z",
       "createdAt": "2026-07-20T08:09:24Z",
       "openIssues": 2,
-      "rateRemaining": "6049"
+      "rateRemaining": "6232"
     },
     {
       "url": "https://github.com/Artistsyn/cortex_suite",
@@ -3936,7 +4111,7 @@
       "kind": "github-repo",
       "owner": "Artistsyn",
       "repo": "cortex_suite",
-      "checkedAt": "2026-10-26T12:03:58.621Z",
+      "checkedAt": "2026-10-26T16:00:51.994Z",
       "status": "ok",
       "name": "Artistsyn/cortex_suite",
       "title": "cortex_suite",
@@ -3952,7 +4127,7 @@
       "pushedAt": "2026-10-25T05:11:00Z",
       "createdAt": "2026-08-04T05:39:24Z",
       "openIssues": 0,
-      "rateRemaining": "6048"
+      "rateRemaining": "6231"
     },
     {
       "url": "https://github.com/sulabhdubey/rta-smriti-brain",
@@ -3962,7 +4137,7 @@
       "kind": "github-repo",
       "owner": "sulabhdubey",
       "repo": "rta-smriti-brain",
-      "checkedAt": "2026-10-26T12:03:58.671Z",
+      "checkedAt": "2026-10-26T16:00:52.005Z",
       "status": "ok",
       "name": "sulabhdubey/rta-smriti-brain",
       "title": "rta-smriti-brain",
@@ -3989,7 +4164,7 @@
       "pushedAt": "2026-10-26T05:20:22Z",
       "createdAt": "2026-08-14T20:49:21Z",
       "openIssues": 5,
-      "rateRemaining": "6047"
+      "rateRemaining": "6230"
     },
     {
       "url": "https://github.com/EfficientStreet/youtube-subscriptions-ingest",
@@ -3999,7 +4174,7 @@
       "kind": "github-repo",
       "owner": "EfficientStreet",
       "repo": "youtube-subscriptions-ingest",
-      "checkedAt": "2026-10-26T12:03:58.699Z",
+      "checkedAt": "2026-10-26T16:00:52.157Z",
       "status": "ok",
       "name": "EfficientStreet/youtube-subscriptions-ingest",
       "title": "youtube-subscriptions-ingest",
@@ -4015,7 +4190,7 @@
       "pushedAt": "2026-08-14T18:07:33Z",
       "createdAt": "2026-08-11T22:32:39Z",
       "openIssues": 3,
-      "rateRemaining": "6046"
+      "rateRemaining": "6228"
     },
     {
       "url": "https://github.com/Kayforkind/reimagine-it",
@@ -4025,7 +4200,7 @@
       "kind": "github-repo",
       "owner": "Kayforkind",
       "repo": "reimagine-it",
-      "checkedAt": "2026-10-26T12:03:58.719Z",
+      "checkedAt": "2026-10-26T16:00:52.159Z",
       "status": "ok",
       "name": "Kayforkind/reimagine-it",
       "title": "reimagine-it",
@@ -4060,7 +4235,7 @@
       "pushedAt": "2026-10-24T14:13:34Z",
       "createdAt": "2026-08-19T02:12:07Z",
       "openIssues": 5,
-      "rateRemaining": "6045"
+      "rateRemaining": "6229"
     },
     {
       "url": "https://github.com/templetongroup/radiant",
@@ -4070,7 +4245,7 @@
       "kind": "github-repo",
       "owner": "templetongroup",
       "repo": "radiant",
-      "checkedAt": "2026-10-26T12:03:58.769Z",
+      "checkedAt": "2026-10-26T16:00:52.276Z",
       "status": "ok",
       "name": "templetongroup/radiant",
       "title": "radiant",
@@ -4100,7 +4275,7 @@
       "pushedAt": "2026-10-21T15:51:45Z",
       "createdAt": "2026-08-19T02:51:36Z",
       "openIssues": 1,
-      "rateRemaining": "6044"
+      "rateRemaining": "6227"
     },
     {
       "url": "https://github.com/FoundationAgents/MetaGPT",
@@ -4110,12 +4285,12 @@
       "kind": "github-repo",
       "owner": "FoundationAgents",
       "repo": "MetaGPT",
-      "checkedAt": "2026-10-26T12:03:58.838Z",
+      "checkedAt": "2026-10-26T16:00:52.364Z",
       "status": "ok",
       "name": "FoundationAgents/MetaGPT",
       "title": "MetaGPT",
       "description": "🌟 The Multi-Agent Framework: First AI Software Company, Towards Natural Language Programming",
-      "stars": 71022,
+      "stars": 71026,
       "forks": 9049,
       "language": "Python",
       "license": "MIT",
@@ -4132,7 +4307,7 @@
       "pushedAt": "2026-01-21T10:12:33Z",
       "createdAt": "2023-06-30T09:04:55Z",
       "openIssues": 137,
-      "rateRemaining": "6043"
+      "rateRemaining": "6225"
     },
     {
       "url": "https://github.com/ramon-victor/freegpt-webui",
@@ -4142,7 +4317,7 @@
       "kind": "github-repo",
       "owner": "ramon-victor",
       "repo": "freegpt-webui",
-      "checkedAt": "2026-10-26T12:03:58.899Z",
+      "checkedAt": "2026-10-26T16:00:52.378Z",
       "status": "archived",
       "name": "ramon-victor/freegpt-webui",
       "title": "freegpt-webui",
@@ -4179,7 +4354,7 @@
       "pushedAt": "2023-09-26T21:09:16Z",
       "createdAt": "2023-06-04T00:37:35Z",
       "openIssues": 85,
-      "rateRemaining": "6041"
+      "rateRemaining": "6223"
     },
     {
       "url": "https://github.com/Lin-jun-xiang/docGPT-langchain",
@@ -4189,7 +4364,7 @@
       "kind": "github-repo",
       "owner": "Lin-jun-xiang",
       "repo": "docGPT-langchain",
-      "checkedAt": "2026-10-26T12:03:58.901Z",
+      "checkedAt": "2026-10-26T16:00:52.381Z",
       "status": "ok",
       "name": "Lin-jun-xiang/docGPT-langchain",
       "title": "docGPT-langchain",
@@ -4224,7 +4399,7 @@
       "pushedAt": "2023-11-13T09:39:52Z",
       "createdAt": "2023-07-03T15:11:14Z",
       "openIssues": 3,
-      "rateRemaining": "6042"
+      "rateRemaining": "6226"
     },
     {
       "url": "https://github.com/teremterem/claude-code-gpt-5-codex",
@@ -4234,7 +4409,7 @@
       "kind": "github-repo",
       "owner": "teremterem",
       "repo": "claude-code-gpt-5-codex",
-      "checkedAt": "2026-10-26T12:03:58.977Z",
+      "checkedAt": "2026-10-26T16:00:52.519Z",
       "status": "ok",
       "name": "teremterem/claude-code-gpt-5-codex",
       "title": "claude-code-gpt-5-codex",
@@ -4268,7 +4443,7 @@
       "pushedAt": "2026-07-22T06:50:35Z",
       "createdAt": "2025-08-11T18:38:02Z",
       "openIssues": 7,
-      "rateRemaining": "6040"
+      "rateRemaining": "6224"
     },
     {
       "url": "https://github.com/GetGoAPI/Free-GPT-Grok-Gemini-Claude-API",
@@ -4278,7 +4453,7 @@
       "kind": "github-repo",
       "owner": "GetGoAPI",
       "repo": "Free-GPT-Grok-Gemini-Claude-API",
-      "checkedAt": "2026-10-26T12:03:58.992Z",
+      "checkedAt": "2026-10-26T16:00:52.608Z",
       "status": "ok",
       "name": "GetGoAPI/Free-GPT-Grok-Gemini-Claude-API",
       "title": "Free-GPT-Grok-Gemini-Claude-API",
@@ -4304,7 +4479,7 @@
       "pushedAt": "2025-12-04T12:57:05Z",
       "createdAt": "2023-11-23T18:50:45Z",
       "openIssues": 1,
-      "rateRemaining": "6039"
+      "rateRemaining": "6222"
     },
     {
       "url": "https://github.com/zai-org/GLM-5",
@@ -4314,7 +4489,7 @@
       "kind": "github-repo",
       "owner": "zai-org",
       "repo": "GLM-5",
-      "checkedAt": "2026-10-26T12:03:59.037Z",
+      "checkedAt": "2026-10-26T16:00:52.609Z",
       "status": "ok",
       "name": "zai-org/GLM-5",
       "title": "GLM-5",
@@ -4335,7 +4510,7 @@
       "pushedAt": "2026-10-15T01:36:08Z",
       "createdAt": "2026-02-09T08:17:02Z",
       "openIssues": 15,
-      "rateRemaining": "6038"
+      "rateRemaining": "6221"
     },
     {
       "url": "https://github.com/unorouter/unorouter",
@@ -4345,7 +4520,7 @@
       "kind": "github-repo",
       "owner": "unorouter",
       "repo": "unorouter",
-      "checkedAt": "2026-10-26T12:03:59.122Z",
+      "checkedAt": "2026-10-26T16:00:52.700Z",
       "status": "ok",
       "name": "unorouter/unorouter",
       "title": "unorouter",
@@ -4377,7 +4552,7 @@
       "pushedAt": "2026-10-26T10:59:50Z",
       "createdAt": "2026-02-15T22:40:51Z",
       "openIssues": 1,
-      "rateRemaining": "6037"
+      "rateRemaining": "6220"
     },
     {
       "url": "https://github.com/ruvnet/ruflo",
@@ -4387,13 +4562,13 @@
       "kind": "github-repo",
       "owner": "ruvnet",
       "repo": "ruflo",
-      "checkedAt": "2026-10-26T12:03:59.191Z",
+      "checkedAt": "2026-10-26T16:00:52.753Z",
       "status": "ok",
       "name": "ruvnet/ruflo",
       "title": "ruflo",
       "description": "🌊 The original agent harness. Deploy intelligent multi-player swarms, coordinate autonomous workflows, and build conversational AI systems. Features adaptive memory, self-learning intelligence, federation, vector RAG integration, and native Claude Code / Codex / Hermes and many more Integrated",
-      "stars": 79399,
-      "forks": 9319,
+      "stars": 79443,
+      "forks": 9322,
       "language": "TypeScript",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -4421,10 +4596,10 @@
       ],
       "homepage": "https://Cognitum.One",
       "archived": false,
-      "pushedAt": "2026-10-26T09:39:41Z",
+      "pushedAt": "2026-10-26T15:52:45Z",
       "createdAt": "2025-06-02T21:24:20Z",
-      "openIssues": 988,
-      "rateRemaining": "6036"
+      "openIssues": 985,
+      "rateRemaining": "6219"
     },
     {
       "url": "https://github.com/mksglu/context-mode",
@@ -4434,12 +4609,12 @@
       "kind": "github-repo",
       "owner": "mksglu",
       "repo": "context-mode",
-      "checkedAt": "2026-10-26T12:03:59.201Z",
+      "checkedAt": "2026-10-26T16:00:52.857Z",
       "status": "ok",
       "name": "mksglu/context-mode",
       "title": "context-mode",
       "description": "Context window optimization for AI coding agents. Sandboxes tool output (98% reduction), persists session memory, and   enforces routing across 17 platforms via MCP + hooks.",
-      "stars": 32358,
+      "stars": 32387,
       "forks": 2234,
       "language": "TypeScript",
       "license": "NOASSERTION",
@@ -4468,10 +4643,10 @@
       ],
       "homepage": "https://context-mode.com",
       "archived": false,
-      "pushedAt": "2026-10-26T08:55:25Z",
+      "pushedAt": "2026-10-26T15:55:47Z",
       "createdAt": "2026-02-23T05:56:28Z",
-      "openIssues": 356,
-      "rateRemaining": "6035"
+      "openIssues": 355,
+      "rateRemaining": "6218"
     },
     {
       "url": "https://github.com/affaan-m/ECC",
@@ -4481,13 +4656,13 @@
       "kind": "github-repo",
       "owner": "affaan-m",
       "repo": "ECC",
-      "checkedAt": "2026-10-26T12:03:59.260Z",
+      "checkedAt": "2026-10-26T16:00:52.903Z",
       "status": "ok",
       "name": "affaan-m/ECC",
       "title": "ECC",
       "description": "The agent harness performance optimization system. Skills, instincts, memory, security, and research-first development for Claude Code, Codex, Opencode, Cursor and beyond.",
-      "stars": 289232,
-      "forks": 42859,
+      "stars": 289454,
+      "forks": 42882,
       "language": "JavaScript",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -4505,8 +4680,8 @@
       "archived": false,
       "pushedAt": "2026-10-26T04:56:56Z",
       "createdAt": "2026-01-18T00:51:51Z",
-      "openIssues": 239,
-      "rateRemaining": "6034"
+      "openIssues": 241,
+      "rateRemaining": "6217"
     },
     {
       "url": "https://github.com/alsk1992/CloddsBot",
@@ -4516,7 +4691,7 @@
       "kind": "github-repo",
       "owner": "alsk1992",
       "repo": "CloddsBot",
-      "checkedAt": "2026-10-26T12:03:59.266Z",
+      "checkedAt": "2026-10-26T16:00:52.998Z",
       "status": "ok",
       "name": "alsk1992/CloddsBot",
       "title": "CloddsBot",
@@ -4553,7 +4728,7 @@
       "pushedAt": "2026-10-02T19:37:29Z",
       "createdAt": "2026-01-26T15:08:42Z",
       "openIssues": 41,
-      "rateRemaining": "6033"
+      "rateRemaining": "6216"
     },
     {
       "url": "https://github.com/akitaonrails/ai-memory",
@@ -4563,23 +4738,23 @@
       "kind": "github-repo",
       "owner": "akitaonrails",
       "repo": "ai-memory",
-      "checkedAt": "2026-10-26T12:03:59.331Z",
+      "checkedAt": "2026-10-26T16:00:53.010Z",
       "status": "ok",
       "name": "akitaonrails/ai-memory",
       "title": "ai-memory",
       "description": "Solution for long term memory for agent coding CLIs and to facilitate handoff between different agent vendors",
-      "stars": 13650,
-      "forks": 965,
+      "stars": 13712,
+      "forks": 970,
       "language": "Rust",
       "license": "MIT",
       "licenseName": "MIT License",
       "topics": [],
       "homepage": null,
       "archived": false,
-      "pushedAt": "2026-10-26T05:14:00Z",
+      "pushedAt": "2026-10-26T15:46:45Z",
       "createdAt": "2026-05-21T23:23:51Z",
-      "openIssues": 22,
-      "rateRemaining": "6032"
+      "openIssues": 19,
+      "rateRemaining": "6215"
     },
     {
       "url": "https://github.com/anthropics/claude-plugins-community",
@@ -4589,12 +4764,12 @@
       "kind": "github-repo",
       "owner": "anthropics",
       "repo": "claude-plugins-community",
-      "checkedAt": "2026-10-26T12:03:59.432Z",
+      "checkedAt": "2026-10-26T16:00:53.048Z",
       "status": "ok",
       "name": "anthropics/claude-plugins-community",
       "title": "claude-plugins-community",
       "description": "Community plugin marketplace for Claude Cowork and Claude Code. Read-only mirror — submit plugins at clau.de/plugin-directory-submission.",
-      "stars": 4769,
+      "stars": 4770,
       "forks": 346,
       "language": "JavaScript",
       "license": "Apache-2.0",
@@ -4605,7 +4780,7 @@
       "pushedAt": "2026-10-26T08:16:07Z",
       "createdAt": "2026-03-20T02:20:30Z",
       "openIssues": 545,
-      "rateRemaining": "6031"
+      "rateRemaining": "6212"
     },
     {
       "url": "https://github.com/cursor/plugins",
@@ -4615,23 +4790,23 @@
       "kind": "github-repo",
       "owner": "cursor",
       "repo": "plugins",
-      "checkedAt": "2026-10-26T12:03:59.445Z",
+      "checkedAt": "2026-10-26T16:00:53.120Z",
       "status": "ok",
       "name": "cursor/plugins",
       "title": "plugins",
       "description": "Cursor plugin specification and official plugins",
-      "stars": 14129,
-      "forks": 1414,
+      "stars": 14152,
+      "forks": 1419,
       "language": "TypeScript",
       "license": "NOASSERTION",
       "licenseName": null,
       "topics": [],
       "homepage": null,
       "archived": false,
-      "pushedAt": "2026-10-26T11:39:17Z",
+      "pushedAt": "2026-10-26T15:32:03Z",
       "createdAt": "2026-01-23T01:57:42Z",
-      "openIssues": 423,
-      "rateRemaining": "6030"
+      "openIssues": 441,
+      "rateRemaining": "6214"
     },
     {
       "url": "https://github.com/cline/cline",
@@ -4641,23 +4816,23 @@
       "kind": "github-repo",
       "owner": "cline",
       "repo": "cline",
-      "checkedAt": "2026-10-26T12:03:59.497Z",
+      "checkedAt": "2026-10-26T16:00:53.158Z",
       "status": "ok",
       "name": "cline/cline",
       "title": "cline",
       "description": "Autonomous coding agent as an SDK, IDE extension, or CLI assistant.",
-      "stars": 70864,
-      "forks": 7754,
+      "stars": 70882,
+      "forks": 7762,
       "language": "TypeScript",
       "license": "Apache-2.0",
       "licenseName": "Apache License 2.0",
       "topics": [],
       "homepage": "https://cline.bot",
       "archived": false,
-      "pushedAt": "2026-10-26T11:54:23Z",
+      "pushedAt": "2026-10-26T15:02:16Z",
       "createdAt": "2024-07-06T07:28:10Z",
       "openIssues": 1715,
-      "rateRemaining": "6029"
+      "rateRemaining": "6213"
     },
     {
       "url": "https://github.com/nikmcfly/MiroFish-Offline",
@@ -4667,12 +4842,12 @@
       "kind": "github-repo",
       "owner": "nikmcfly",
       "repo": "MiroFish-Offline",
-      "checkedAt": "2026-10-26T12:03:59.504Z",
+      "checkedAt": "2026-10-26T16:00:53.219Z",
       "status": "ok",
       "name": "nikmcfly/MiroFish-Offline",
       "title": "MiroFish-Offline",
       "description": "Offline multi-agent simulation & prediction engine. English fork of MiroFish with Neo4j + Ollama local stack.",
-      "stars": 2660,
+      "stars": 2661,
       "forks": 672,
       "language": "Python",
       "license": "AGPL-3.0",
@@ -4694,7 +4869,7 @@
       "pushedAt": "2026-03-24T18:52:43Z",
       "createdAt": "2026-03-14T22:54:19Z",
       "openIssues": 49,
-      "rateRemaining": "6028"
+      "rateRemaining": "6211"
     },
     {
       "url": "https://github.com/mattpocock/dictionary-of-ai-coding",
@@ -4704,12 +4879,12 @@
       "kind": "github-repo",
       "owner": "mattpocock",
       "repo": "dictionary-of-ai-coding",
-      "checkedAt": "2026-10-26T12:03:59.537Z",
+      "checkedAt": "2026-10-26T16:00:53.306Z",
       "status": "ok",
       "name": "mattpocock/dictionary-of-ai-coding",
       "title": "dictionary-of-ai-coding",
       "description": "AI coding jargon, explained in plain English.",
-      "stars": 5280,
+      "stars": 5282,
       "forks": 591,
       "language": "TypeScript",
       "license": "NOASSERTION",
@@ -4720,7 +4895,7 @@
       "pushedAt": "2026-09-24T11:59:42Z",
       "createdAt": "2026-05-01T10:17:05Z",
       "openIssues": 23,
-      "rateRemaining": "6027"
+      "rateRemaining": "6210"
     },
     {
       "url": "https://github.com/nashsu/llm_wiki",
@@ -4730,12 +4905,12 @@
       "kind": "github-repo",
       "owner": "nashsu",
       "repo": "llm_wiki",
-      "checkedAt": "2026-10-26T12:03:59.663Z",
+      "checkedAt": "2026-10-26T16:00:53.340Z",
       "status": "ok",
       "name": "nashsu/llm_wiki",
       "title": "llm_wiki",
       "description": "LLM Wiki is a cross-platform desktop application that turns your documents into an organized, interlinked knowledge base — automatically. Instead of traditional RAG (retrieve-and-answer from scratch every time), the LLM incrementally builds and maintains a persistent wiki from your sources。",
-      "stars": 20989,
+      "stars": 20991,
       "forks": 2382,
       "language": "TypeScript",
       "license": "NOASSERTION",
@@ -4746,7 +4921,7 @@
       "pushedAt": "2026-10-21T11:17:29Z",
       "createdAt": "2026-04-08T11:24:01Z",
       "openIssues": 283,
-      "rateRemaining": "6026"
+      "rateRemaining": "6209"
     },
     {
       "url": "https://github.com/siyuan-note/siyuan",
@@ -4756,13 +4931,13 @@
       "kind": "github-repo",
       "owner": "siyuan-note",
       "repo": "siyuan",
-      "checkedAt": "2026-10-26T12:03:59.731Z",
+      "checkedAt": "2026-10-26T16:00:53.528Z",
       "status": "ok",
       "name": "siyuan-note/siyuan",
       "title": "siyuan",
       "description": "An open-source, privacy-first, self-hosted knowledge workspace where humans and AI agents work together 开源、隐私优先、自托管的知识工作空间，让人与智能体在此协作",
-      "stars": 46939,
-      "forks": 3090,
+      "stars": 46943,
+      "forks": 3091,
       "language": "TypeScript",
       "license": "AGPL-3.0",
       "licenseName": "GNU Affero General Public License v3.0",
@@ -4780,10 +4955,10 @@
       ],
       "homepage": "https://b3log.org/siyuan",
       "archived": false,
-      "pushedAt": "2026-10-26T11:57:10Z",
+      "pushedAt": "2026-10-26T15:47:39Z",
       "createdAt": "2020-08-30T09:21:35Z",
-      "openIssues": 32,
-      "rateRemaining": "6025"
+      "openIssues": 18,
+      "rateRemaining": "6208"
     },
     {
       "url": "https://github.com/public-apis/public-apis",
@@ -4793,13 +4968,13 @@
       "kind": "github-repo",
       "owner": "public-apis",
       "repo": "public-apis",
-      "checkedAt": "2026-10-26T12:03:59.777Z",
+      "checkedAt": "2026-10-26T16:00:53.572Z",
       "status": "ok",
       "name": "public-apis/public-apis",
       "title": "public-apis",
       "description": "A collective list of free APIs",
-      "stars": 492282,
-      "forks": 54815,
+      "stars": 492352,
+      "forks": 54827,
       "language": "Python",
       "license": "MIT",
       "licenseName": "MIT License",
@@ -4822,8 +4997,8 @@
       "archived": false,
       "pushedAt": "2026-10-24T09:30:33Z",
       "createdAt": "2016-03-20T23:49:42Z",
-      "openIssues": 2384,
-      "rateRemaining": "6024"
+      "openIssues": 2388,
+      "rateRemaining": "6203"
     },
     {
       "url": "https://github.com/huggingface/education-toolkit",
@@ -4833,7 +5008,7 @@
       "kind": "github-repo",
       "owner": "huggingface",
       "repo": "education-toolkit",
-      "checkedAt": "2026-10-26T12:03:59.779Z",
+      "checkedAt": "2026-10-26T16:00:53.586Z",
       "status": "archived",
       "name": "huggingface/education-toolkit",
       "title": "education-toolkit",
@@ -4849,7 +5024,7 @@
       "pushedAt": "2023-09-29T03:58:40Z",
       "createdAt": "2022-02-22T08:39:52Z",
       "openIssues": 12,
-      "rateRemaining": "6023"
+      "rateRemaining": "6207"
     },
     {
       "url": "https://github.com/nabaleducation/EducationConsultancyWebsite",
@@ -4859,7 +5034,7 @@
       "kind": "github-repo",
       "owner": "nabaleducation",
       "repo": "EducationConsultancyWebsite",
-      "checkedAt": "2026-10-26T12:03:59.818Z",
+      "checkedAt": "2026-10-26T16:00:53.592Z",
       "status": "ok",
       "name": "nabaleducation/EducationConsultancyWebsite",
       "title": "EducationConsultancyWebsite",
@@ -4875,7 +5050,7 @@
       "pushedAt": "2026-09-18T04:24:17Z",
       "createdAt": "2026-07-31T06:15:48Z",
       "openIssues": 0,
-      "rateRemaining": "6022"
+      "rateRemaining": "6206"
     },
     {
       "url": "https://github.com/arupdas0825/studytra",
@@ -4885,7 +5060,7 @@
       "kind": "github-repo",
       "owner": "arupdas0825",
       "repo": "studytra",
-      "checkedAt": "2026-10-26T12:03:59.836Z",
+      "checkedAt": "2026-10-26T16:00:53.652Z",
       "status": "ok",
       "name": "arupdas0825/studytra",
       "title": "studytra",
@@ -4901,7 +5076,7 @@
       "pushedAt": "2026-07-03T06:34:09Z",
       "createdAt": "2026-03-05T05:51:22Z",
       "openIssues": 0,
-      "rateRemaining": "6021"
+      "rateRemaining": "6205"
     },
     {
       "url": "https://github.com/Bhawana0218/NextStep-Abroad",
@@ -4911,7 +5086,7 @@
       "kind": "github-repo",
       "owner": "Bhawana0218",
       "repo": "NextStep-Abroad",
-      "checkedAt": "2026-10-26T12:03:59.969Z",
+      "checkedAt": "2026-10-26T16:00:53.680Z",
       "status": "ok",
       "name": "Bhawana0218/NextStep-Abroad",
       "title": "NextStep-Abroad",
@@ -4927,7 +5102,7 @@
       "pushedAt": "2026-07-06T15:14:39Z",
       "createdAt": "2026-05-06T01:00:56Z",
       "openIssues": 0,
-      "rateRemaining": "6020"
+      "rateRemaining": "6204"
     },
     {
       "url": "https://github.com/nwuzmedoutlook/university",
@@ -4937,12 +5112,12 @@
       "kind": "github-repo",
       "owner": "nwuzmedoutlook",
       "repo": "university",
-      "checkedAt": "2026-10-26T12:04:00.021Z",
+      "checkedAt": "2026-10-26T16:00:53.918Z",
       "status": "ok",
       "name": "nwuzmedoutlook/university",
       "title": "university",
       "description": ":octocat:120+国内高校课程资源纯手工整理，欢迎补充、修订",
-      "stars": 1229,
+      "stars": 1230,
       "forks": 90,
       "language": null,
       "license": "Apache-2.0",
@@ -4966,7 +5141,7 @@
       "pushedAt": "2026-09-28T05:32:27Z",
       "createdAt": "2022-02-08T05:43:30Z",
       "openIssues": 0,
-      "rateRemaining": "6019"
+      "rateRemaining": "6202"
     },
     {
       "url": "https://github.com/bugcrowd/bugcrowd_university",
@@ -4976,7 +5151,7 @@
       "kind": "github-repo",
       "owner": "bugcrowd",
       "repo": "bugcrowd_university",
-      "checkedAt": "2026-10-26T12:04:00.056Z",
+      "checkedAt": "2026-10-26T16:00:53.938Z",
       "status": "ok",
       "name": "bugcrowd/bugcrowd_university",
       "title": "bugcrowd_university",
@@ -4992,7 +5167,7 @@
       "pushedAt": "2026-08-26T04:29:07Z",
       "createdAt": "2018-07-30T15:59:01Z",
       "openIssues": 20,
-      "rateRemaining": "6018"
+      "rateRemaining": "6201"
     },
     {
       "url": "https://github.com/TheExplainthis/ChatGPT-AI-English-Tutor",
@@ -5002,7 +5177,7 @@
       "kind": "github-repo",
       "owner": "TheExplainthis",
       "repo": "ChatGPT-AI-English-Tutor",
-      "checkedAt": "2026-10-26T12:04:00.126Z",
+      "checkedAt": "2026-10-26T16:00:53.985Z",
       "status": "ok",
       "name": "TheExplainthis/ChatGPT-AI-English-Tutor",
       "title": "ChatGPT-AI-English-Tutor",
@@ -5018,7 +5193,7 @@
       "pushedAt": "2023-05-23T02:28:45Z",
       "createdAt": "2023-04-24T14:16:29Z",
       "openIssues": 1,
-      "rateRemaining": "6017"
+      "rateRemaining": "6199"
     },
     {
       "url": "https://github.com/xckevin/magic-english-buddy",
@@ -5028,7 +5203,7 @@
       "kind": "github-repo",
       "owner": "xckevin",
       "repo": "magic-english-buddy",
-      "checkedAt": "2026-10-26T12:04:00.162Z",
+      "checkedAt": "2026-10-26T16:00:54.014Z",
       "status": "ok",
       "name": "xckevin/magic-english-buddy",
       "title": "magic-english-buddy",
@@ -5049,7 +5224,7 @@
       "pushedAt": "2026-09-15T12:02:41Z",
       "createdAt": "2025-11-30T05:10:38Z",
       "openIssues": 1,
-      "rateRemaining": "6016"
+      "rateRemaining": "6200"
     },
     {
       "url": "https://github.com/xiaochong/hi-kid",
@@ -5059,7 +5234,7 @@
       "kind": "github-repo",
       "owner": "xiaochong",
       "repo": "hi-kid",
-      "checkedAt": "2026-10-26T12:04:00.195Z",
+      "checkedAt": "2026-10-26T16:00:54.104Z",
       "status": "ok",
       "name": "xiaochong/hi-kid",
       "title": "hi-kid",
@@ -5083,7 +5258,7 @@
       "pushedAt": "2026-04-24T16:25:53Z",
       "createdAt": "2026-04-19T14:37:15Z",
       "openIssues": 8,
-      "rateRemaining": "6015"
+      "rateRemaining": "6198"
     },
     {
       "url": "https://github.com/graykode/toeicbert",
@@ -5093,7 +5268,7 @@
       "kind": "github-repo",
       "owner": "graykode",
       "repo": "toeicbert",
-      "checkedAt": "2026-10-26T12:04:00.264Z",
+      "checkedAt": "2026-10-26T16:00:54.149Z",
       "status": "ok",
       "name": "graykode/toeicbert",
       "title": "toeicbert",
@@ -5119,7 +5294,7 @@
       "pushedAt": "2019-06-18T02:01:47Z",
       "createdAt": "2019-04-28T07:12:38Z",
       "openIssues": 4,
-      "rateRemaining": "6014"
+      "rateRemaining": "6197"
     },
     {
       "url": "https://github.com/ToolJet/ToolJet",
@@ -5129,13 +5304,13 @@
       "kind": "github-repo",
       "owner": "ToolJet",
       "repo": "ToolJet",
-      "checkedAt": "2026-10-26T12:04:00.277Z",
+      "checkedAt": "2026-10-26T16:00:54.240Z",
       "status": "ok",
       "name": "ToolJet/ToolJet",
       "title": "ToolJet",
       "description": "Open-source foundation of ToolJet AI - the enterprise app generation platform for internal tools, dashboards, business applications, workflows and AI agents. Build visually, from a prompt, or from Claude Code, Codex and Cursor over MCP 🚀",
-      "stars": 41127,
-      "forks": 5502,
+      "stars": 41128,
+      "forks": 5503,
       "language": "HTML",
       "license": "AGPL-3.0",
       "licenseName": "GNU Affero General Public License v3.0",
@@ -5161,10 +5336,10 @@
       ],
       "homepage": "https://tooljet.com",
       "archived": false,
-      "pushedAt": "2026-10-26T11:48:49Z",
+      "pushedAt": "2026-10-26T15:47:43Z",
       "createdAt": "2021-03-30T08:51:34Z",
-      "openIssues": 914,
-      "rateRemaining": "6013"
+      "openIssues": 913,
+      "rateRemaining": "6196"
     },
     {
       "url": "https://github.com/nextcloud/server",
@@ -5174,13 +5349,13 @@
       "kind": "github-repo",
       "owner": "nextcloud",
       "repo": "server",
-      "checkedAt": "2026-10-26T12:04:00.393Z",
+      "checkedAt": "2026-10-26T16:00:54.392Z",
       "status": "ok",
       "name": "nextcloud/server",
       "title": "server",
       "description": "☁️ Nextcloud server, a safe home for all your data",
-      "stars": 37303,
-      "forks": 5309,
+      "stars": 37302,
+      "forks": 5310,
       "language": "PHP",
       "license": "AGPL-3.0",
       "licenseName": "GNU Affero General Public License v3.0",
@@ -5208,10 +5383,10 @@
       ],
       "homepage": "https://nextcloud.com",
       "archived": false,
-      "pushedAt": "2026-10-26T11:40:55Z",
+      "pushedAt": "2026-10-26T15:59:32Z",
       "createdAt": "2016-06-02T07:44:14Z",
-      "openIssues": 3827,
-      "rateRemaining": "6012"
+      "openIssues": 3833,
+      "rateRemaining": "6194"
     },
     {
       "url": "https://github.com/dani-garcia/vaultwarden",
@@ -5221,12 +5396,12 @@
       "kind": "github-repo",
       "owner": "dani-garcia",
       "repo": "vaultwarden",
-      "checkedAt": "2026-10-26T12:04:00.463Z",
+      "checkedAt": "2026-10-26T16:00:54.398Z",
       "status": "ok",
       "name": "dani-garcia/vaultwarden",
       "title": "vaultwarden",
       "description": "Unofficial Bitwarden compatible server written in Rust, formerly known as bitwarden_rs",
-      "stars": 69697,
+      "stars": 69707,
       "forks": 3370,
       "language": "Rust",
       "license": "AGPL-3.0",
@@ -5243,8 +5418,8 @@
       "archived": false,
       "pushedAt": "2026-10-25T19:42:35Z",
       "createdAt": "2018-02-17T22:40:20Z",
-      "openIssues": 95,
-      "rateRemaining": "6011"
+      "openIssues": 94,
+      "rateRemaining": "6195"
     },
     {
       "url": "https://github.com/monkscode/Natural-Language-to-Robot-Framework",
@@ -5254,7 +5429,7 @@
       "kind": "github-repo",
       "owner": "monkscode",
       "repo": "Natural-Language-to-Robot-Framework",
-      "checkedAt": "2026-10-26T12:04:00.465Z",
+      "checkedAt": "2026-10-26T16:00:54.441Z",
       "status": "ok",
       "name": "monkscode/Natural-Language-to-Robot-Framework",
       "title": "Natural-Language-to-Robot-Framework",
@@ -5281,7 +5456,7 @@
       "pushedAt": "2026-10-26T05:33:57Z",
       "createdAt": "2024-11-21T18:41:59Z",
       "openIssues": 7,
-      "rateRemaining": "6010"
+      "rateRemaining": "6192"
     },
     {
       "url": "https://github.com/iamakshayshar/AITestCaseGenerator",
@@ -5291,7 +5466,7 @@
       "kind": "github-repo",
       "owner": "iamakshayshar",
       "repo": "AITestCaseGenerator",
-      "checkedAt": "2026-10-26T12:04:00.490Z",
+      "checkedAt": "2026-10-26T16:00:54.441Z",
       "status": "ok",
       "name": "iamakshayshar/AITestCaseGenerator",
       "title": "AITestCaseGenerator",
@@ -5311,7 +5486,7 @@
       "pushedAt": "2025-09-22T14:21:26Z",
       "createdAt": "2025-09-21T09:10:33Z",
       "openIssues": 0,
-      "rateRemaining": "6009"
+      "rateRemaining": "6193"
     },
     {
       "url": "https://github.com/vastsa/PI-Desktop",
@@ -5321,13 +5496,13 @@
       "kind": "github-repo",
       "owner": "vastsa",
       "repo": "PI-Desktop",
-      "checkedAt": "2026-10-26T12:04:00.531Z",
+      "checkedAt": "2026-10-26T16:00:54.490Z",
       "status": "ok",
       "name": "vastsa/PI-Desktop",
       "title": "PI-Desktop",
       "description": "Local-first AI coding agent desktop: Electron + Rust host core + pi Agent Harness + user-installable plugins",
-      "stars": 7313,
-      "forks": 707,
+      "stars": 7324,
+      "forks": 709,
       "language": "TypeScript",
       "license": "LGPL-3.0",
       "licenseName": "GNU Lesser General Public License v3.0",
@@ -5350,10 +5525,10 @@
       ],
       "homepage": "https://pi-docs.aiuo.net",
       "archived": false,
-      "pushedAt": "2026-10-26T07:51:53Z",
+      "pushedAt": "2026-10-26T13:46:49Z",
       "createdAt": "2023-03-22T14:23:39Z",
-      "openIssues": 230,
-      "rateRemaining": "6008"
+      "openIssues": 228,
+      "rateRemaining": "6191"
     },
     {
       "url": "https://github.com/volcengine/OpenViking",
@@ -5363,13 +5538,13 @@
       "kind": "github-repo",
       "owner": "volcengine",
       "repo": "OpenViking",
-      "checkedAt": "2026-10-26T12:04:00.608Z",
+      "checkedAt": "2026-10-26T16:00:54.588Z",
       "status": "ok",
       "name": "volcengine/OpenViking",
       "title": "OpenViking",
       "description": "Self-evolving Context Database for AI Agents. Unify Agent Memory, Knowledge RAG and Skills.",
-      "stars": 40866,
-      "forks": 3310,
+      "stars": 40876,
+      "forks": 3312,
       "language": "Python",
       "license": "AGPL-3.0",
       "licenseName": "GNU Affero General Public License v3.0",
@@ -5388,10 +5563,10 @@
       ],
       "homepage": "https://openviking.ai",
       "archived": false,
-      "pushedAt": "2026-10-26T11:51:39Z",
+      "pushedAt": "2026-10-26T16:00:19Z",
       "createdAt": "2026-01-05T07:11:17Z",
-      "openIssues": 1116,
-      "rateRemaining": "6007"
+      "openIssues": 1121,
+      "rateRemaining": "6190"
     },
     {
       "url": "https://github.com/Lakr233/vphone-cli",
@@ -5401,23 +5576,23 @@
       "kind": "github-repo",
       "owner": "Lakr233",
       "repo": "vphone-cli",
-      "checkedAt": "2026-10-26T12:04:00.665Z",
+      "checkedAt": "2026-10-26T16:00:54.720Z",
       "status": "ok",
       "name": "Lakr233/vphone-cli",
       "title": "vphone-cli",
       "description": "Run a virtual iPhone on an Apple Silicon Mac.",
-      "stars": 16023,
-      "forks": 1903,
+      "stars": 16030,
+      "forks": 1904,
       "language": "Swift",
       "license": "MIT",
       "licenseName": "MIT License",
       "topics": [],
       "homepage": null,
       "archived": false,
-      "pushedAt": "2026-10-26T05:25:10Z",
+      "pushedAt": "2026-10-26T15:53:38Z",
       "createdAt": "2026-02-26T11:29:08Z",
-      "openIssues": 8,
-      "rateRemaining": "6006"
+      "openIssues": 7,
+      "rateRemaining": "6189"
     },
     {
       "url": "https://github.com/AprilNEA/OpenLogi",
@@ -5427,12 +5602,12 @@
       "kind": "github-repo",
       "owner": "AprilNEA",
       "repo": "OpenLogi",
-      "checkedAt": "2026-10-26T12:04:00.723Z",
+      "checkedAt": "2026-10-26T16:00:54.793Z",
       "status": "ok",
       "name": "AprilNEA/OpenLogi",
       "title": "OpenLogi",
       "description": "⚡️A native, local-first alternative to Logitech Options+, written in Rust 🦀 — remap buttons, DPI, and SmartShift over HID++. No account, no telemetry.",
-      "stars": 24140,
+      "stars": 24157,
       "forks": 852,
       "language": "Rust",
       "license": "Apache-2.0",
@@ -5454,10 +5629,10 @@
       ],
       "homepage": "https://openlogi.org",
       "archived": false,
-      "pushedAt": "2026-10-26T09:38:27Z",
+      "pushedAt": "2026-10-26T14:56:00Z",
       "createdAt": "2026-05-24T10:10:36Z",
-      "openIssues": 561,
-      "rateRemaining": "6005"
+      "openIssues": 564,
+      "rateRemaining": "6185"
     },
     {
       "url": "https://github.com/omacom/omarchy",
@@ -5467,23 +5642,23 @@
       "kind": "github-repo",
       "owner": "omacom",
       "repo": "omarchy",
-      "checkedAt": "2026-10-26T12:04:00.744Z",
+      "checkedAt": "2026-10-26T16:00:54.811Z",
       "status": "ok",
       "name": "omacom/omarchy",
       "title": "omarchy",
       "description": "Beautiful, Modern & Opinionated Linux",
-      "stars": 45719,
-      "forks": 5721,
+      "stars": 45729,
+      "forks": 5725,
       "language": "Shell",
       "license": "MIT",
       "licenseName": "MIT License",
       "topics": [],
       "homepage": "https://omarchy.org",
       "archived": false,
-      "pushedAt": "2026-10-26T11:15:46Z",
+      "pushedAt": "2026-10-26T15:18:00Z",
       "createdAt": "2025-06-01T07:26:22Z",
-      "openIssues": 5795,
-      "rateRemaining": "6004"
+      "openIssues": 5763,
+      "rateRemaining": "6187"
     },
     {
       "url": "https://github.com/armory3d/armorpaint",
@@ -5493,13 +5668,13 @@
       "kind": "github-repo",
       "owner": "armory3d",
       "repo": "armorpaint",
-      "checkedAt": "2026-10-26T12:04:00.802Z",
+      "checkedAt": "2026-10-26T16:00:54.813Z",
       "status": "ok",
       "name": "armory3d/armorpaint",
       "title": "armorpaint",
       "description": "Graphics Creation Tools",
       "stars": 5417,
-      "forks": 645,
+      "forks": 646,
       "language": "C",
       "license": "NOASSERTION",
       "licenseName": "Other",
@@ -5519,7 +5694,7 @@
       "pushedAt": "2026-10-25T22:21:31Z",
       "createdAt": "2017-02-06T23:03:08Z",
       "openIssues": 83,
-      "rateRemaining": "6003"
+      "rateRemaining": "6188"
     },
     {
       "url": "https://github.com/fmtlib/fmt",
@@ -5529,7 +5704,7 @@
       "kind": "github-repo",
       "owner": "fmtlib",
       "repo": "fmt",
-      "checkedAt": "2026-10-26T12:04:00.840Z",
+      "checkedAt": "2026-10-26T16:00:54.831Z",
       "status": "ok",
       "name": "fmtlib/fmt",
       "title": "fmt",
@@ -5557,8 +5732,8 @@
       "archived": false,
       "pushedAt": "2026-10-25T16:49:29Z",
       "createdAt": "2012-12-07T16:26:46Z",
-      "openIssues": 11,
-      "rateRemaining": "6002"
+      "openIssues": 10,
+      "rateRemaining": "6186"
     },
     {
       "url": "https://github.com/YutaroHayakawa/ipftrace2",
@@ -5568,7 +5743,7 @@
       "kind": "github-repo",
       "owner": "YutaroHayakawa",
       "repo": "ipftrace2",
-      "checkedAt": "2026-10-26T12:04:00.884Z",
+      "checkedAt": "2026-10-26T16:00:54.949Z",
       "status": "ok",
       "name": "YutaroHayakawa/ipftrace2",
       "title": "ipftrace2",
@@ -5590,7 +5765,7 @@
       "pushedAt": "2024-04-14T02:35:14Z",
       "createdAt": "2020-03-17T16:53:52Z",
       "openIssues": 2,
-      "rateRemaining": "6001"
+      "rateRemaining": "6184"
     },
     {
       "url": "https://github.com/tinystruct/smalltalk",
@@ -5600,7 +5775,7 @@
       "kind": "github-repo",
       "owner": "tinystruct",
       "repo": "smalltalk",
-      "checkedAt": "2026-10-26T12:04:00.941Z",
+      "checkedAt": "2026-10-26T16:00:55.086Z",
       "status": "ok",
       "name": "tinystruct/smalltalk",
       "title": "smalltalk",
@@ -5630,7 +5805,7 @@
       "pushedAt": "2026-08-15T16:33:20Z",
       "createdAt": "2021-01-11T14:20:29Z",
       "openIssues": 13,
-      "rateRemaining": "6000"
+      "rateRemaining": "6183"
     },
     {
       "url": "https://github.com/elebumm",
@@ -5639,7 +5814,7 @@
       "note": "Founder — RedditVideoMakerBot",
       "kind": "github-user",
       "login": "elebumm",
-      "checkedAt": "2026-10-26T12:04:00.977Z",
+      "checkedAt": "2026-10-26T16:00:55.146Z",
       "status": "ok",
       "name": "elebumm",
       "title": "Lewis Menelaws",
@@ -5656,7 +5831,7 @@
       "note": "Maintainer — RedditVideoMakerBot",
       "kind": "github-user",
       "login": "JasonLovesDoggo",
-      "checkedAt": "2026-10-26T12:04:01.039Z",
+      "checkedAt": "2026-10-26T16:00:55.151Z",
       "status": "ok",
       "name": "JasonLovesDoggo",
       "title": "Jason Cameron",
@@ -5673,7 +5848,7 @@
       "note": "Contributor — RedditVideoMakerBot",
       "kind": "github-user",
       "login": "OpenSourceSimon",
-      "checkedAt": "2026-10-26T12:04:01.101Z",
+      "checkedAt": "2026-10-26T16:00:55.157Z",
       "status": "ok",
       "name": "OpenSourceSimon",
       "title": "Simon",
@@ -5690,7 +5865,7 @@
       "note": "Contributor — RedditVideoMakerBot",
       "kind": "github-user",
       "login": "CallumIO",
-      "checkedAt": "2026-10-26T12:04:01.104Z",
+      "checkedAt": "2026-10-26T16:00:55.193Z",
       "status": "ok",
       "name": "callumio",
       "title": "Callum Leslie",
@@ -5707,7 +5882,7 @@
       "note": "Contributor — RedditVideoMakerBot",
       "kind": "github-user",
       "login": "CordlessCoder",
-      "checkedAt": "2026-10-26T12:04:01.152Z",
+      "checkedAt": "2026-10-26T16:00:55.275Z",
       "status": "ok",
       "name": "CordlessCoder",
       "title": "CordlessCoder",
@@ -5724,7 +5899,7 @@
       "note": "Contributor — RedditVideoMakerBot",
       "kind": "github-user",
       "login": "LukaHietala",
-      "checkedAt": "2026-10-26T12:04:01.153Z",
+      "checkedAt": "2026-10-26T16:00:55.378Z",
       "status": "ok",
       "name": "LukaHietala",
       "title": "Luka Hietala",
@@ -5741,7 +5916,7 @@
       "note": "Contributor — RedditVideoMakerBot",
       "kind": "github-user",
       "login": "FreebieII",
-      "checkedAt": "2026-10-26T12:04:01.209Z",
+      "checkedAt": "2026-10-26T16:00:55.381Z",
       "status": "ok",
       "name": "FreebieII",
       "title": "Freebie",
@@ -5758,7 +5933,7 @@
       "note": "Contributor — RedditVideoMakerBot",
       "kind": "github-user",
       "login": "electro199",
-      "checkedAt": "2026-10-26T12:04:01.263Z",
+      "checkedAt": "2026-10-26T16:00:55.412Z",
       "status": "ok",
       "name": "electro199",
       "title": "Syed Aman Raza",
@@ -5775,7 +5950,7 @@
       "note": "Contributor — RedditVideoMakerBot",
       "kind": "github-user",
       "login": "cyteon",
-      "checkedAt": "2026-10-26T12:04:01.279Z",
+      "checkedAt": "2026-10-26T16:00:55.484Z",
       "status": "ok",
       "name": "cyteon",
       "title": "Cyteon",
@@ -5793,12 +5968,12 @@
       "kind": "github-repo",
       "owner": "meta-models",
       "repo": "meta-model-cookbook",
-      "checkedAt": "2026-10-26T12:04:01.289Z",
+      "checkedAt": "2026-10-26T16:00:55.485Z",
       "status": "ok",
       "name": "meta-models/meta-model-cookbook",
       "title": "meta-model-cookbook",
       "description": "Developer recipes for Meta Model API — agentic workflows, multi-agent orchestration patterns, and use case examples with cost comparisons. Colab notebooks + standalone Python files.",
-      "stars": 181,
+      "stars": 183,
       "forks": 48,
       "language": "Python",
       "license": "MIT",
@@ -5809,7 +5984,7 @@
       "pushedAt": "2026-10-24T04:05:26Z",
       "createdAt": "2026-07-07T21:57:37Z",
       "openIssues": 43,
-      "rateRemaining": "5990"
+      "rateRemaining": "6173"
     }
   ]
 }
