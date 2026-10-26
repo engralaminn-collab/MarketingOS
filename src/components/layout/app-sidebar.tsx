@@ -33,6 +33,7 @@ import {
   BarChart3,
   Boxes,
   Building2,
+  Rocket,
 } from "lucide-react";
 import {
   Sidebar,
@@ -65,6 +66,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "outreach-hub", label: "SMS, VoIP & Scraper", icon: Phone, roles: ["*"] },
   { id: "workflow-studio", label: "Workflow Studio", icon: GitBranch, roles: ["*"] },
   { id: "agency-console", label: "Agency Console", icon: Building2, roles: ["*"] },
+  { id: "deployments", label: "Deployments & Hosting", icon: Rocket, roles: ["super_admin", "company_owner"] },
   { id: "ecosystem", label: "Ecosystem Library", icon: Boxes, roles: ["*"] },
   { id: "analytics", label: "Analytics & UTM", icon: BarChart3, roles: ["*"] },
   { id: "ukvi-hub", label: "Study Abroad & UKVI", icon: GraduationCap, roles: ["*"] },
@@ -99,7 +101,7 @@ export function AppSidebar() {
   );
 
   const sections = [
-    { label: "Overview", items: filteredItems.filter((i) => ["dashboard", "agency-console", "free-ai-hub", "knowledge-wiki"].includes(i.id)) },
+    { label: "Overview", items: filteredItems.filter((i) => ["dashboard", "agency-console", "deployments", "free-ai-hub", "knowledge-wiki"].includes(i.id)) },
     { label: "Marketing & Outreach", items: filteredItems.filter((i) => ["marketing-studio", "crm", "seo", "market-intelligence", "outreach-hub", "workflow-studio", "ecosystem", "analytics"].includes(i.id)) },
     { label: "Academic & UKVI", items: filteredItems.filter((i) => ["ukvi-hub", "students", "employees", "departments", "programs", "attendance", "assignments", "exams", "schedule"].includes(i.id)) },
     { label: "Finance & HR", items: filteredItems.filter((i) => ["finance", "fees", "salary", "hrm", "leave"].includes(i.id)) },

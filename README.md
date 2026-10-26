@@ -7,16 +7,13 @@ Self-hosted marketing operations platform with CRM, campaigns, content, SEO, ana
 Requirements: Node.js 22.23.2, Bun 1.x, and a reachable SQLite database path.
 
 ```bash
-bun install
-cp .env.example .env
-# Set JWT_SECRET to a fresh secret and set ADMIN_SEED_PASSWORD for seeding.
-openssl rand -hex 32
-mkdir -p db
-bunx prisma generate
-bunx prisma db push
-bunx tsx prisma/seed.ts
+bash scripts/setup.sh
 bun run dev
 ```
+
+The setup script is re-runnable: it preserves an existing `.env` and database, generates a strong `JWT_SECRET` only when the template value is blank, installs the locked dependencies, generates Prisma Client, applies non-destructive schema changes, and seeds the initial records. It never downloads AI models or overwrites existing credentials. Review `.env` (especially `ADMIN_SEED_PASSWORD`, database location, encryption keys, and AI provider settings) before exposing the service. To skip seeding: `SKIP_SEED=1 bash scripts/setup.sh`.
+
+For production, use the reviewed CI → image build → VPS deploy pipeline in `.github/workflows/`; do not run deployment by manually copying files. Configure the GitHub Actions `DEPLOY_HOST` and `DEPLOY_SSH_KEY` secrets and reconcile the server configuration with `docs/DEPLOYMENT.md`. Actual remote deployment cannot be enabled until those owner-controlled credentials and a server are configured.
 
 ## Self-hosted AI
 
@@ -118,6 +115,7 @@ bot-protected pages) — they are never silently dropped.
 - Ecosystem library: every brief link verified, classified, mapped to a module and searchable
 - Study-abroad intake roadmap: back-planned milestones, readiness score, cost ranges and an exportable plan (deterministic, no model call)
 - Agency Console: 100 department runtimes, 2,000 agent specs, SOP library, client provisioning, brand voices, personas and backups with a live readiness audit
+- Deployments & Hosting: company-owner/super-admin dashboard for GitHub Actions status and guarded production workflow dispatch, with a shareable project brief for the supplied PM2/Nginx/Cloudflare hosting target
 - SMS/OTP, webhooks, audit logs, notifications, team management and settings
 
 ## Tech stack
