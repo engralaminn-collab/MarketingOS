@@ -415,3 +415,25 @@ Verified: tsc --noEmit clean, eslint . clean, verifier reports
 { ok: 184, http-403: 4, archived: 2 } with zero blocked, builder emits 190
 entries, audit reports 0 missing. The 4 remaining access-required links are three
 private repos the GitHub token cannot read plus developer.meta.com/ai.
+
+---
+Task ID: marketingos-ci-lockfile-1
+Agent: Main Orchestrator
+Task: Unblock the PR merge — CI failed at "Install dependencies"
+
+Finding: CI died before lint/typecheck ever ran. `bun install --frozen-lockfile`
+rejected the tree because tsx (^4.20.3) was added to package.json devDependencies
+in the agency commit but bun.lock was never regenerated — the dependency had only
+ever been installed locally with npm. 60 lockfile lines were missing: the tsx
+entry, esbuild and its platform binaries, fsevents, and bun's configVersion marker.
+
+Fix: regenerated the lockfile from the pushed branch with bun 1.4.4 (CI pins
+bun-version "1") using --lockfile-only. The diff is purely additive — 60 lines
+added, 0 removed.
+
+Verified against a clean `git archive` checkout, i.e. the way CI sees the tree:
+  * bun install --frozen-lockfile -> 873 packages, no error
+  * bunx prisma generate -> ok (this sandbox needs the engine override; runners do not)
+  * bun run lint -> clean
+  * bun run typecheck -> clean
+  * bun run test -> 21/21 pass
