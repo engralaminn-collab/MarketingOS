@@ -16,7 +16,14 @@
     "db:push": "prisma db push --accept-data-loss",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "refs:verify": "node scripts/verify-reference-links.mjs",
+    "refs:build": "node scripts/build-reference-library.mjs",
+    "refs:audit": "node scripts/audit-submitted-links.mjs",
+    "agency:seed": "tsx prisma/seed-agency.ts",
+    "backup:now": "tsx scripts/agency-backup.ts",
+    "backup:verify": "tsx scripts/agency-backup.ts --verify-latest",
+    "backup:list": "tsx scripts/agency-backup.ts --list"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -99,6 +106,7 @@
     "eslint-config-next": "^16.1.1",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.5",
-    "typescript": "^5"
+    "typescript": "^5",
+    "tsx": "^4.20.3"
   }
 }

@@ -51,6 +51,9 @@ import {
   Briefcase,
   PlaneTakeoff,
   Handshake,
+  Boxes,
+  Building2,
+  UserCircle,
 } from 'lucide-react';
 
 // Lazy load views
@@ -58,6 +61,7 @@ const DashboardView = lazy(() => import('@/components/views/dashboard-view').the
 const SocialAccountsView = lazy(() => import('@/components/views/social-accounts-view').then(m => ({ default: m.SocialAccountsView })));
 const AiCommandView = lazy(() => import('@/components/views/ai-command-view').then(m => ({ default: m.AiCommandView })));
 const MediaStudioView = lazy(() => import('@/components/views/media-studio-view').then(m => ({ default: m.MediaStudioView })));
+const TalkingHeadView = lazy(() => import('@/components/views/talking-head-view').then(m => ({ default: m.TalkingHeadView })));
 const CrmView = lazy(() => import('@/components/views/crm-view').then(m => ({ default: m.CrmView })));
 const SeoView = lazy(() => import('@/components/views/seo-view').then(m => ({ default: m.SeoView })));
 const MarketIntelligenceView = lazy(() => import('@/components/views/market-intelligence-view'));
@@ -93,6 +97,8 @@ const KnowledgeWikiView = lazy(() => import('@/components/views/knowledge-wiki-v
 const OutreachHubView = lazy(() => import('@/components/views/outreach-hub-view'));
 const WorkflowStudioView = lazy(() => import('@/components/views/workflow-studio-view'));
 const UkviHubView = lazy(() => import('@/components/views/ukvi-hub-view'));
+const EcosystemView = lazy(() => import('@/components/views/ecosystem-view').then(m => ({ default: m.EcosystemView })));
+const AgencyConsoleView = lazy(() => import('@/components/views/agency-console-view').then(m => ({ default: m.AgencyConsoleView })));
 
 const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   dashboard: DashboardView,
@@ -100,6 +106,7 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   'social-accounts': SocialAccountsView,
   'ai-command': AiCommandView,
   'media-studio': MediaStudioView,
+  'talking-head': TalkingHeadView,
   crm: CrmView,
   seo: SeoView,
   'market-intelligence': MarketIntelligenceView,
@@ -118,6 +125,8 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   'outreach-hub': OutreachHubView,
   'workflow-studio': WorkflowStudioView,
   'ukvi-hub': UkviHubView,
+  ecosystem: EcosystemView,
+  'agency-console': AgencyConsoleView,
   integrations: IntegrationsView,
   subscriptions: SettingsView,
   settings: SettingsView,
@@ -149,6 +158,8 @@ const navItems: NavItem[] = [
   { id: 'dashboard', label: 'CEO Dashboard', icon: <LayoutDashboard className="w-4 h-4" />, section: 'Main' },
   { id: 'workforce', label: 'AI Workforce', icon: <Network className="w-4 h-4" />, badge: '2,000', section: 'Workforce' },
   { id: 'workflow-studio', label: 'Workflow Studio', icon: <GitBranch className="w-4 h-4" />, badge: 'n8n', section: 'Workforce' },
+  { id: 'agency-console', label: 'Agency Console', icon: <Building2 className="w-4 h-4" />, badge: '100·2K', section: 'Workforce' },
+  { id: 'ecosystem', label: 'Ecosystem Library', icon: <Boxes className="w-4 h-4" />, badge: '190', section: 'Connect' },
   { id: 'integrations', label: 'Integrations', icon: <Plug className="w-4 h-4" />, badge: '116', section: 'Connect' },
   { id: 'social-accounts', label: 'Social Accounts', icon: <Link2 className="w-4 h-4" />, badge: 'OAuth', section: 'Connect' },
   { id: 'outreach-hub', label: 'SMS, VoIP & Scraper', icon: <Phone className="w-4 h-4" />, badge: 'Live', section: 'Connect' },
@@ -156,6 +167,7 @@ const navItems: NavItem[] = [
   { id: 'ai-command', label: 'AI Command', icon: <Bot className="w-4 h-4" />, section: 'AI' },
   { id: 'knowledge-wiki', label: 'Knowledge Wiki & RAG', icon: <BookOpen className="w-4 h-4" />, badge: 'Wiki', section: 'AI' },
   { id: 'media-studio', label: 'Media Studio', icon: <Palette className="w-4 h-4" />, section: 'AI' },
+  { id: 'talking-head', label: 'Live Talk Studio', icon: <UserCircle className="w-4 h-4" />, badge: 'Talking video', section: 'AI' },
   { id: 'ai-agents', label: 'AI Agents', icon: <Cpu className="w-4 h-4" />, section: 'AI' },
   { id: 'marketing-studio', label: 'Marketing Studio', icon: <Sparkles className="w-4 h-4" />, badge: '61 Kits', section: 'Marketing' },
   { id: 'crm', label: 'CRM & Enrichment', icon: <Users className="w-4 h-4" />, section: 'Marketing' },

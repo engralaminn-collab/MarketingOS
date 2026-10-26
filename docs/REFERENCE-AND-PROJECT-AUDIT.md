@@ -12,6 +12,13 @@
 
 ## 2. Reference review and disposition
 
+> **Update 2026-10-26:** the link-level inventory is now generated and versioned in
+> [REFERENCE-LIBRARY.md](REFERENCE-LIBRARY.md). It covers **190 unique links** (including maintainer
+> profiles and product sites, not only repositories), re-checks each GitHub link, keeps HTTP 403 and
+> sandbox-blocked links visible, and records an implementation evidence path for every "adopted"
+> pattern. The dispositions below are the 2026-10-17 snapshot and remain valid; where they differ from
+> the generated library, the generated library plus `docs/link-verification.json` are authoritative.
+
 | Reference pattern | Decision and current state |
 |---|---|
 | Marketing kits, diagrams, CTA/design references | Applicable. Marketing Studio now has 9 deterministic kit types, including SEO briefs/CRO experiments/case studies/referrals, Markdown download, 7 editable branded SVG diagram layouts with light palette tokens and 2× PNG export, and CTA HTML copy/download with contrast checks. Patterns were adapted; upstream source/assets were not copied. Browser/accessibility review across all screen sizes remains outstanding. |

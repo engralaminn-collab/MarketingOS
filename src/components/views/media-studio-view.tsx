@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { useApiMutation, useApiQuery } from "@/hooks/use-api-query";
 import { VideoCaptionerAndVoicePanel } from "@/components/studio/video-captioner-panel";
+import { LiveTalkStudio } from "@/components/studio/live-talk-studio";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -225,7 +226,7 @@ const VIDEO_TYPES = [
   { id: "reels", label: "Instagram Reels", icon: Film, desc: "Vertical editing, trending audio, and direct Instagram publishing are not configured.", status: "coming" as const },
   { id: "shorts", label: "YouTube Shorts", icon: Clapperboard, desc: "Short-form rendering and direct YouTube publishing are not configured.", status: "coming" as const },
   { id: "promo", label: "Promo Video", icon: Video, desc: "A free local animated text-card WebM template is available below. It is not AI-generated footage.", status: "local" as const },
-  { id: "avatar", label: "Talking Avatar", icon: UserCircle, desc: "Avatar rendering and voice cloning are not configured.", status: "coming" as const },
+  { id: "avatar", label: "Talking Avatar", icon: UserCircle, desc: "Live browser preview: your photo plus a script, driven by OS voices. Add local TTS for recorded audio; neural lip-sync needs an operator GPU adapter.", status: "talk" as const },
   { id: "marketing", label: "Marketing Video Plan", icon: Wand2, desc: "Draft a marketing video script and storyboard. Rendered video depends on an available AI video provider.", status: "plan" as const },
 ];
 
@@ -1185,6 +1186,8 @@ function VideoStudio() {
           const Icon = videoType.icon;
           const canPlan = videoType.status === "plan";
           const canRenderLocalTemplate = videoType.status === "local";
+          const canTalk = videoType.status === "talk";
+          const isEnabled = canPlan || canRenderLocalTemplate || canTalk;
           return (
             <motion.div
               key={videoType.id}
@@ -1196,9 +1199,9 @@ function VideoStudio() {
                 <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-500/20 to-sky-500/20 flex items-center justify-center">
                   <Icon className="h-5 w-5 text-orange-400" />
                 </div>
-                <Badge variant={canPlan || canRenderLocalTemplate ? "outline" : "secondary"} className="text-[10px] gap-1">
-                  {canPlan ? <Sparkles className="h-2.5 w-2.5" /> : canRenderLocalTemplate ? <Film className="h-2.5 w-2.5" /> : <Lock className="h-2.5 w-2.5" />}
-                  {canPlan ? "Plan available" : canRenderLocalTemplate ? "Local template" : "Not configured"}
+                <Badge variant={isEnabled ? "outline" : "secondary"} className="text-[10px] gap-1">
+                  {canPlan ? <Sparkles className="h-2.5 w-2.5" /> : canRenderLocalTemplate ? <Film className="h-2.5 w-2.5" /> : canTalk ? <UserCircle className="h-2.5 w-2.5" /> : <Lock className="h-2.5 w-2.5" />}
+                  {canPlan ? "Plan available" : canRenderLocalTemplate ? "Local template" : canTalk ? "Live in browser" : "Not configured"}
                 </Badge>
               </div>
               <h3 className="text-sm font-semibold mb-1.5">{videoType.label}</h3>
@@ -1207,20 +1210,23 @@ function VideoStudio() {
                 <Button
                   variant={canPlan ? "default" : "outline"}
                   size="sm"
-                  disabled={(!canPlan && !canRenderLocalTemplate) || generateMutation.isLoading}
+                  disabled={!isEnabled || generateMutation.isLoading}
                   onClick={() => {
                     if (canPlan) setShowComposer(true);
+                    else if (canTalk) document.getElementById("live-talk-studio")?.scrollIntoView({ behavior: "smooth", block: "start" });
                     else document.getElementById("local-promo-video")?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
                   className="w-full text-xs h-9"
                 >
-                  {canPlan ? <><Sparkles className="h-3.5 w-3.5 mr-1.5" />Create script & storyboard</> : canRenderLocalTemplate ? <><Film className="h-3.5 w-3.5 mr-1.5" />Open local maker</> : "Not configured"}
+                  {canPlan ? <><Sparkles className="h-3.5 w-3.5 mr-1.5" />Create script & storyboard</> : canRenderLocalTemplate ? <><Film className="h-3.5 w-3.5 mr-1.5" />Open local maker</> : canTalk ? <><UserCircle className="h-3.5 w-3.5 mr-1.5" />Open live talk studio</> : "Not configured"}
                 </Button>
               </div>
             </motion.div>
           );
         })}
       </motion.div>
+
+      <LiveTalkStudio />
 
       <LocalPromoVideoMaker />
 

@@ -50,6 +50,63 @@ bun run build
 
 Production uses the SQLite database configured in `prisma/schema.prisma`; the database file must live in the persistent `./db` volume described in `docker-compose.prod.yml`. Back up both the database and the credential-encryption key. SQLite is suitable for smaller/self-hosted deployments but should be load-tested before multi-user high-write production use.
 
+## Agency operating model (100 departments · 2,000 agents · SOPs everywhere)
+
+The platform is one application that serves many clients. A client is configuration, not a deployment.
+
+```bash
+npm run agency:seed     # top up 100 departments, 2,000 agent specs, SOPs, department runtimes
+npm run backup:now      # take + verify + register a database snapshot
+npm run backup:verify   # re-verify the newest snapshot
+```
+
+- **100 departments**, each with its own `DepartmentRuntime`: model name, tier, temperature, system prompt,
+  guardrails, knowledge scope and SOP binding. Isolation is `local` and fallback is `none` by default, so a
+  department fails loudly instead of silently calling a hosted provider.
+- **2,000 agent specs** (`AGT-0001`…`AGT-2000`) across 20 role archetypes, plus **2,464 AI employees** that
+  execute them. Every department is staffed.
+- **120 SOPs**: one delivery procedure per department plus 12 cross-functional playbooks (onboarding, brand
+  voice, publishing, SEO content, media, persona consent, SMS, leads, invoicing, backups, access, reporting).
+- **Per-client configuration** via `POST /api/clients`: channels, credential mode (`client_login` with
+  auto-logout and password rotation, or `managed`), persona limit and a default brand voice — in one call.
+- **Face agents** (`BrandPersona`) built from client-supplied photos, with server-enforced consent, usage
+  scope and a gated render request.
+- **Verified backups**: `VACUUM INTO` snapshots with SHA-256 checksums, per-table manifests and a restore
+  dry-run. `scripts/db-backup.sh` remains the deploy-time safeguard.
+
+Open **Agency Console** in the app, or `GET /api/agency/readiness`, to see every check recomputed from live
+data. Details and limits: [docs/AGENCY-OPERATIONS.md](docs/AGENCY-OPERATIONS.md).
+
+## Open-source reference library
+
+Every repository, maintainer profile and product site from the project brief is catalogued in
+**Ecosystem Library** (`src/components/views/ecosystem-view.tsx`) and in
+[`docs/REFERENCE-LIBRARY.md`](docs/REFERENCE-LIBRARY.md). The catalogue is generated, not hand-written:
+
+```bash
+node scripts/verify-reference-links.mjs   # re-checks every link via the GitHub API
+node scripts/build-reference-library.mjs  # rebuilds the typed catalogue + inventory doc
+node scripts/audit-submitted-links.mjs    # audits a submitted batch, duplicates and typos included
+```
+
+- Source list: `scripts/data/reference-links.json` (190 unique URLs, de-duplicated)
+- Verification snapshot: `docs/link-verification.json`
+- Out-of-band checks for hosts the build sandbox cannot reach: `scripts/data/external-verification.json`
+- Typed catalogue used by the UI: `src/data/reference-library.ts`
+- Per-batch audit: `docs/SUBMITTED-LINKS-AUDIT.md` (79 unique links from the 2026-10-26 submission)
+- Read-only JSON API: `GET /api/ecosystem?q=&category=&module=&status=&sort=&limit=`
+
+Statuses describe **this** repository: `adopted` patterns point at the implementing code path,
+`blueprint` items are scheduled, `evaluated` items are reference-only, and copyleft licences are
+flagged for review. No upstream source, model weights, datasets or assets are bundled.
+
+Every link now carries **how** it was checked (`github-api`, `page-fetch`, `host-probe`) and when.
+The build sandbox can only reach GitHub, npm and PyPI, so other websites used to be marked
+`external site` without being fetched; they are now checked from a general network and merged in from
+`scripts/data/external-verification.json`, with the sandbox's own probe result kept alongside. Only
+links that genuinely cannot be read stay marked `access required` (private repositories and
+bot-protected pages) — they are never silently dropped.
+
 ## Platform areas
 
 - CRM: leads, contacts, deals, tickets
@@ -58,6 +115,9 @@ Production uses the SQLite database configured in `prisma/schema.prisma`; the da
 - Local image generation and optional self-hosted video/TTS adapters
 - Campaigns, content calendar, analytics, SEO, competitor and keyword tracking
 - Social account records, integration settings, workflow builder and execution
+- Ecosystem library: every brief link verified, classified, mapped to a module and searchable
+- Study-abroad intake roadmap: back-planned milestones, readiness score, cost ranges and an exportable plan (deterministic, no model call)
+- Agency Console: 100 department runtimes, 2,000 agent specs, SOP library, client provisioning, brand voices, personas and backups with a live readiness audit
 - SMS/OTP, webhooks, audit logs, notifications, team management and settings
 
 ## Tech stack

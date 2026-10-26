@@ -68,3 +68,7 @@ db/
 *.sqlite3
 backups/
 package-lock.json
+
+# local database + backups
+/db/
+/backups/
