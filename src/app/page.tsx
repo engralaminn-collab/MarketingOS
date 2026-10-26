@@ -53,6 +53,7 @@ import {
   Handshake,
   Boxes,
   Building2,
+  UserCircle,
 } from 'lucide-react';
 
 // Lazy load views
@@ -60,6 +61,7 @@ const DashboardView = lazy(() => import('@/components/views/dashboard-view').the
 const SocialAccountsView = lazy(() => import('@/components/views/social-accounts-view').then(m => ({ default: m.SocialAccountsView })));
 const AiCommandView = lazy(() => import('@/components/views/ai-command-view').then(m => ({ default: m.AiCommandView })));
 const MediaStudioView = lazy(() => import('@/components/views/media-studio-view').then(m => ({ default: m.MediaStudioView })));
+const TalkingHeadView = lazy(() => import('@/components/views/talking-head-view').then(m => ({ default: m.TalkingHeadView })));
 const CrmView = lazy(() => import('@/components/views/crm-view').then(m => ({ default: m.CrmView })));
 const SeoView = lazy(() => import('@/components/views/seo-view').then(m => ({ default: m.SeoView })));
 const MarketIntelligenceView = lazy(() => import('@/components/views/market-intelligence-view'));
@@ -104,6 +106,7 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   'social-accounts': SocialAccountsView,
   'ai-command': AiCommandView,
   'media-studio': MediaStudioView,
+  'talking-head': TalkingHeadView,
   crm: CrmView,
   seo: SeoView,
   'market-intelligence': MarketIntelligenceView,
@@ -164,6 +167,7 @@ const navItems: NavItem[] = [
   { id: 'ai-command', label: 'AI Command', icon: <Bot className="w-4 h-4" />, section: 'AI' },
   { id: 'knowledge-wiki', label: 'Knowledge Wiki & RAG', icon: <BookOpen className="w-4 h-4" />, badge: 'Wiki', section: 'AI' },
   { id: 'media-studio', label: 'Media Studio', icon: <Palette className="w-4 h-4" />, section: 'AI' },
+  { id: 'talking-head', label: 'Live Talk Studio', icon: <UserCircle className="w-4 h-4" />, badge: 'Talking video', section: 'AI' },
   { id: 'ai-agents', label: 'AI Agents', icon: <Cpu className="w-4 h-4" />, section: 'AI' },
   { id: 'marketing-studio', label: 'Marketing Studio', icon: <Sparkles className="w-4 h-4" />, badge: '61 Kits', section: 'Marketing' },
   { id: 'crm', label: 'CRM & Enrichment', icon: <Users className="w-4 h-4" />, section: 'Marketing' },

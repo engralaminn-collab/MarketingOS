@@ -8,7 +8,7 @@ import {
   Settings, UserCog, Bot, Plug, Palette, Network, Search as SearchIcon,
   Link2, Plus, Download, Upload, Bell, Sparkles, Activity, Rss,
   Zap, BookOpen, Phone, GitBranch, GraduationCap, School, CalendarCheck,
-  ClipboardList, Clock, DollarSign, Receipt, CreditCard, Briefcase, PlaneTakeoff, Boxes, Building2,
+  ClipboardList, Clock, DollarSign, Receipt, CreditCard, Briefcase, PlaneTakeoff, Boxes, Building2, UserCircle,
 } from "lucide-react";
 import { useAppStore, type ViewId } from "@/stores/app-store";
 import { useRouter } from "next/navigation";
@@ -99,6 +99,7 @@ export function CommandPalette({ onNavigate, onQuickAction }: CommandPaletteProp
       { id: "nav-outreach-hub", label: "Omni-Channel Outreach — SMS, VoIP dialer, Inbox & Firecrawl scraper", icon: Phone, group: "Navigate", action: () => go("outreach-hub"), keywords: "sms httpsms twilio voip telnyx scraper firecrawl auto-reply" },
       { id: "nav-workflow-studio", label: "Workflow Studio — visual automation & n8n JSON export", icon: GitBranch, group: "Navigate", action: () => go("workflow-studio"), keywords: "n8n workflow automation trigger tooljet" },
       { id: "nav-ukvi-hub", label: "Study Abroad & UKVI Consultancy Hub — University matcher, CAS & IELTS", icon: GraduationCap, group: "Navigate", action: () => go("ukvi-hub"), keywords: "ukvi cas visa ielts university study abroad consultancy" },
+      { id: "nav-talking-head", label: "Live Talk Studio — photo + script \u2192 talking video clip", icon: UserCircle, group: "Navigate", action: () => go("talking-head"), keywords: "talking head avatar lipsync lip sync video voice presenter" },
       { id: "nav-media-studio", label: "Media Studio — images, video, VideoCaptioner subtitles & VoiceStudio", icon: Palette, group: "Navigate", action: () => go("media-studio"), keywords: "subtitles srt vtt whisperflux video audio" },
       { id: "nav-social", label: "Social Accounts", icon: Link2, group: "Navigate", action: () => go("social-accounts") },
       // Academic, UKVI, ERP, Finance & HRM views

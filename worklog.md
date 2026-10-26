@@ -311,3 +311,64 @@ Verified:
   * POST /api/agency/backups -> 201; verify -> all checks PASS
   * readiness endpoint: 12/12 PASS (100 depts, 2,000 agents, 2,464 employees, 120 SOPs,
     100 local runtimes, 0 fallbacks, 0 hosted keys)
+
+---
+Task ID: marketingos-talking-video-1
+Agent: Main Orchestrator
+Task: Answer "can we generate live talk video?" with a working talking-video agent, not a promise
+
+Starting state (measured): Media Studio shipped a "Talking Avatar" card marked
+"not configured"; /api/ai/avatar-video existed but required VIDEO_GENERATION_URL
+(ComfyUI) plus a local TTS endpoint, so on a default install there was no way to
+produce a talking clip at all.
+
+Work Log:
+- src/lib/talking-head.ts: viseme table (rest/AA/E/I/O/U/M/FV/L/WQ), charToViseme,
+  ease/visemeToMouth, RMS envelope, and drawTalkingFrame — cover-fits the photo,
+  adds head bob, blink, a draggable 2D mouth overlay and a vignette; draws a
+  neutral presenter silhouette when there is no photo. Plus pickVideoMime,
+  browserVoices and formatDuration.
+- src/components/studio/live-talk-studio.tsx: the studio itself. Canvas stage,
+  client-side photo intake (FileReader, never uploaded), mandatory consent
+  checkbox, script presets + tidy, 720x720 / 1280x720 / 720x1280 frames, mouth
+  placement sliders, live browser-voice preview driven by SpeechSynthesis
+  boundary events, and a local-TTS record path (decodeAudioData -> AnalyserNode
+  -> captureStream(30) + MediaStreamDestination -> MediaRecorder WebM, so the
+  file has sound). Silent-recording warning is shown whenever the browser-voice
+  tier records, because browsers cannot capture speech output as a stream.
+- GET /api/media/talking-head: capability report for the three tiers and the
+  hard limits (4,000 chars, 6 MB photo, 30 fps), so the UI never shows a button
+  for something that cannot run.
+- POST /api/media/talking-head/audio: local TTS -> data URL; 503 + fallback hint
+  when unconfigured, 502 on local failure, no hosted fallback. The "configured"
+  test now checks only LOCAL_TTS_BASE_URL, because that is the only variable
+  generateLocalSpeech reads (TTS_SERVICE_URL would have reported ready and then
+  502'd).
+- GET|POST /api/media/lipsync: adapter contract report and job submission
+  (POST /generate -> taskId), optional personaId re-checks consentGranted /
+  consentOwner / consentProof / status / usageScope, emits media.lipsync_submitted,
+  returns 202.
+- New view src/components/views/talking-head-view.tsx ("Live Talk Studio") wired
+  into ViewId, the router map, the AI sidebar section and Cmd+K, so "live talk
+  video" is one click from the dashboard. The Media Studio "Talking Avatar" card
+  now reads "Live in browser" and scrolls to the embedded studio in the Video tab.
+- Fixed two pre-existing type holes found on the way: node_modules was empty on
+  resume (Prisma client regenerated with engineType=client), and lint errors for
+  setState-in-effect were removed by deriving the voice/mode defaults instead of
+  storing them.
+- Docs: .env.example gained LIPSYNC_ADAPTER_URL / LIPSYNC_TIMEOUT_MS (unset by
+  default, no hosted fallback); docs/AGENCY-OPERATIONS.md section 10 documents the
+  three tiers, the API surface, consent, privacy and the honest limits.
+
+Verified against a fake local adapter (port 5055, now stopped):
+  * tsc --noEmit clean, eslint . clean, next build succeeds (routes compiled)
+  * GET /api/media/talking-head -> 200; tiers flip to available when env is set
+  * POST /api/media/talking-head/audio unconfigured -> 503 + fallback:"browser-voice";
+    with a local TTS stub -> 200, data:audio/wav;base64, 64 KB, provider self-hosted,
+    stored:false
+  * POST /api/media/lipsync unconfigured -> 503; with the stub -> 202 {taskId};
+    unknown personaId -> 404; consenting persona -> 202
+  * GET /api/media/talking-head without a token -> 401; page / -> 200
+  * agency readiness back to 12/12 PASS after taking a fresh verified backup
+Not verifiable in this sandbox: MediaRecorder / SpeechSynthesis / canvas capture
+need a real browser, so the recording path is type-checked and reviewed, not run.

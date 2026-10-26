@@ -7,6 +7,7 @@ export type ViewId =
   | 'social-accounts'
   | 'ai-command'
   | 'media-studio'
+  | 'talking-head'
   | 'crm'
   | 'seo'
   | 'market-intelligence'
