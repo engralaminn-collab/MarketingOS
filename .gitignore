@@ -59,14 +59,14 @@ server.log
 # ── Databases & backups ──────────────────────────────────────────────────────
 # SQLite lives in db/ (see deploy.sh, docker-compose.prod.yml). Never commit a
 # production database or a backup of one. CI fails the build if one is tracked.
-db/
+/db/
 *.db
 *.db-journal
 *.db-wal
 *.db-shm
 *.sqlite
 *.sqlite3
-backups/
+/backups/
 package-lock.json
 
 # local database + backups

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 
 const geistSans = localFont({
   src: "../../public/fonts/geist-latin.woff2",
@@ -15,16 +16,10 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-const SITE_URL = "https://www.kexsio.com";
-const SITE_NAME = "Kexsio MarketingOS";
-const SITE_DESCRIPTION =
-  "Kexsio MarketingOS — AI-assisted marketing operations with a catalog of 116 integrations, CRM, SEO, content, and campaign tools. Built by Kexsio.";
-const OG_IMAGE = `${SITE_URL}/kexsio-logo.png`;
-
 export const metadata: Metadata = {
   // --- Basic ---
   title: {
-    default: "Kexsio MarketingOS — Enterprise AI Workforce Platform",
+    default: SITE_TITLE,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -83,14 +78,14 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: "Kexsio MarketingOS — Enterprise AI Workforce Platform",
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     images: [
       {
         url: OG_IMAGE,
         width: 512,
         height: 512,
-        alt: "Kexsio MarketingOS — Enterprise AI Workforce Platform",
+        alt: SITE_TITLE,
       },
     ],
   },
@@ -98,7 +93,7 @@ export const metadata: Metadata = {
   // --- Twitter Card ---
   twitter: {
     card: "summary_large_image",
-    title: "Kexsio MarketingOS — Enterprise AI Workforce Platform",
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     images: [OG_IMAGE],
   },

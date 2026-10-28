@@ -10,8 +10,11 @@ export const GET = withAuth(async (request, { params }) => {
       where: { id },
       include: {
         user: {
-          select: { id: true, name: true, email: true, avatar: true },
-          include: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
             studentProfile: { select: { studentId: true, admissionStatus: true } },
           },
         },
@@ -58,8 +61,12 @@ export const PUT = withAuth(async (request, { params, user }) => {
       data,
       include: {
         user: {
-          select: { id: true, name: true, email: true },
-          include: { studentProfile: { select: { studentId: true } } },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            studentProfile: { select: { studentId: true } },
+          },
         },
         feeStructure: { select: { id: true, name: true, frequency: true } },
       },

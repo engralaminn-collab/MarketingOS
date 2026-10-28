@@ -1,3 +1,17 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# SANDBOX PREVIEW CONFIG — NOT THE PRODUCTION REVERSE PROXY
+#
+# This file is used by the hosted development sandbox to expose a port as a
+# preview URL: it reads an `XTransformPort` query parameter and proxies to
+# whatever port the sandbox gives it. That is an open proxy by design and must
+# never be deployed to a public server.
+#
+# For production TLS termination use one of:
+#   deploy/caddy/Caddyfile     (Caddy, automatic Let's Encrypt)
+#   deploy/nginx/marketingos.conf (Nginx + certbot)
+# See docs/DEPLOYMENT-REVERSE-PROXY.md.
+# ═══════════════════════════════════════════════════════════════════════════
+
 :81 {
 	@transform_port_query {
 		query XTransformPort=*

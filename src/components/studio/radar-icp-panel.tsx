@@ -59,7 +59,7 @@ export function MarketRadarIcpPanel({
 
   async function addRssPreset(label: string, url: string) {
     try {
-      await apiFetch('/api/feeds', {
+      await apiFetch('/api/feeds/sources', {
         method: 'POST',
         body: JSON.stringify({ name: label, url, category: 'market-radar' }),
       });
@@ -72,7 +72,7 @@ export function MarketRadarIcpPanel({
 
   async function approveSignalToLead(sig: { title: string; description: string; score: number }) {
     try {
-      await apiFetch('/api/leads', {
+      await apiFetch('/api/crm/leads', {
         method: 'POST',
         body: JSON.stringify({
           name: sig.title.slice(0, 72),

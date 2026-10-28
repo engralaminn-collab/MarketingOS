@@ -13,7 +13,7 @@ bun run dev
 
 The setup script is re-runnable: it preserves an existing `.env` and database, generates a strong `JWT_SECRET` only when the template value is blank, installs the locked dependencies, generates Prisma Client, applies non-destructive schema changes, and seeds the initial records. It never downloads AI models or overwrites existing credentials. Review `.env` (especially `ADMIN_SEED_PASSWORD`, database location, encryption keys, and AI provider settings) before exposing the service. To skip seeding: `SKIP_SEED=1 bash scripts/setup.sh`.
 
-For production, use the reviewed CI → image build → VPS deploy pipeline in `.github/workflows/`; do not run deployment by manually copying files. Configure the GitHub Actions `DEPLOY_HOST` and `DEPLOY_SSH_KEY` secrets and reconcile the server configuration with `docs/DEPLOYMENT.md`. Actual remote deployment cannot be enabled until those owner-controlled credentials and a server are configured.
+For production, use the reviewed CI → image build → VPS deploy pipeline in `.github/workflows/`; do not run deployment by manually copying files. Configure the GitHub Actions `DEPLOY_HOST` and `DEPLOY_SSH_KEY` secrets and reconcile the server configuration with `docs/DEPLOYMENT.md`. TLS termination, reverse-proxy and PM2 configurations are checked in under `deploy/` and documented in `docs/DEPLOYMENT-REVERSE-PROXY.md`. Actual remote deployment cannot be enabled until those owner-controlled credentials and a server are configured.
 
 ## Self-hosted AI
 
@@ -60,8 +60,8 @@ npm run backup:verify   # re-verify the newest snapshot
 - **100 departments**, each with its own `DepartmentRuntime`: model name, tier, temperature, system prompt,
   guardrails, knowledge scope and SOP binding. Isolation is `local` and fallback is `none` by default, so a
   department fails loudly instead of silently calling a hosted provider.
-- **2,000 agent specs** (`AGT-0001`…`AGT-2000`) across 20 role archetypes, plus **2,464 AI employees** that
-  execute them. Every department is staffed.
+- **2,000 agent specs** (`AGT-0001`…`AGT-2000`) across 20 role archetypes, plus **2,000 AI employees** that
+  execute them (20 per department). Every department is staffed.
 - **120 SOPs**: one delivery procedure per department plus 12 cross-functional playbooks (onboarding, brand
   voice, publishing, SEO content, media, persona consent, SMS, leads, invoicing, backups, access, reporting).
 - **Per-client configuration** via `POST /api/clients`: channels, credential mode (`client_login` with

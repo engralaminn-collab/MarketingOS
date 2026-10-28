@@ -13,78 +13,11 @@
  * Usage: npx tsx prisma/seed-agency.ts
  */
 import { db as prisma } from '../src/lib/db';
+import { AGENCY_DEPARTMENTS, CORE_DEPARTMENTS, type AgencyDepartment } from './departments';
 
 // ── 46 additional departments (54 already exist -> 100) ─────────────────────
-interface DeptDef {
-  code: string;
-  name: string;
-  parent: string | null;
-  level: number;
-  icon: string;
-  color: string;
-  description: string;
-  deliverable: string;
-}
 
-const NEW_DEPARTMENTS: DeptDef[] = [
-  { code: 'AIZ', name: 'AI Operations', parent: null, level: 0, icon: 'Cpu', color: '#8b5cf6', description: 'Runs the agent fleet, model profiles, evaluation and continuity', deliverable: 'agent fleet health and model policy' },
-  { code: 'CLS', name: 'Client Services', parent: null, level: 0, icon: 'Handshake', color: '#f59e0b', description: 'Owns client relationships, delivery and reporting', deliverable: 'client satisfaction and retention' },
-  { code: 'RES', name: 'Research & Insights', parent: null, level: 0, icon: 'Telescope', color: '#0ea5e9', description: 'Market, audience and trend intelligence', deliverable: 'evidence-backed insights' },
-  { code: 'LOC', name: 'Localisation & Accessibility', parent: null, level: 0, icon: 'Languages', color: '#14b8a6', description: 'Language, cultural and accessibility adaptation', deliverable: 'market-ready localised assets' },
 
-  { code: 'MKT-CPY', name: 'Copywriting', parent: 'MKT', level: 2, icon: 'PenLine', color: '#ef4444', description: 'Owns written voice across every channel', deliverable: 'copy that matches the brand voice' },
-  { code: 'MKT-SOC-FB', name: 'Facebook & Instagram', parent: 'MKT', level: 2, icon: 'Instagram', color: '#ec4899', description: 'Meta platform content, publishing and community', deliverable: 'published Meta content calendar' },
-  { code: 'MKT-SOC-TIK', name: 'TikTok Marketing', parent: 'MKT', level: 2, icon: 'Music2', color: '#111827', description: 'Short-form vertical video strategy and publishing', deliverable: 'short-form video pipeline' },
-  { code: 'MKT-SOC-LI', name: 'LinkedIn Marketing', parent: 'MKT', level: 2, icon: 'Linkedin', color: '#0284c7', description: 'B2B thought leadership and company page content', deliverable: 'B2B content programme' },
-  { code: 'MKT-SOC-YT', name: 'YouTube Marketing', parent: 'MKT', level: 2, icon: 'Youtube', color: '#dc2626', description: 'Long-form video, thumbnails, titles and channel SEO', deliverable: 'channel growth plan' },
-  { code: 'MKT-SEO-ONP', name: 'On-Page SEO', parent: 'MKT', level: 2, icon: 'FileSearch', color: '#84cc16', description: 'Titles, headings, internal links and schema markup', deliverable: 'optimised page briefs' },
-  { code: 'MKT-SEO-LOC', name: 'Local SEO', parent: 'MKT', level: 2, icon: 'MapPin', color: '#22c55e', description: 'Google Business Profile, citations and local landing pages', deliverable: 'local visibility plan' },
-  { code: 'MKT-PER-GAD', name: 'Google Ads', parent: 'MKT', level: 2, icon: 'MousePointerClick', color: '#f59e0b', description: 'Search, Performance Max and shopping campaigns', deliverable: 'paid search performance' },
-  { code: 'MKT-PER-MAD', name: 'Meta Ads', parent: 'MKT', level: 2, icon: 'Megaphone', color: '#3b82f6', description: 'Facebook and Instagram acquisition campaigns', deliverable: 'paid social performance' },
-  { code: 'MKT-INF', name: 'Influencer Marketing', parent: 'MKT', level: 2, icon: 'Users', color: '#a855f7', description: 'Creator sourcing, briefing and measurement', deliverable: 'creator campaign results' },
-  { code: 'MKT-PR', name: 'Public Relations', parent: 'MKT', level: 2, icon: 'Newspaper', color: '#64748b', description: 'Press, media relations and reputation', deliverable: 'earned media coverage' },
-  { code: 'MKT-AFF', name: 'Affiliate Marketing', parent: 'MKT', level: 2, icon: 'Network', color: '#06b6d4', description: 'Partner recruitment, tracking and payouts', deliverable: 'affiliate revenue' },
-  { code: 'MKT-LIF', name: 'Lifecycle & Retention', parent: 'MKT', level: 2, icon: 'Repeat', color: '#8b5cf6', description: 'Onboarding, activation, retention and winback journeys', deliverable: 'retention lift' },
-  { code: 'MKT-MOP', name: 'Marketing Operations', parent: 'MKT', level: 2, icon: 'Workflow', color: '#475569', description: 'Tooling, data hygiene, process and governance', deliverable: 'reliable marketing systems' },
-
-  { code: 'CRE-MOT', name: 'Motion Graphics', parent: 'CRE', level: 2, icon: 'Clapperboard', color: '#d946ef', description: 'Animated explainers, lower thirds and stingers', deliverable: 'motion assets' },
-  { code: 'CRE-VED', name: 'Video Editing', parent: 'CRE', level: 2, icon: 'Scissors', color: '#f97316', description: 'Cuts, captions, pacing and platform variants', deliverable: 'edited video deliverables' },
-  { code: 'CRE-AUD', name: 'Audio & Voice Production', parent: 'CRE', level: 2, icon: 'Mic', color: '#0ea5e9', description: 'Voiceover, podcast and sound design', deliverable: 'audio deliverables' },
-  { code: 'CRE-PER', name: 'Face & Persona Studio', parent: 'CRE', level: 2, icon: 'UserSquare', color: '#e879f9', description: 'Builds client-owned AI presenters from supplied photos with one consistent voice', deliverable: 'approved persona kit' },
-  { code: 'CRE-PHO', name: 'Photography & Retouching', parent: 'CRE', level: 2, icon: 'Camera', color: '#78716c', description: 'Product and lifestyle imagery, cut-outs and colour', deliverable: 'final image sets' },
-  { code: 'CRE-3D', name: '3D & AR Assets', parent: 'CRE', level: 2, icon: 'Box', color: '#7c3aed', description: '3D product views and AR-ready assets', deliverable: '3D/AR asset packs' },
-
-  { code: 'DAT-ANL', name: 'Web & Product Analytics', parent: 'DAT', level: 2, icon: 'LineChart', color: '#06b6d4', description: 'Traffic, event and funnel measurement', deliverable: 'analytics instrumentation' },
-  { code: 'DAT-ATR', name: 'Attribution & Measurement', parent: 'DAT', level: 2, icon: 'GitMerge', color: '#0891b2', description: 'UTM governance, channel attribution and incrementality', deliverable: 'trustworthy attribution' },
-  { code: 'DAT-EXP', name: 'Experimentation & CRO', parent: 'DAT', level: 2, icon: 'FlaskConical', color: '#14b8a6', description: 'Test design, landing page optimisation and analysis', deliverable: 'validated experiments' },
-  { code: 'DAT-RPT', name: 'Reporting & Dashboards', parent: 'DAT', level: 2, icon: 'LayoutDashboard', color: '#0e7490', description: 'Client dashboards, KPI definitions and commentary', deliverable: 'client reporting pack' },
-
-  { code: 'OPS-AUT', name: 'Automation & Integrations', parent: 'OPS', level: 2, icon: 'Plug', color: '#8b5cf6', description: 'Workflows, webhooks and system-to-system data flow', deliverable: 'working automations' },
-  { code: 'OPS-BIL', name: 'Billing & Invoicing', parent: 'OPS', level: 2, icon: 'Receipt', color: '#22c55e', description: 'Retainers, media spend reconciliation and final invoices', deliverable: 'accurate invoices' },
-  { code: 'OPS-VEN', name: 'Vendor & Cost Control', parent: 'OPS', level: 2, icon: 'Wallet', color: '#a16207', description: 'Supplier contracts, tool spend and margin protection', deliverable: 'cost control register' },
-
-  { code: 'CX-REP', name: 'Reputation & Reviews', parent: 'CX', level: 2, icon: 'Star', color: '#f59e0b', description: 'Review generation, response and sentiment recovery', deliverable: 'review programme' },
-  { code: 'CX-ONB', name: 'Client Onboarding', parent: 'CX', level: 2, icon: 'Rocket', color: '#f97316', description: 'Kickoff, access, brand intake and first-90-day plan', deliverable: 'onboarded client workspace' },
-
-  { code: 'LEG-PRV', name: 'Privacy & Data Protection', parent: 'LEG', level: 2, icon: 'Lock', color: '#475569', description: 'Consent, retention and data-processing records', deliverable: 'privacy compliance file' },
-  { code: 'LEG-ADP', name: 'Advertising Policy & Brand Safety', parent: 'LEG', level: 2, icon: 'ShieldCheck', color: '#334155', description: 'Platform policy, claims substantiation and placement safety', deliverable: 'policy clearance' },
-
-  { code: 'FIN-PRC', name: 'Procurement', parent: 'FIN', level: 2, icon: 'ShoppingCart', color: '#6366f1', description: 'Tool and supplier purchasing', deliverable: 'approved purchases' },
-  { code: 'FIN-TAX', name: 'Tax & Statutory Reporting', parent: 'FIN', level: 2, icon: 'Landmark', color: '#4338ca', description: 'VAT/GST, withholding and statutory filings', deliverable: 'filed statutory returns' },
-
-  { code: 'HR-OPS', name: 'HR Operations', parent: 'HR', level: 2, icon: 'ClipboardCheck', color: '#ec4899', description: 'Contracts, records and workforce policy', deliverable: 'current people records' },
-
-  { code: 'ENG-WEB', name: 'Web Platform', parent: 'ENG', level: 2, icon: 'Globe', color: '#0ea5e9', description: 'Landing pages, CMS and storefront work', deliverable: 'shipped web changes' },
-  { code: 'ENG-INT', name: 'Integrations & API', parent: 'ENG', level: 2, icon: 'Webhook', color: '#0284c7', description: 'Platform connectors and API reliability', deliverable: 'working integrations' },
-
-  { code: 'AIZ-PRM', name: 'Prompt & Model Operations', parent: 'AIZ', level: 2, icon: 'SlidersHorizontal', color: '#7c3aed', description: 'Prompt versions, model profiles and routing policy', deliverable: 'model policy set' },
-  { code: 'AIZ-EVL', name: 'Agent Evaluation & QA', parent: 'AIZ', level: 2, icon: 'BadgeCheck', color: '#6d28d9', description: 'Test sets, scoring and regression gates for agents', deliverable: 'agent quality report' },
-  { code: 'AIZ-KNW', name: 'Knowledge & RAG Operations', parent: 'AIZ', level: 2, icon: 'BookOpen', color: '#5b21b6', description: 'Knowledge base, retrieval quality and citations', deliverable: 'retrieval quality report' },
-  { code: 'AIZ-SAF', name: 'AI Safety & Guardrails', parent: 'AIZ', level: 2, icon: 'ShieldAlert', color: '#4c1d95', description: 'Prompt safety, refusal policy and human review gates', deliverable: 'guardrail register' },
-
-  { code: 'CLS-ACC', name: 'Account Management', parent: 'CLS', level: 2, icon: 'UserCog', color: '#b45309', description: 'Day-to-day client ownership and planning', deliverable: 'account plan' },
-  { code: 'CLS-REP', name: 'Client Reporting', parent: 'CLS', level: 2, icon: 'FileBarChart', color: '#d97706', description: 'Monthly performance narrative and QBRs', deliverable: 'monthly report' },
-];
 
 // ── 20 role archetypes -> 2,000 agent specs ─────────────────────────────────
 const ROLE_ARCHETYPES: Array<{
@@ -130,7 +63,7 @@ const TIER_MODEL: Record<string, string> = {
 };
 
 /** Standard delivery SOP shape, tailored per department. */
-function departmentSop(dept: DeptDef) {
+function departmentSop(dept: AgencyDepartment) {
   const steps = [
     { order: 1, title: 'Intake and brief confirmation', description: `Confirm the request, owner, deadline and success measure for ${dept.name}.` },
     { order: 2, title: 'Research and context', description: `Check the knowledge base, client brand voice and prior ${dept.name} work before drafting.` },
@@ -175,8 +108,15 @@ async function main() {
   // ── 1. Departments ────────────────────────────────────────────────────────
   const existing = await prisma.department.findMany({ where: { companyId } });
   const byCode = new Map(existing.map((d) => [d.code ?? d.id, d]));
+  // The full 100-department catalog: 54 core departments plus the 46
+  // specialist ones. Seeding only this seed's half used to leave the workspace
+  // at 46 departments, which also capped the agent fleet at 920.
+  const catalog: AgencyDepartment[] = [
+    ...CORE_DEPARTMENTS.map((dept) => ({ ...dept, deliverable: `${dept.name} deliverables` })),
+    ...AGENCY_DEPARTMENTS,
+  ];
   let added = 0;
-  for (const [index, dept] of NEW_DEPARTMENTS.entries()) {
+  for (const [index, dept] of catalog.entries()) {
     if (byCode.has(dept.code)) continue;
     const parentId = dept.parent ? byCode.get(dept.parent)?.id ?? null : null;
     const created = await prisma.department.create({
@@ -198,7 +138,7 @@ async function main() {
   const departments = await prisma.department.findMany({ where: { companyId } });
   console.log(`🏢 Departments: ${existing.length} existing + ${added} added = ${departments.length}`);
 
-  const deptMeta = new Map<string, DeptDef | undefined>(NEW_DEPARTMENTS.map((d) => [d.code, d]));
+  const deptMeta = new Map<string, AgencyDepartment | undefined>(AGENCY_DEPARTMENTS.map((d) => [d.code, d]));
   const describe = (d: { name: string; code: string | null; description: string | null }) =>
     deptMeta.get(d.code ?? '')?.deliverable ?? d.description ?? `${d.name} deliverables`;
 
@@ -206,7 +146,7 @@ async function main() {
   let sopCount = 0;
   for (const dept of departments) {
     const code = (dept.code ?? dept.name).toLowerCase();
-    const def: DeptDef = deptMeta.get(dept.code ?? '') ?? {
+    const def: AgencyDepartment = deptMeta.get(dept.code ?? '') ?? {
       code: dept.code ?? dept.name,
       name: dept.name,
       parent: null,
@@ -244,6 +184,31 @@ async function main() {
   }
   const totalSops = await prisma.sop.count({ where: { companyId } });
   console.log(`📋 SOPs: ${totalSops} active (${departments.length} department + ${CROSS_FUNCTIONAL_SOPS.length} cross-functional)`);
+
+  // ── 2b. Knowledge base: one operational reference per cross-functional SOP ─
+  // The readiness audit requires at least one knowledge node; a fresh workspace
+  // had none unless the unrelated workforce seed was run. Derived from the SOP
+  // catalog so the content is real procedure text, not placeholder prose.
+  for (const sop of CROSS_FUNCTIONAL_SOPS) {
+    await prisma.knowledgeNode.upsert({
+      where: { id: `kn-x-${sop.key}` },
+      update: {},
+      create: {
+        id: `kn-x-${sop.key}`,
+        title: sop.name,
+        summary: sop.description,
+        content: `${sop.description}\n\nSteps:\n${sop.steps.map((step: string, index: number) => `${index + 1}. ${step}`).join('\n')}`,
+        nodeType: 'guideline',
+        tags: JSON.stringify([sop.category, 'sop', 'agency']),
+        category: sop.category,
+        accessLevel: 'company',
+        accessRoles: JSON.stringify(['executive', 'director', 'manager', 'supervisor', 'specialist', 'worker']),
+        companyId,
+      },
+    });
+  }
+  const totalKnowledge = await prisma.knowledgeNode.count({ where: { companyId } });
+  console.log(`📚 Knowledge nodes: ${totalKnowledge} (${CROSS_FUNCTIONAL_SOPS.length} SOP references ensured)`);
 
   // ── 3. Department runtimes: one isolated local model per department ───────
   for (const dept of departments) {
@@ -283,20 +248,38 @@ async function main() {
   console.log(`🧠 Department runtimes: ${runtimes} (isolation=local, fallback=none)`);
 
   // ── 4. 2,000 agent specs = departments x 20 roles ─────────────────────────
-  const existingAgents = await prisma.agentSpec.count({ where: { companyId } });
-  if (existingAgents >= departments.length * ROLE_ARCHETYPES.length) {
-    console.log(`🤖 Agent specs already present: ${existingAgents}`);
+  // Codes are deterministic (AGT-0001 … AGT-2000), so a partially seeded
+  // database must be topped up by code rather than by count: re-running the
+  // seed with only "count < target" as the guard re-created existing codes and
+  // aborted on the AgentSpec.code unique constraint.
+  const expectedAgents = departments.length * ROLE_ARCHETYPES.length;
+  const existingCodes = new Set(
+    (await prisma.agentSpec.findMany({ where: { companyId }, select: { code: true } })).map((agent) => agent.code),
+  );
+  if (existingCodes.size >= expectedAgents) {
+    console.log(`🤖 Agent specs already present: ${existingCodes.size}`);
   } else {
     const sopsByDept = new Map(
       (await prisma.sop.findMany({ where: { companyId, departmentId: { not: null } }, select: { id: true, departmentId: true } }) ).map((s) => [s.departmentId as string, s.id])
     );
     let index = 0;
+    let created = 0;
     let batch: any[] = [];
+    const flush = async () => {
+      if (batch.length === 0) return;
+      // SQLite has no skipDuplicates option; the batch is pre-filtered by
+      // existing code, so a duplicate here is a genuine bug worth surfacing.
+      const result = await prisma.agentSpec.createMany({ data: batch });
+      created += result.count;
+      batch = [];
+    };
     for (const dept of departments) {
       for (const role of ROLE_ARCHETYPES) {
         index += 1;
+        const code = `AGT-${String(index).padStart(4, '0')}`;
+        if (existingCodes.has(code)) continue;
         batch.push({
-          code: `AGT-${String(index).padStart(4, '0')}`,
+          code,
           name: `${dept.name} · ${role.role}`,
           departmentId: dept.id,
           departmentCode: dept.code ?? dept.name,
@@ -316,29 +299,45 @@ async function main() {
           isEnabled: true,
           companyId,
         });
-        if (batch.length >= 400) {
-          await prisma.agentSpec.createMany({ data: batch });
-          batch = [];
-        }
+        if (batch.length >= 400) await flush();
       }
     }
-    if (batch.length) await prisma.agentSpec.createMany({ data: batch });
-    console.log(`🤖 Agent specs seeded: ${await prisma.agentSpec.count({ where: { companyId } })}`);
+    await flush();
+    const totalAgents = await prisma.agentSpec.count({ where: { companyId } });
+    console.log(`🤖 Agent specs seeded: ${created} new → ${totalAgents} total`);
   }
 
-  // ── 5. Ensure every department has employees (rebalance, never delete) ────
+  // ── 5. Staff every department (rebalance, never delete) ───────────────────
+  // Target: AGENCY_TARGETS.employees (2,000) spread over 100 departments.
+  // Filling only *empty* departments (8 each) left the workspace at 800 staff,
+  // so the documented single `agency:seed` command could never satisfy the
+  // readiness audit's own 2,000-employee target.
+  const EMPLOYEE_TARGET = 2000; // same target the readiness audit checks (src/lib/agency.ts)
+  const STAFFING_PER_DEPARTMENT = Math.ceil(EMPLOYEE_TARGET / Math.max(departments.length, 1));
   const employeeCount = await prisma.employee.count({ where: { companyId } });
   const covered = await prisma.employee.groupBy({ by: ['departmentId'], where: { companyId }, _count: true });
-  const coveredIds = new Set(covered.map((c) => c.departmentId));
-  const missing = departments.filter((d) => !coveredIds.has(d.id));
-  if (missing.length > 0) {
+  const headcountByDept = new Map(covered.map((row) => [row.departmentId, row._count]));
+  const gaps = departments
+    .map((dept) => ({ dept, deficit: Math.max(0, STAFFING_PER_DEPARTMENT - (headcountByDept.get(dept.id) ?? 0)) }))
+    .filter((entry) => entry.deficit > 0);
+  if (gaps.length > 0) {
     const titleByLevel: Record<string, string> = {
       worker: 'Associate', specialist: 'Specialist', supervisor: 'Team Lead', manager: 'Manager', director: 'Director', executive: 'Executive',
     };
-    let seq = employeeCount;
-    const data = missing.flatMap((dept) =>
-      ['worker', 'worker', 'specialist', 'specialist', 'specialist', 'supervisor', 'manager', 'director'].map((level) => {
+    // Sequential ids must continue past the highest id in use, not past the
+    // row count: a deletion would otherwise re-issue an existing EMP-#### and
+    // fail on the unique constraint.
+    const allEmployeeIds = await prisma.employee.findMany({ select: { employeeId: true } });
+    const highestSeq = allEmployeeIds.reduce((max, row) => {
+      const digits = Number((row.employeeId.match(/(\d+)$/) || [0, '0'])[1]);
+      return Number.isFinite(digits) ? Math.max(max, digits) : max;
+    }, 0);
+    let seq = Math.max(highestSeq, employeeCount);
+    const LEVEL_CYCLE = ['worker', 'worker', 'specialist', 'specialist', 'specialist', 'supervisor', 'manager', 'director'];
+    const data = gaps.flatMap(({ dept, deficit }) =>
+      Array.from({ length: deficit }, (_, offset) => {
         seq += 1;
+        const level = LEVEL_CYCLE[offset % LEVEL_CYCLE.length];
         return {
           employeeId: `EMP-${String(seq).padStart(4, '0')}`,
           name: `${dept.name.split(' ')[0]} ${titleByLevel[level]} ${seq}`,
@@ -360,7 +359,7 @@ async function main() {
       })
     );
     await prisma.employee.createMany({ data });
-    console.log(`👥 Employees added for ${missing.length} previously empty departments: ${data.length}`);
+    console.log(`👥 Employees added: ${data.length} across ${gaps.length} under-staffed departments (target ${STAFFING_PER_DEPARTMENT} each)`);
   }
   const finalEmployees = await prisma.employee.count({ where: { companyId } });
   console.log(`👥 Employees total: ${finalEmployees}`);

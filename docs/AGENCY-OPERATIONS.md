@@ -16,9 +16,9 @@ Nothing here is asserted from memory: open the console and the same numbers are 
 
 | Requirement | Implementation | Evidence |
 |---|---|---|
-| 100 departments | 100 `Department` rows (12 executive, 34 mid-level, 8 teams, 46 added by the agency seed) | `Department` table · Agency Console → Departments |
+| 100 departments | 100 `Department` rows: 54 core departments + 46 specialist departments, both catalogs in `prisma/departments.ts` and seeded by `npm run agency:seed` | `Department` table · Agency Console → Departments |
 | Each department behaves as an independent model | 100 `DepartmentRuntime` rows: own model name, tier, temperature, system prompt, guardrails, knowledge scope, SOP binding | `DepartmentRuntime` table · `/api/agency/departments` |
-| 2,000 AI staff | 2,464 `Employee` rows with missions, KPIs, escalation paths and department assignment | `Employee` table |
+| 2,000 AI staff | 2,000 `Employee` rows with missions, KPIs, escalation paths and department assignment (20 per department) | `Employee` table |
 | 2,000 agents | 2,000 `AgentSpec` rows (`AGT-0001`…`AGT-2000`): 100 departments × 20 role archetypes | `AgentSpec` table · `/api/agency/agents` |
 | Full SOP coverage | 120 active SOPs: one per department plus 12 cross-functional playbooks | `Sop` table · `/api/agency/sops` |
 | No external AI dependency | Every runtime is `isolationMode=local`, `fallbackPolicy=none`; no hosted keys configured; readiness check fails if either changes | `DepartmentRuntime` + environment |
@@ -59,7 +59,8 @@ Seed it: `npm run agency:seed` (idempotent — existing departments are never de
 
 - **Agent specs (2,000):** the executable definition — role, level, mission, model tier, tools, guardrails,
   autonomy level (`supervised` / `semi_autonomous` / `autonomous`) and the SOP that governs the work.
-- **Employees (2,464):** the roster that executes those specs, with KPIs, escalation paths and reporting lines.
+- **Employees (2,000 by default):** the roster that executes those specs — 20 per department — with KPIs,
+escalation paths and reporting lines. `agency:seed` only ever adds staff, so a workspace can hold more.
   The seed rebalances so that **every one of the 100 departments is staffed**; it only adds, never removes.
 
 Browse and filter both in **Agency Console → Agents** (24 per page, searchable by name, role, code or department).
@@ -157,7 +158,7 @@ A check fails rather than being hidden. The audit currently reports:
 |---|---|---|
 | Department coverage | 100 | 100 |
 | Agent specifications | 2,000 | 2,000 |
-| AI workforce | 2,464 | ≥ 2,000 |
+| AI workforce | 2,000 | ≥ 2,000 |
 | SOP coverage | 100/100 departments, 120 SOPs | every department |
 | Independent department models | 100 local runtimes, 0 hosted | 100 |
 | No external AI dependency | ollama · local, 0 fallbacks | local only |

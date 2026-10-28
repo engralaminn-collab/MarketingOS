@@ -21,8 +21,13 @@ export const GET = withAuth(async (request) => {
         where,
         include: {
           user: {
-            select: { id: true, name: true, email: true, avatar: true },
-            include: {
+            // Prisma rejects `include` alongside `select` on the same relation;
+            // nest the relation inside the select instead.
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
               studentProfile: { select: { studentId: true, admissionStatus: true } },
             },
           },
@@ -79,8 +84,10 @@ export const POST = withAuth(async (request, { user }) => {
       },
       include: {
         user: {
-          select: { id: true, name: true, email: true },
-          include: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
             studentProfile: { select: { studentId: true } },
           },
         },
