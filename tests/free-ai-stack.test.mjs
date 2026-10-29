@@ -21,8 +21,8 @@ function loadTsModule(relPath) {
 
 const stack = loadTsModule('src/lib/free-ai-stack.ts');
 
-test('FREE_LLM_PROVIDERS covers all 17 free & local providers', () => {
-  assert.equal(stack.FREE_LLM_PROVIDERS.length, 17);
+test('FREE_LLM_PROVIDERS covers all 16 configured free/local and compatible adapters', () => {
+  assert.equal(stack.FREE_LLM_PROVIDERS.length, 16);
   const ids = new Set(stack.FREE_LLM_PROVIDERS.map((p) => p.id));
   for (const required of [
     'ollama',
@@ -30,7 +30,6 @@ test('FREE_LLM_PROVIDERS covers all 17 free & local providers', () => {
     'gemini',
     'cerebras',
     'openrouter',
-    'github-models',
     'cloudflare',
     'sambanova',
     'chutes',
@@ -81,7 +80,7 @@ test('ModelDeck telemetry and response cache track calls and hits accurately', (
   assert.equal(hit?.content, 'Cached response');
 
   const telemetry = stack.getModelDeckTelemetry();
-  assert.equal(telemetry.length, 17);
+  assert.equal(telemetry.length, 16);
   assert.ok(telemetry.some((p) => p.id === 'groq' && p.rpmUsed >= 1 && p.rpdUsed >= 1));
 });
 

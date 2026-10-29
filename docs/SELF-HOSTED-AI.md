@@ -2,9 +2,29 @@
 
 ## Short answer
 
-MarketingOS can run its core text assistant and marketing agents against a model that you host yourself. **Ollama is now the default text provider**; there is no automatic fallback to OpenRouter or Z.AI when the local model is unavailable. That removes per-request AI API billing for chat, copy, agent runs, grammar checks, diagrams, and video-plan scripts.
+MarketingOS can run its core text assistant and marketing agents against a model that you host yourself. **Ollama is the default text provider.** If Ollama is unavailable, the updated provider router can automatically try configured free-tier cloud providers in this order: Groq, Gemini, OpenRouter, Cloudflare Workers AI, then Mistral. It only tries a provider when its required credentials are present. No paid API is selected automatically, and the router never creates provider keys for you.
 
 It is not cost-free: you provide and operate the CPU/GPU, RAM, storage, electricity, network, and model licensing. A small model can be slower or less capable than a large paid model. No model server is bundled into the Next.js app image.
+
+
+## Free-tier failover (optional)
+
+Set one or more provider keys on the server, never in browser code or a committed file:
+
+```dotenv
+AI_PROVIDER=ollama
+AI_FALLBACK_CHAIN=
+GROQ_API_KEY=
+GEMINI_API_KEY=
+OPENROUTER_API_KEY=
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_API_TOKEN=
+MISTRAL_API_KEY=
+```
+
+When `AI_FALLBACK_CHAIN` is blank, the application discovers configured providers from that allowlisted free-tier order. You can set an explicit comma-separated order if you want to override it. A free tier is quota-limited and its models, eligibility, data terms, and availability can change. The application cannot guarantee uninterrupted free service. Review each provider's current terms and quotas before enabling it for client data.
+
+The free-provider fallback applies to text completion. It does not automatically configure social network publishing, email, SMS, image generation, video, or speech. Those features require their own provider credentials and a supported adapter. Social credentials alone are not enough until the relevant platform publishing permissions and implementation are available.
 
 ## Run Ollama locally
 
