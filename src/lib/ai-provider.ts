@@ -140,13 +140,31 @@ function parseProviderName(rawInput?: string): AiProviderName {
   );
 }
 
+const FREE_FALLBACK_ORDER: AiProviderName[] = ['groq', 'gemini', 'openrouter', 'cloudflare', 'mistral'];
+
+/**
+ * When AI_FALLBACK_CHAIN is not explicitly set, use only the supported free-tier
+ * providers for which this deployment has credentials. This never opts a user
+ * into a paid API automatically. Provider quotas and terms still apply.
+ */
+function isFreeProviderConfigured(provider: AiProviderName): boolean {
+  switch (provider) {
+    case 'groq': return Boolean(process.env.GROQ_API_KEY?.trim());
+    case 'gemini': return Boolean((process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_STUDIO_KEY || '').trim());
+    case 'openrouter': return Boolean(process.env.OPENROUTER_API_KEY?.trim());
+    case 'cloudflare': return Boolean(process.env.CLOUDFLARE_API_TOKEN?.trim() && process.env.CLOUDFLARE_ACCOUNT_ID?.trim());
+    case 'mistral': return Boolean(process.env.MISTRAL_API_KEY?.trim());
+    default: return false;
+  }
+}
+
 function parseFallbackChainFromEnv(): AiProviderName[] {
   const raw = (process.env.AI_FALLBACK_CHAIN || '').trim();
-  if (!raw) return [];
+  if (!raw) return FREE_FALLBACK_ORDER.filter(isFreeProviderConfigured);
   const items: AiProviderName[] = [];
   for (const part of raw.split(',')) {
     const clean = part.trim().toLowerCase();
-    if (VALID_PROVIDER_SET.has(clean)) {
+    if (VALID_PROVIDER_SET.has(clean) && !items.includes(clean as AiProviderName)) {
       items.push(clean as AiProviderName);
     }
   }
