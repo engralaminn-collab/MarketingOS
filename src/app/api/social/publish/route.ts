@@ -138,9 +138,13 @@ export async function POST(req: NextRequest) {
           ? `https://graph.facebook.com/${META_GRAPH_VERSION}/${encodeURIComponent(pageId)}/photos`
           : `https://graph.facebook.com/${META_GRAPH_VERSION}/${encodeURIComponent(pageId)}/feed`;
         const params = mediaUrl ? { url: mediaUrl, caption: message } : { message, ...(httpsUrl(message) ? { link: httpsUrl(message) } : {}) };
-        const formParams = mediaUrl
+        const formParams: Record<string, string> = mediaUrl
           ? { url: mediaUrl, caption: message }
-          : { message, ...(httpsUrl(message) ? { link: httpsUrl(message)! } : {}) };
+          : { message };
+        if (!mediaUrl) {
+          const link = httpsUrl(message);
+          if (link) formParams.link = link;
+        }
         const payload = await postForm(endpoint, accessToken, formParams);
         providerPostId = clean(payload.id || payload.post_id, 300);
         break;
