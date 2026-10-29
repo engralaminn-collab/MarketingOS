@@ -29,6 +29,7 @@ let socialGet: typeof import('../src/app/api/social-accounts/route').GET;
 let socialPost: typeof import('../src/app/api/social-accounts/route').POST;
 let socialPatch: typeof import('../src/app/api/social-accounts/route').PATCH;
 let socialDelete: typeof import('../src/app/api/social-accounts/route').DELETE;
+let socialPublishPost: typeof import('../src/app/api/social/publish/route').POST;
 
 let tenantAAdminToken = '';
 let tenantAViewerToken = '';
@@ -60,6 +61,7 @@ beforeAll(async () => {
   ({ GET: socialGet, POST: socialPost, PATCH: socialPatch, DELETE: socialDelete } = await import(
     '../src/app/api/social-accounts/route'
   ));
+  ({ POST: socialPublishPost } = await import('../src/app/api/social/publish/route'));
 
   const suffix = `rt_${Date.now()}`;
   const hashed = await hashPassword('RegressionTest!2026#Safe');
@@ -346,6 +348,52 @@ describe('/api/social-accounts security & tenant isolation suite (10 scenarios)'
     expect(listBRes.status).toBe(200);
     const listBJson = await listBRes.json();
     expect(listBJson.accounts.some((a: { id: string }) => a.id === createdAccountId)).toBe(false);
+  });
+
+  it('publishes a saved draft through the connected X adapter and blocks repeat posts', async () => {
+    process.env.CREDENTIAL_ENCRYPTION_KEY = '0123456789abcdef'.repeat(4);
+    const actor = await (await import('../src/lib/auth')).verifyToken(tenantAAdminToken);
+    expect(actor?.companyId).toBeTruthy();
+    const content = await db.content.create({
+      data: {
+        title: 'Regression social post',
+        type: 'post',
+        status: 'draft',
+        body: 'A test post from MarketingOS',
+        companyId: actor!.companyId!,
+        creatorId: actor!.userId!,
+      },
+    });
+
+    let providerCalls = 0;
+    globalThis.fetch = (async () => {
+      providerCalls++;
+      return new Response(JSON.stringify({ data: { id: 'tweet_regression_123' } }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }) as typeof fetch;
+
+    const published = await socialPublishPost(makeJsonRequest(
+      'http://localhost/api/social/publish',
+      'POST',
+      tenantAAdminToken,
+      { contentId: content.id, socialAccountId: createdAccountId },
+    ));
+    expect(published.status).toBe(200);
+    const publishedJson = await published.json();
+    expect(publishedJson.data.postId).toBe('tweet_regression_123');
+    expect(publishedJson.data.status).toBe('published');
+    expect(providerCalls).toBe(1);
+
+    const duplicate = await socialPublishPost(makeJsonRequest(
+      'http://localhost/api/social/publish',
+      'POST',
+      tenantAAdminToken,
+      { contentId: content.id, socialAccountId: createdAccountId },
+    ));
+    expect(duplicate.status).toBe(409);
+    expect(providerCalls).toBe(1);
   });
 
   it('7-10. enforces RBAC and tenant ownership on updates and deletions', async () => {
