@@ -25,6 +25,22 @@ async function parseProviderResponse(response: Response): Promise<PublishRespons
   return response.json().catch(() => ({})) as Promise<PublishResponse>;
 }
 
+async function postForm(url: string, token: string, fields: Record<string, string>) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(fields).toString(),
+    signal: AbortSignal.timeout(20_000),
+    cache: 'no-store',
+  });
+  const payload = await parseProviderResponse(response);
+  if (!response.ok) {
+    const message = clean(payload.error?.message, 300);
+    throw new Error(`Meta rejected the post (HTTP ${response.status})${message ? `: ${message}` : ''}`);
+  }
+  return { ...payload, id: payload.id || response.headers.get('x-restli-id') || undefined };
+}
+
 async function postJson(url: string, token: string, body: Record<string, unknown>, extraHeaders: Record<string, string> = {}) {
   const response = await fetch(url, {
     method: 'POST',
@@ -112,7 +128,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'This content is already marked as published to this social account; duplicate publishing was blocked.' }, { status: 409 });
     }
     let providerPostId = '';
-    let provider = account.platform;
+    const provider = account.platform;
 
     switch (account.platform) {
       case 'Facebook': {
@@ -122,7 +138,10 @@ export async function POST(req: NextRequest) {
           ? `https://graph.facebook.com/${META_GRAPH_VERSION}/${encodeURIComponent(pageId)}/photos`
           : `https://graph.facebook.com/${META_GRAPH_VERSION}/${encodeURIComponent(pageId)}/feed`;
         const params = mediaUrl ? { url: mediaUrl, caption: message } : { message, ...(httpsUrl(message) ? { link: httpsUrl(message) } : {}) };
-        const payload = await postJson(endpoint, accessToken, params);
+        const formParams = mediaUrl
+          ? { url: mediaUrl, caption: message }
+          : { message, ...(httpsUrl(message) ? { link: httpsUrl(message)! } : {}) };
+        const payload = await postForm(endpoint, accessToken, formParams);
         providerPostId = clean(payload.id || payload.post_id, 300);
         break;
       }
@@ -131,10 +150,10 @@ export async function POST(req: NextRequest) {
         if (!igUserId) return NextResponse.json({ error: 'Instagram professional account ID is missing' }, { status: 409 });
         if (!mediaUrl) return NextResponse.json({ error: 'Instagram feed publishing requires a publicly accessible HTTPS image in the content media URL' }, { status: 400 });
         const createUrl = `https://graph.facebook.com/${META_GRAPH_VERSION}/${encodeURIComponent(igUserId)}/media`;
-        const container = await postJson(createUrl, accessToken, { image_url: mediaUrl, caption: message });
+        const container = await postForm(createUrl, accessToken, { image_url: mediaUrl, caption: message });
         const creationId = clean(container.id, 300);
         if (!creationId) throw new Error('Instagram did not return a media container ID');
-        const published = await postJson(
+        const published = await postForm(
           `https://graph.facebook.com/${META_GRAPH_VERSION}/${encodeURIComponent(igUserId)}/media_publish`,
           accessToken,
           { creation_id: creationId },
