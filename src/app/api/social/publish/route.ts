@@ -64,7 +64,7 @@ async function postJson(url: string, token: string, body: Record<string, unknown
  * LinkedIn member text posts, X text posts, Pinterest image pins, Telegram.
  */
 export async function POST(req: NextRequest) {
-  const token = req.headers.get('Authorization')?.match(/^Bearer\\s+(.+)$/i)?.[1];
+  const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const actor = await verifyToken(token);
   if (!actor?.companyId || !actor.userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
