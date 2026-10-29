@@ -2,7 +2,7 @@
  * Complete 100% Free AI & Agent Services Registry + Code Generators + ModelDeck Telemetry.
  *
  * Covers:
- *  1. 17 Free LLM Providers (Groq, Google AI Studio, Cerebras, OpenRouter :free, GitHub Models,
+ *  1. 16 configured LLM adapters (Groq, Google AI Studio, Cerebras, OpenRouter :free,
  *     Cloudflare Workers AI, SambaNova, Chutes, Pollinations, Zhipu GLM, ModelScope,
  *     SiliconFlow, Mistral, NVIDIA NIM, Hugging Face, Ollama Local, OpenAI-Compatible)
  *  2. 7 Free Embedding Providers + deterministic 128-dim local semantic vector engine
@@ -22,7 +22,6 @@ export type FreeLlmProviderId =
   | 'gemini'
   | 'cerebras'
   | 'openrouter'
-  | 'github-models'
   | 'cloudflare'
   | 'sambanova'
   | 'chutes'
@@ -183,29 +182,6 @@ export const FREE_LLM_PROVIDERS: FreeLlmProviderSpec[] = [
     signupUrl: 'https://openrouter.ai/keys',
     rpmEstimate: 20,
     rpdEstimate: 200,
-    supportsToolCalling: true,
-    requiresKey: true,
-  },
-  {
-    id: 'github-models',
-    name: 'GitHub Models',
-    tier: 'no-card',
-    baseUrl: 'https://models.inference.ai.azure.com',
-    envKey: 'GITHUB_MODELS_TOKEN',
-    defaultModel: 'gpt-4o-mini',
-    freeModels: [
-      'gpt-4o-mini',
-      'gpt-4.1',
-      'gpt-4.1-mini',
-      'Phi-4',
-      'Mistral-small',
-      'DeepSeek-R1',
-      'Llama-3.3-70B-Instruct',
-    ],
-    limits: '~10–15 RPM (150 RPD) with GitHub PAT',
-    signupUrl: 'https://github.com/settings/tokens',
-    rpmEstimate: 15,
-    rpdEstimate: 150,
     supportsToolCalling: true,
     requiresKey: true,
   },
