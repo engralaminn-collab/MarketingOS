@@ -16,7 +16,7 @@ function safeStepType(step: WorkflowStep): string {
 }
 
 export async function POST(req: NextRequest) {
-  const token = req.headers.get('Authorization')?.match(/^Bearer\\s+(.+)$/i)?.[1];
+  const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const actor = await verifyToken(token);
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
           const to = text(config.to, 320);
           const subject = text(config.subject || wf.name, 180);
           const html = text(config.html || config.body, 100_000) || workingText;
-          if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(to)) throw new Error('send_email requires a valid recipient email in config.to');
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) throw new Error('send_email requires a valid recipient email in config.to');
           if (!subject || !html) throw new Error('send_email requires a subject and body, or an earlier AI draft step');
           const from = text(process.env.EMAIL_FROM, 320) || 'noreply@marketingos.local';
           const record = await db.content.create({
