@@ -30,6 +30,7 @@ let socialPost: typeof import('../src/app/api/social-accounts/route').POST;
 let socialPatch: typeof import('../src/app/api/social-accounts/route').PATCH;
 let socialDelete: typeof import('../src/app/api/social-accounts/route').DELETE;
 let socialPublishPost: typeof import('../src/app/api/social/publish/route').POST;
+let workflowExecutePost: typeof import('../src/app/api/workflows/execute/route').POST;
 
 let tenantAAdminToken = '';
 let tenantAViewerToken = '';
@@ -62,6 +63,7 @@ beforeAll(async () => {
     '../src/app/api/social-accounts/route'
   ));
   ({ POST: socialPublishPost } = await import('../src/app/api/social/publish/route'));
+  ({ POST: workflowExecutePost } = await import('../src/app/api/workflows/execute/route'));
 
   const suffix = `rt_${Date.now()}`;
   const hashed = await hashPassword('RegressionTest!2026#Safe');
@@ -273,6 +275,35 @@ describe('POST /api/ai/diagram regression suite', () => {
     expect(aiJson.data.generationMode).toBe('local-model');
     expect(aiJson.data.degraded).toBe(false);
     expect(aiJson.data.mermaid).toBe('graph TD\n  A[Visitor] --> B[Signup]');
+  });
+});
+
+describe('/api/workflows/execute truthful execution suite', () => {
+  it('fails unsupported steps explicitly instead of returning fake success', async () => {
+    const actor = await (await import('../src/lib/auth')).verifyToken(tenantAAdminToken);
+    const workflow = await db.workflow.create({
+      data: {
+        name: 'Unsupported step regression',
+        description: 'Must not claim unsupported steps ran',
+        trigger: 'manual',
+        triggerConfig: '{}',
+        steps: JSON.stringify([{ type: 'pretend_publish', label: 'Pretend publish' }]),
+        isActive: true,
+        companyId: actor!.companyId!,
+        createdBy: actor!.userId!,
+      },
+    });
+    const response = await workflowExecutePost(makeJsonRequest(
+      'http://localhost/api/workflows/execute',
+      'POST',
+      tenantAAdminToken,
+      { workflowId: workflow.id },
+    ));
+    expect(response.status).toBe(422);
+    const json = await response.json();
+    expect(json.data.status).toBe('failed');
+    expect(json.data.steps[0].status).toBe('failed');
+    expect(json.data.error).toContain('Unsupported workflow step type');
   });
 });
 
