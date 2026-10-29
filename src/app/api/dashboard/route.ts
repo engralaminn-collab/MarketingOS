@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const token = req.headers.get('Authorization')?.replace('Bearer ', '');
     if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
     const payload = await verifyToken(token);
-    if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!payload?.companyId || !payload.userId) return NextResponse.json({ error: 'A company workspace session is required' }, { status: 401 });
 
     const companyId = payload.companyId;
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
@@ -45,19 +45,6 @@ export async function GET(req: NextRequest) {
     // Calculate revenue from won deals
     const wonDealsData = await db.deal.findMany({ where: { companyId, stage: 'won' } });
     const revenue = wonDealsData.reduce((sum, d) => sum + d.value, 0);
-
-    // Engagement analytics from content engagement data
-    const allContent = await db.content.findMany({ where: { companyId } });
-    let totalLikes = 0, totalShares = 0, totalComments = 0, totalClicks = 0;
-    for (const c of allContent) {
-      try {
-        const eng = JSON.parse(c.engagement || '{}');
-        totalLikes += eng.likes || 0;
-        totalShares += eng.shares || 0;
-        totalComments += eng.comments || 0;
-        totalClicks += eng.clicks || 0;
-      } catch { /* skip unparseable */ }
-    }
 
     // Lead funnel
     const leadByStatus = await db.lead.groupBy({
@@ -150,26 +137,13 @@ export async function GET(req: NextRequest) {
     }));
 
     // Shape activeCampaignsList (frontend calls this `activeCampaigns`)
-    const activeCampaignsList = campaigns.map(c => {
-      let reach = 0, impressions = 0, clicks = 0, conversions = 0;
-      try {
-        const m = JSON.parse(c.metrics || '{}');
-        reach = m.reach || 0;
-        impressions = m.impressions || 0;
-        clicks = m.clicks || 0;
-        conversions = m.conversions || 0;
-      } catch { /* skip */ }
-      return {
-        id: c.id,
-        name: c.name,
-        platform: c.type,
-        status: c.status,
-        reach,
-        engagement: clicks,
-        conversions,
-        startDate: c.startDate?.toISOString() || c.createdAt.toISOString(),
-      };
-    });
+    // Legacy metric JSON has no source or verification. Internal campaign
+    // state is not a provider launch or an analytics feed.
+    const activeCampaignsList = campaigns.filter(c => c.status === 'active').map(c => ({
+      id: c.id, name: c.name, platform: c.type, status: c.status,
+      reach: null, engagement: null, conversions: null,
+      startDate: c.startDate?.toISOString() || null,
+    }));
 
     return NextResponse.json({
       // `overview` and `kpi` both populated — view reads `kpi`
@@ -198,10 +172,10 @@ export async function GET(req: NextRequest) {
         seoProgress,
       },
       engagement: {
-        likes: totalLikes,
-        shares: totalShares,
-        comments: totalComments,
-        clicks: totalClicks,
+        likes: null,
+        shares: null,
+        comments: null,
+        clicks: null,
       },
       leadFunnel,
       dealPipeline,
@@ -212,13 +186,9 @@ export async function GET(req: NextRequest) {
         type: c.type,
         platform: c.platform || 'unknown',
         status: c.status,
-        publishedAt: c.publishedAt?.toISOString() || c.createdAt.toISOString(),
-        engagement: (() => {
-          try {
-            const e = JSON.parse(c.engagement || '{}');
-            return (e.likes || 0) + (e.comments || 0) + (e.shares || 0);
-          } catch { return 0; }
-        })(),
+        publishedAt: c.publishedAt?.toISOString() || null,
+        publicationVerification: c.status === 'published' ? 'unverified_legacy' : null,
+        engagement: null, // legacy metrics are not provider-verified
       })),
       recentLeads: recentLeads.map(l => ({
         id: l.id,
@@ -236,7 +206,7 @@ export async function GET(req: NextRequest) {
         status: c.status,
         budget: c.budget,
         contentCount: c.contents.length,
-        metrics: (() => { try { return JSON.parse(c.metrics || '{}'); } catch { return {}; } })(),
+        metrics: null, // no verified provider source
       })),
       activeCampaigns: activeCampaignsList,
       seoChallenge: seoChallenges[0] ? {
@@ -250,6 +220,7 @@ export async function GET(req: NextRequest) {
       revenueTrend,
       platformDistribution,
       aiInsights: [] as any[],  // empty array — view handles gracefully
+      provenance: { publication: 'legacy labels are unverified', engagement: 'provider data unavailable', revenue: 'CRM won-deal value; not verified revenue', currency: 'unspecified' },
     });
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

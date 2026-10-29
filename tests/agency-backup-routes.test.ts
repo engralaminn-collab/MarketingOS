@@ -25,6 +25,7 @@ let markRead: typeof import('../src/app/api/messages/[id]/read/route').POST;
 
 let adminToken = '';
 let viewerToken = '';
+let companyAdminToken = '';
 
 function jsonRequest(url: string, method: string, token?: string, body?: unknown) {
   const headers: Record<string, string> = {
@@ -68,15 +69,19 @@ beforeAll(async () => {
     data: { name: `Backup Test ${suffix}`, slug: `backup-${suffix}`, isActive: true },
   });
   const admin = await db.user.create({
-    data: { email: `admin-${suffix}@test.local`, name: 'Backup Admin', passwordHash: hashed, role: 'admin', isActive: true },
+    data: { email: `admin-${suffix}@test.local`, name: 'System Admin', passwordHash: hashed, role: 'admin', isActive: true, isSuperAdmin: true },
   });
   const viewer = await db.user.create({
     data: { email: `viewer-${suffix}@test.local`, name: 'Backup Viewer', passwordHash: hashed, role: 'viewer', isActive: true },
+  });
+  const companyAdmin = await db.user.create({
+    data: { email: `workspace-admin-${suffix}@test.local`, name: 'Workspace Admin', passwordHash: hashed, role: 'admin', isActive: true },
   });
   await db.companyUser.createMany({
     data: [
       { userId: admin.id, companyId: company.id, role: 'admin' },
       { userId: viewer.id, companyId: company.id, role: 'viewer' },
+      { userId: companyAdmin.id, companyId: company.id, role: 'admin' },
     ],
   });
 
@@ -88,6 +93,9 @@ beforeAll(async () => {
   ).token;
   viewerToken = (
     await createSessionToken(req, { userId: viewer.id, email: viewer.email, role: 'viewer', companyId: company.id })
+  ).token;
+  companyAdminToken = (
+    await createSessionToken(req, { userId: companyAdmin.id, email: companyAdmin.email, role: 'admin', companyId: company.id })
   ).token;
 });
 
@@ -106,7 +114,7 @@ afterAll(async () => {
 });
 
 describe('/api/agency/backups', () => {
-  it('requires an authenticated administrator', async () => {
+  it('requires an authenticated interactive system administrator, not a tenant admin', async () => {
     const unauth = await backupGet(jsonRequest('http://localhost/api/agency/backups', 'GET'));
     expect(unauth.status).toBe(401);
 
@@ -117,6 +125,8 @@ describe('/api/agency/backups', () => {
       jsonRequest('http://localhost/api/agency/backups', 'POST', viewerToken, { kind: 'manual' }),
     );
     expect(forbiddenCreate.status).toBe(403);
+    expect((await backupGet(jsonRequest('http://localhost/api/agency/backups', 'GET', companyAdminToken))).status).toBe(403);
+    expect((await backupPost(jsonRequest('http://localhost/api/agency/backups', 'POST', companyAdminToken, { kind: 'manual' }))).status).toBe(403);
   });
 
   it('rejects an unknown backup kind', async () => {
@@ -149,6 +159,13 @@ describe('/api/agency/backups', () => {
     const verifiedBody = (await verified.json()) as { data: { ok: boolean; checks: Array<{ name: string }> } };
     expect(verifiedBody.data.ok).toBe(true);
     expect(verifiedBody.data.checks.map((check) => check.name)).toContain('checksum_matches');
+    // Same-second backups get distinct names and never prune existing snapshots.
+    const second = await backupPost(jsonRequest('http://localhost/api/agency/backups', 'POST', adminToken, { kind: 'manual' }));
+    expect(second.status).toBe(201);
+    const secondBody = await second.json() as { data: { filename: string } };
+    const currentFiles = fs.readdirSync(isolatedBackupDir).filter((file) => file.endsWith('.db'));
+    expect(currentFiles.length).toBeGreaterThanOrEqual(2);
+    expect(currentFiles).toContain(secondBody.data.filename);
   });
 
   it('returns 404 when verifying an unknown backup', async () => {

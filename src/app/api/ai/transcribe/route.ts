@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { transcribeFreeSpeech } from '@/lib/ai-extensions';
 import { generateChatCompletion } from '@/lib/ai-provider';
 
@@ -90,7 +90,8 @@ export async function POST(req: NextRequest) {
     const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const actor = await verifyToken(token);
-    if (!actor?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!actor?.companyId || !actor.userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!hasPermission(actor.role, 'content_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== 'object') {
@@ -98,6 +99,8 @@ export async function POST(req: NextRequest) {
     }
 
     let transcript = typeof body.transcript === 'string' ? body.transcript.trim() : '';
+    if (transcript.length > 50_000 || (typeof body.audioBase64 === 'string' && body.audioBase64.length > 35_000_000)) return NextResponse.json({ error: 'Transcript or audio is too large.' }, { status: 400 });
+    if (body.analyzeWithAi === true && !hasPermission(actor.role, 'manager')) return NextResponse.json({ error: 'A manager must approve AI processing of this transcript.' }, { status: 403 });
     let provider = 'script-alignment';
     let rawSegments: Array<{ start: number; end: number; text: string }> | undefined;
 
@@ -115,7 +118,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             error:
-              'Server-side Whisper STT is not configured yet (set GROQ_API_KEY for free whisper-large-v3-turbo or LOCAL_STT_BASE_URL). Use Browser Live Voice Dictation or paste your transcript to generate SRT/VTT & meeting notes immediately.',
+              'Server-side transcription is unavailable. Configure LOCAL_STT_BASE_URL or paste a transcript; no hosted STT fallback was attempted.',
           },
           { status: 503 },
         );
@@ -132,6 +135,7 @@ export async function POST(req: NextRequest) {
     let translatedSrt: string | null = null;
     const targetLanguage = typeof body.translateTo === 'string' ? body.translateTo.trim() : '';
 
+    if (targetLanguage && targetLanguage.toLowerCase() !== 'none' && body.analyzeWithAi !== true) return NextResponse.json({ error: 'Translation requires explicit approval for AI processing.' }, { status: 403 });
     if (targetLanguage && targetLanguage.toLowerCase() !== 'none') {
       try {
         const tr = await generateChatCompletion(
@@ -150,7 +154,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    try {
+    let meetingNotesSource = 'deterministic-extract';
+    if (body.analyzeWithAi === true) try {
       const llmNotes = await generateChatCompletion(
         [
           {
@@ -165,6 +170,7 @@ export async function POST(req: NextRequest) {
       if (m) {
         const parsed = JSON.parse(m[0]);
         if (parsed.summary) {
+          meetingNotesSource = `ai:${llmNotes.provider}`;
           meetingNotes = {
             summary: String(parsed.summary),
             actionItems: Array.isArray(parsed.actionItems) ? parsed.actionItems.map(String) : meetingNotes.actionItems,
@@ -185,10 +191,13 @@ export async function POST(req: NextRequest) {
         vtt,
         translatedSrt,
         meetingNotes,
+        meetingNotesSource,
+        captionTiming: rawSegments?.length ? 'provider-segments' : 'estimated-from-word-count',
+        note: 'Review all captions and notes. Estimated timestamps are not synchronized to audio.',
       },
     });
-  } catch (error) {
-    console.error('[POST /api/ai/transcribe]', error);
+  } catch {
+    console.error('[POST /api/ai/transcribe] failed');
     return NextResponse.json({ error: 'Transcription & captioning failed' }, { status: 500 });
   }
 }

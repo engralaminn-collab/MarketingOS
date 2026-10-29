@@ -159,6 +159,7 @@ export async function POST(req: NextRequest) {
 
     // 3. Explicit Opt-In Free Cloud Image Provider (only when user explicitly selects provider !== 'auto')
     if (requestedProvider === 'pollinations' || requestedProvider === 'huggingface' || requestedProvider === 'cloudflare') {
+      if (input.approveCharges !== true || actor.apiKeyId || !hasPermission(actor.role, 'manager')) return NextResponse.json({ error: 'A manager must explicitly approve potential hosted-provider charges for this request.' }, { status: 403 });
       const freeImg = await generateFreeCloudImage(prompt, dimensions.width, dimensions.height, requestedProvider);
       if (freeImg) {
         const content = shouldSave
@@ -209,6 +210,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (requestedProvider !== 'zai' || input.approveCharges !== true || actor.apiKeyId || !hasPermission(actor.role, 'manager')) {
+      return NextResponse.json({ error: 'Hosted image generation requires explicit provider selection and a manager’s charge approval. No hosted fallback was attempted.' }, { status: 403 });
+    }
     const result = await generateImage(prompt, size);
     if (!result?.base64) {
       return NextResponse.json({ error: 'Image generation is unavailable from the configured provider' }, { status: 503 });

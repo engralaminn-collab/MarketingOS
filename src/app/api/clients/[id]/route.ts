@@ -12,6 +12,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   if (!ADMIN_ROLES.has(actor.role)) return NextResponse.json({ error: 'Only an administrator can change a client' }, { status: 403 });
 
   const { id } = await context.params;
+  if (id !== actor.companyId) return NextResponse.json({ error: 'Client not found' }, { status: 404 });
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 

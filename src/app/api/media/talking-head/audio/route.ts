@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getActor } from '@/lib/agency';
+import { hasPermission } from '@/lib/auth';
 import { generateLocalSpeech } from '@/lib/local-tts';
 
 /**
@@ -15,6 +16,7 @@ import { generateLocalSpeech } from '@/lib/local-tts';
 export async function POST(req: Request) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasPermission(actor.role, 'content_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   // Only LOCAL_TTS_BASE_URL feeds this path: generateLocalSpeech reads nothing
   // else, so reporting "configured" for any other variable would promise audio
@@ -55,11 +57,10 @@ export async function POST(req: Request) {
       },
       { headers: { 'Cache-Control': 'no-store' } }
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         error: 'Local speech generation failed. No hosted fallback was attempted.',
-        detail: error instanceof Error ? error.message : String(error),
         fallback: 'browser-voice',
       },
       { status: 502 }

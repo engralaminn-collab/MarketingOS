@@ -1,28 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
-import { emitEvent } from '@/lib/events';
-export async function GET(req: NextRequest) {
-  try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
-    const payload = await verifyToken(token);
-    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
-    const workflows = await db.workflow.findMany({ where: { companyId: payload.companyId }, orderBy: { createdAt: 'desc' } });
-    return NextResponse.json({ data: workflows.map(w => ({ id: w.id, name: w.name, description: w.description, trigger: w.trigger, steps: JSON.parse(w.steps || '[]'), isActive: w.isActive, runCount: w.runCount, createdAt: w.createdAt.toISOString() })) });
-  } catch { return NextResponse.json({ error: 'Failed' }, { status: 500 }); }
+import { hasPermission, verifyToken } from '@/lib/auth';
+import { parseStoredWorkflowSteps, readWorkflowSteps, validateExecutableSteps } from '@/lib/workflows';
+
+async function actorFor(req: NextRequest) {
+  const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+  const actor = token ? await verifyToken(token) : null;
+  return actor?.companyId && actor.userId ? actor : null;
 }
-export async function POST(req: NextRequest) {
+
+export async function GET(req: NextRequest) {
+  const actor = await actorFor(req);
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
-    const payload = await verifyToken(token);
-    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
-    const body = await req.json();
-    const name = String(body.name || '').trim();
-    if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 });
-    const wf = await db.workflow.create({ data: { name, description: body.description || null, trigger: body.trigger || 'manual', triggerConfig: JSON.stringify(body.triggerConfig || {}), steps: JSON.stringify(body.steps || []), isActive: body.isActive || false, companyId: payload.companyId, createdBy: payload.userId } });
-    await emitEvent({ companyId: payload.companyId, userId: payload.userId, type: 'workflow.created', title: 'Workflow created', description: name, resourceType: 'workflow', resourceId: wf.id });
+    const workflows = await db.workflow.findMany({ where: { companyId: actor.companyId! }, orderBy: { createdAt: 'desc' }, take: 100 });
+    return NextResponse.json({ data: workflows.map((wf) => {
+      const parsed = parseStoredWorkflowSteps(wf.steps);
+      return { id: wf.id, name: wf.name, description: wf.description, trigger: wf.trigger, steps: parsed.steps, validationError: parsed.error || validateExecutableSteps(parsed.steps), isActive: wf.isActive, runCount: wf.runCount, lastRunAt: wf.lastRunAt, createdAt: wf.createdAt };
+    }), capabilities: { manualOnly: true, supportedSteps: ['log_activity', 'create_notification', 'email'], emailIsDraftOnly: true } }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch {
+    return NextResponse.json({ error: 'Could not fetch workflows.' }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const actor = await actorFor(req);
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasPermission(actor.role, 'manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const body: unknown = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: 'A JSON object is required.' }, { status: 400 });
+  const input = body as Record<string, unknown>;
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!name || name.length > 160) return NextResponse.json({ error: 'Name must be 1–160 characters.' }, { status: 400 });
+  if (input.description !== undefined && (typeof input.description !== 'string' || input.description.length > 2_000)) return NextResponse.json({ error: 'Description must be at most 2,000 characters.' }, { status: 400 });
+  if (input.trigger !== undefined && input.trigger !== 'manual') return NextResponse.json({ error: 'Only manual triggers are implemented; event and scheduled triggers are unavailable.' }, { status: 422 });
+  if (input.isActive !== undefined && typeof input.isActive !== 'boolean') return NextResponse.json({ error: 'isActive must be boolean.' }, { status: 400 });
+  const parsed = readWorkflowSteps(input.steps);
+  const error = parsed.error || validateExecutableSteps(parsed.steps);
+  if (error) return NextResponse.json({ error }, { status: 422 });
+  try {
+    const wf = await db.workflow.create({ data: { name, description: typeof input.description === 'string' ? input.description : null, trigger: 'manual', steps: JSON.stringify(parsed.steps), isActive: input.isActive === true, companyId: actor.companyId!, createdBy: actor.userId } });
     return NextResponse.json({ data: { id: wf.id, name: wf.name } }, { status: 201 });
-  } catch { return NextResponse.json({ error: 'Failed' }, { status: 500 }); }
+  } catch {
+    return NextResponse.json({ error: 'Could not create workflow.' }, { status: 500 });
+  }
 }

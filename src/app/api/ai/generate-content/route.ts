@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { generateContentDraft } from '@/lib/agent-runtime';
 
 // POST /api/ai/generate-content — generate a content draft via the Content Writer agent
@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
+    if (!payload.userId || !hasPermission(payload.role, 'content_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const body = await req.json();
     const title = String(body.title || '').trim();
     if (!title) {
@@ -65,10 +66,10 @@ export async function POST(req: NextRequest) {
         aiGenerated: true,
       },
     });
-  } catch (err) {
-    console.error('[POST /api/ai/generate-content]', err);
+  } catch {
+    console.error('[POST /api/ai/generate-content] failed');
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to generate content' },
+      { error: 'Failed to generate content' },
       { status: 500 },
     );
   }

@@ -717,32 +717,21 @@ function mapModelConfig(model: any): ModelConfigResult {
 // ============================================================================
 
 export async function retrieveKnowledge(
+  companyId: string,
   query: string,
   departmentId?: string,
-  accessRoles?: string[],
   limit: number = 5
 ): Promise<KnowledgeNodeResult[]> {
   try {
+    if (!companyId) return [];
     const queryLower = query.toLowerCase();
     const queryKeywords = queryLower
       .split(/[^a-z0-9]+/)
       .filter((k) => k.length > 2);
 
-    // Build the base where clause
-    const where: Record<string, unknown> = { companyId: { not: '' } };
-
-    if (departmentId) {
-      where.OR = [
-        { departmentId },
-        { accessLevel: 'public' },
-        { accessLevel: 'company' },
-      ];
-    } else {
-      where.OR = [
-        { accessLevel: 'public' },
-        { accessLevel: 'company' },
-      ];
-    }
+    // Never search another tenant or restricted/role/department records until
+    // a complete actor-specific knowledge policy is implemented.
+    const where = { companyId, accessLevel: { in: ['public', 'company'] } };
 
     // Fetch all candidate knowledge nodes
     const candidates = await db.knowledgeNode.findMany({
@@ -785,15 +774,6 @@ export async function retrieveKnowledge(
       // Quality bonus
       if (node.rating > 0) {
         score += node.rating * 0.5;
-      }
-
-      // Access role check
-      if (accessRoles && accessRoles.length > 0 && node.accessRoles) {
-        const nodeRoles = safeJsonParse<string[]>(node.accessRoles, []);
-        const hasRole = accessRoles.some((r) => nodeRoles.includes(r));
-        if (node.accessLevel === 'role' && !hasRole) {
-          score = -1; // Exclude
-        }
       }
 
       return { node, score };
@@ -854,7 +834,7 @@ export async function addKnowledge(
         accessRoles: JSON.stringify(data.accessRoles || []),
         sourceUrl: data.sourceUrl || null,
         sourceType: data.sourceType || null,
-        companyId: data.companyId || companyId,
+        companyId,
       },
     });
     return node.id;
@@ -869,18 +849,19 @@ export async function addKnowledge(
 // ============================================================================
 
 export async function getMemories(
+  companyId: string,
   employeeId: string,
   type?: string,
   limit: number = 20
 ): Promise<MemoryResult[]> {
   try {
-    const emp = await db.employee.findUnique({
-      where: { employeeId },
+    const emp = await db.employee.findFirst({
+      where: { employeeId, companyId },
       select: { id: true },
     });
     if (!emp) return [];
 
-    const where: Record<string, unknown> = { employeeId: emp.id };
+    const where: Record<string, unknown> = { employeeId: emp.id, companyId, isApproved: true, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] };
     if (type) {
       where.memoryType = type;
     }
@@ -920,11 +901,11 @@ export async function addMemory(
     sourceType?: string;
     sourceId?: string;
   },
-  companyId?: string
+  companyId: string
 ): Promise<string | null> {
   try {
-    const emp = await db.employee.findUnique({
-      where: { employeeId },
+    const emp = await db.employee.findFirst({
+      where: { employeeId, companyId },
       select: { id: true, companyId: true },
     });
     if (!emp) return null;
@@ -940,7 +921,7 @@ export async function addMemory(
         relevance: memory.relevance ?? 1.0,
         sourceType: memory.sourceType || null,
         sourceId: memory.sourceId || null,
-        companyId: companyId || emp.companyId,
+        companyId,
       },
     });
     return mem.id;
@@ -951,18 +932,20 @@ export async function addMemory(
 }
 
 export async function getWorkingMemory(
+  companyId: string,
   employeeId: string
 ): Promise<MemoryResult | null> {
   try {
-    const emp = await db.employee.findUnique({
-      where: { employeeId },
+    const emp = await db.employee.findFirst({
+      where: { employeeId, companyId },
       select: { id: true },
     });
     if (!emp) return null;
 
     const mem = await db.employeeMemory.findFirst({
       where: {
-        employeeId: emp.id,
+        employeeId: emp.id, companyId, isApproved: true,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
         memoryType: 'working',
       },
       orderBy: { updatedAt: 'desc' },
@@ -996,12 +979,13 @@ export async function getWorkingMemory(
 }
 
 export async function getRelevantMemories(
+  companyId: string,
   employeeId: string,
   taskContext: string
 ): Promise<MemoryResult[]> {
   try {
-    const emp = await db.employee.findUnique({
-      where: { employeeId },
+    const emp = await db.employee.findFirst({
+      where: { employeeId, companyId },
       select: { id: true },
     });
     if (!emp) return [];
@@ -1010,7 +994,7 @@ export async function getRelevantMemories(
     const now = new Date();
     const memories = await db.employeeMemory.findMany({
       where: {
-        employeeId: emp.id,
+        employeeId: emp.id, companyId, isApproved: true,
         OR: [
           { expiresAt: null },
           { expiresAt: { gt: now } },
@@ -1082,18 +1066,18 @@ export async function getRelevantMemories(
 // ============================================================================
 
 export async function findApplicableSops(
+  companyId: string,
   taskType: string,
   employeeLevel: string,
   departmentId?: string
 ): Promise<SopResult[]> {
   try {
-    const where: Record<string, unknown> = { isActive: true };
+    const where: Record<string, unknown> = { isActive: true, companyId };
 
     if (departmentId) {
-      where.OR = [
-        { departmentId },
-        { departmentId: null },
-      ];
+      where.OR = [{ departmentId }, { departmentId: null }];
+    } else {
+      where.departmentId = null;
     }
 
     const sops = await db.sop.findMany({
@@ -1328,13 +1312,9 @@ export async function routeTask(
 
     // 5. Load employee context in parallel
     const [sops, knowledge, memories] = await Promise.all([
-      findApplicableSops(task.type, employee.level, employee.departmentId),
-      retrieveKnowledge(
-        `${task.title} ${task.description}`,
-        employee.departmentId,
-        safeJsonParse<string[]>(employee.permissions, [])
-      ),
-      getRelevantMemories(employee.employeeId, `${task.title} ${task.description}`),
+      findApplicableSops(task.companyId, task.type, employee.level, employee.departmentId),
+      retrieveKnowledge(task.companyId, `${task.title} ${task.description}`, employee.departmentId),
+      getRelevantMemories(task.companyId, employee.employeeId, `${task.title} ${task.description}`),
     ]);
 
     const skillsUsed = safeJsonParse<string[]>(employee.skills, []);
@@ -1517,44 +1497,36 @@ export async function routeTask(
 export async function executeWithEmployee(
   employeeId: string,
   message: string,
-  conversationId?: string,
-  companyId?: string
+  conversationId: string | undefined,
+  companyId: string,
+  userId: string
 ): Promise<{
   response: string;
   conversationId: string;
   employeeName: string;
   employeeTitle: string;
+  provider: string;
+  model: string;
+  tokensUsed: number | null;
 }> {
   try {
     // 1. Get employee
     const employee = await getEmployee(employeeId);
-    if (!employee) {
-      throw new Error(`Employee ${employeeId} not found`);
+    if (!employee || employee.companyId !== companyId) {
+      throw new Error('Employee not found in workspace');
     }
 
-    // 2. Get or create conversation
+    // A conversation is private to its creator, tenant and employee. An
+    // invalid supplied ID must not silently create a new conversation.
     let conversation;
     if (conversationId) {
-      conversation = await db.workforceConversation.findUnique({
-        where: { id: conversationId },
+      conversation = await db.workforceConversation.findFirst({
+        where: { id: conversationId, companyId, userId, employeeId: employee.id },
       });
-    }
-
-    if (!conversation) {
-      // Need a userId - use a system user or the first company user
-      const companyUser = companyId
-        ? await db.companyUser.findFirst({
-            where: { companyId },
-            select: { userId: true },
-          })
-        : null;
-
+      if (!conversation) throw new Error('Conversation not found');
+    } else {
       conversation = await db.workforceConversation.create({
-        data: {
-          employeeId: employee.id,
-          userId: companyUser?.userId || 'system',
-          companyId: companyId || employee.companyId,
-        },
+        data: { employeeId: employee.id, userId, companyId },
       });
     }
 
@@ -1566,8 +1538,8 @@ export async function executeWithEmployee(
 
     // 4. Load relevant context
     const [knowledge, memories] = await Promise.all([
-      retrieveKnowledge(message, employee.departmentId, undefined, 3),
-      getRelevantMemories(employee.employeeId, message),
+      retrieveKnowledge(companyId, message, employee.departmentId, 3),
+      getRelevantMemories(companyId, employee.employeeId, message),
     ]);
 
     // 5. Build system prompt with employee identity
@@ -1652,6 +1624,10 @@ export async function executeWithEmployee(
       conversationId: conversation.id,
       employeeName: employee.name,
       employeeTitle: employee.title,
+      provider: completion.provider,
+      model: completion.model,
+      tokensUsed: completion.promptTokens !== undefined && completion.completionTokens !== undefined
+        ? completion.promptTokens + completion.completionTokens : null,
     };
   } catch (error) {
     console.error('[Orchestrator.executeWithEmployee] Error:', error);
@@ -2091,17 +2067,20 @@ export async function listEmployees(
 
 export async function listConversations(
   companyId: string,
+  userId: string,
   employeeId?: string,
   limit: number = 20
 ): Promise<unknown[]> {
   try {
-    const where: Record<string, unknown> = { companyId };
+    if (!companyId || !userId) return [];
+    const where: Record<string, unknown> = { companyId, userId };
     if (employeeId) {
-      const emp = await db.employee.findUnique({
-        where: { employeeId },
+      const emp = await db.employee.findFirst({
+        where: { employeeId, companyId },
         select: { id: true },
       });
-      if (emp) where.employeeId = emp.id;
+      if (!emp) return [];
+      where.employeeId = emp.id;
     }
 
     return await db.workforceConversation.findMany({
@@ -2123,11 +2102,14 @@ export async function listConversations(
 }
 
 export async function getConversation(
-  conversationId: string
+  conversationId: string,
+  companyId: string,
+  userId: string,
 ): Promise<unknown | null> {
   try {
-    return await db.workforceConversation.findUnique({
-      where: { id: conversationId },
+    if (!companyId || !userId) return null;
+    return await db.workforceConversation.findFirst({
+      where: { id: conversationId, companyId, userId },
       include: {
         employee: {
           select: {

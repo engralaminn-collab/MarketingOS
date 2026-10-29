@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getActor } from '@/lib/agency';
+import { getActor, isSystemAdministrator } from '@/lib/agency';
 import { db } from '@/lib/db';
 import { emitEvent } from '@/lib/events';
+import { hasPermission } from '@/lib/auth';
 
 /**
  * Client workspaces.
@@ -11,7 +12,6 @@ import { emitEvent } from '@/lib/events';
  * keeps onboarding cost flat as the agency grows.
  */
 
-const ADMIN_ROLES = new Set(['company_owner', 'super_admin', 'admin']);
 const DEFAULT_CHANNELS = ['facebook', 'instagram', 'linkedin', 'youtube', 'tiktok', 'whatsapp', 'sms', 'email'];
 
 function slugify(value: string) {
@@ -21,10 +21,12 @@ function slugify(value: string) {
 export async function GET(req: Request) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasPermission(actor.role, 'admin')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const isOperator = ADMIN_ROLES.has(actor.role);
+  // A workspace administrator is not an administrator of other tenants.
+  const isOperator = await isSystemAdministrator(actor);
   const companies = await db.company.findMany({
-    where: isOperator ? {} : { id: actor.companyId },
+    where: { id: actor.companyId },
     orderBy: { createdAt: 'asc' },
   });
   const configs = await db.clientConfig.findMany({ where: { companyId: { in: companies.map((c) => c.id) } } });
@@ -71,7 +73,7 @@ export async function GET(req: Request) {
       configured: configs.length,
       isOperator,
       // Explicit contract: no per-client application exists or is needed.
-      deploymentModel: 'single-tenant-configurable',
+      deploymentModel: 'workspace-scoped',
     },
   });
 }
@@ -80,7 +82,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!ADMIN_ROLES.has(actor.role)) return NextResponse.json({ error: 'Only an administrator can provision a client' }, { status: 403 });
+  if (!(await isSystemAdministrator(actor))) return NextResponse.json({ error: 'Only a system administrator can provision a workspace.' }, { status: 403 });
 
   const body = await req.json().catch(() => null);
   if (!body || typeof body.name !== 'string' || !body.name.trim()) {
@@ -96,28 +98,17 @@ export async function POST(req: Request) {
   const autoLogoutMinutes = Math.min(Math.max(Number(body.autoLogoutMinutes) || 15, 1), 240);
   const passwordRotationDays = Math.min(Math.max(Number(body.passwordRotationDays) || 90, 7), 365);
 
-  const existing = await db.company.findUnique({ where: { slug } });
-  const company = existing
-    ? await db.company.update({
-        where: { id: existing.id },
-        data: {
-          name,
-          website: typeof body.website === 'string' ? body.website : existing.website,
-          industry: typeof body.industry === 'string' ? body.industry : existing.industry,
-          country: typeof body.country === 'string' ? body.country : existing.country,
-          plan: typeof body.plan === 'string' ? body.plan : existing.plan,
-        },
-      })
-    : await db.company.create({
-        data: {
-          name,
-          slug,
-          website: typeof body.website === 'string' ? body.website : null,
-          industry: typeof body.industry === 'string' ? body.industry : null,
-          country: typeof body.country === 'string' ? body.country : null,
-          plan: typeof body.plan === 'string' ? body.plan : 'free',
-        },
-      });
+  const existing = await db.company.findUnique({ where: { slug }, select: { id: true } });
+  // Provisioning must never silently overwrite a pre-existing tenant.
+  if (existing) return NextResponse.json({ error: 'Workspace slug is already in use.' }, { status: 409 });
+  const company = await db.company.create({ data: {
+    name, slug,
+    website: typeof body.website === 'string' ? body.website : null,
+    industry: typeof body.industry === 'string' ? body.industry : null,
+    country: typeof body.country === 'string' ? body.country : null,
+    plan: typeof body.plan === 'string' ? body.plan : 'free',
+  } });
+  await db.companyUser.create({ data: { userId: actor.userId, companyId: company.id, role: 'admin' } });
 
   const config = await db.clientConfig.upsert({
     where: { companyId: company.id },

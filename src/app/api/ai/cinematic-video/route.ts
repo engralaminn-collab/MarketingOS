@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
     let script = '';
     let storyboard: Array<{ scene: number; duration: string; visual: string; narration: string; mood: string }> = [];
     let hashtags: string[] = [];
-    let scriptSource: 'local-model' | 'template-fallback' = 'template-fallback';
+    let scriptSource: 'ai-model' | 'template-fallback' = 'template-fallback';
+    let textProvider: string | null = null;
 
     try {
       const completion = await generateChatCompletion(
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
       script = typeof parsed.script === 'string' ? parsed.script.trim() : '';
       storyboard = Array.isArray(parsed.storyboard) ? parsed.storyboard : [];
       hashtags = Array.isArray(parsed.hashtags) ? parsed.hashtags : [];
-      if (script) scriptSource = 'local-model';
+      if (script) { scriptSource = 'ai-model'; textProvider = completion.provider; }
     } catch {
       // Fall back to deterministic storyboard
     }
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
       script = `Opening: Introduce ${topic}. Highlight the core audience bottleneck and show one concrete result. Close with a clear call to action.`;
       storyboard = getFallbackStoryboard(duration, topic);
       scriptSource = 'template-fallback';
+      textProvider = null;
     }
 
     let videoUrl: string | null = null;
@@ -86,7 +88,7 @@ export async function POST(req: NextRequest) {
     try {
       const clipDuration = Math.min(10, Math.max(3, duration));
       videoUrl = await generateWithComfyUIVideo(`${style} video: ${topic}. ${script.slice(0, 300)}`, clipDuration);
-      if (videoUrl) videoStatus = 'completed';
+      if (videoUrl) videoStatus = 'short-clip-ready';
     } catch {
       videoStatus = 'storyboard-only';
     }
@@ -102,7 +104,7 @@ export async function POST(req: NextRequest) {
           .join('\n\n')}`,
         mediaUrl: null,
         mediaType: 'video',
-        aiGenerated: scriptSource === 'local-model',
+        aiGenerated: scriptSource === 'ai-model',
         creatorId: actor.userId,
         companyId: actor.companyId,
       },
@@ -134,7 +136,9 @@ export async function POST(req: NextRequest) {
           style,
           language,
           scriptSource,
-          scriptGeneratedByAI: scriptSource === 'local-model',
+          textProvider,
+          note: 'The storyboard is a plan. Any rendered clip is a separate short clip, not the complete assembled narrated video.',
+          scriptGeneratedByAI: scriptSource === 'ai-model',
         },
       },
       { status: 201, headers: { 'Cache-Control': 'no-store' } },

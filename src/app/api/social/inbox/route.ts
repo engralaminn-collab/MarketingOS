@@ -39,7 +39,8 @@ export async function GET(req: NextRequest) {
 
     // Get SMS messages
     const smsMessages = await db.smsMessage.findMany({
-      where: { companyId: payload.companyId },
+      // Legacy OTP rows contain raw codes; never expose them in inboxes.
+      where: { companyId: payload.companyId, OR: [{ providerMessageId: null }, { NOT: { providerMessageId: { startsWith: 'otp_' } } }] },
       orderBy: { createdAt: 'desc' },
       take: 20,
     });
@@ -93,8 +94,8 @@ export async function GET(req: NextRequest) {
         platform: 'sms',
         subject: s.to,
         snippet: s.body.slice(0, 100),
-        priority: s.providerMessageId?.startsWith('otp_') ? 'high' : 'normal',
-        status: s.status,
+        priority: 'normal',
+        status: s.providerMessageId?.startsWith('broadcast_') ? 'legacy_unverified' : s.status,
         unread: s.status === 'queued',
         createdAt: s.createdAt.toISOString(),
       });

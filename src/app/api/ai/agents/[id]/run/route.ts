@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { runAgent, type AgentRunInput } from '@/lib/agent-runtime';
 
 // POST /api/ai/agents/[id]/run — manually trigger an agent to do real work
@@ -19,10 +19,11 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
+    if (!hasPermission(payload.role, 'ai_agent_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const { id: agentId } = await params;
     const body = await req.json();
-    const task = String(body.task || '').trim();
-    if (!task) {
+    const task = typeof body.task === 'string' ? body.task.trim() : '';
+    if (!task || task.length > 4_000 || JSON.stringify(body).length > 16_384) {
       return NextResponse.json({ error: 'task is required' }, { status: 400 });
     }
 
@@ -52,7 +53,7 @@ export async function POST(
   } catch (err) {
     console.error('[POST /api/ai/agents/[id]/run]', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to run agent' },
+      { error: 'Failed to run agent' },
       { status: 500 },
     );
   }

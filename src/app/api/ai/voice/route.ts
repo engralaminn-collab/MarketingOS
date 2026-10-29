@@ -37,6 +37,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Speech generation is unavailable. Configure a self-hosted OpenAI-compatible TTS service or explicitly enable the hosted Z.AI adapter.' }, { status: 503 });
     }
 
+    if (!localTtsConfigured && hostedTtsEnabled && (input.provider !== 'zai' || input.approveCharges !== true || actor.apiKeyId || !hasPermission(actor.role, 'manager'))) {
+      return NextResponse.json({ error: 'Hosted speech generation requires explicit provider selection and a manager’s charge approval.' }, { status: 403 });
+    }
     const draft = await db.content.create({
       data: {
         title: `AI voiceover: ${text.slice(0, 72)}`,

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getActor } from '@/lib/agency';
-import { hasPermission } from '@/lib/auth';
+import { getActor, isSystemAdministrator } from '@/lib/agency';
 import { verifyBackup } from '@/lib/backup';
 
 /**
@@ -14,7 +13,7 @@ import { verifyBackup } from '@/lib/backup';
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!hasPermission(actor.role, 'admin')) {
+  if (!(await isSystemAdministrator(actor))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -28,6 +27,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const message = error instanceof Error ? error.message : 'Verification failed';
     const status = message === 'Backup not found' ? 404 : 500;
     if (status === 500) console.error('[POST /api/agency/backups/[id]/verify]', error);
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: status === 404 ? 'Backup not found' : 'Backup verification failed' }, { status });
   }
 }

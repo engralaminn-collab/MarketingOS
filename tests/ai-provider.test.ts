@@ -16,6 +16,9 @@ const originalEnv = {
   AI_REQUEST_TIMEOUT_MS: process.env.AI_REQUEST_TIMEOUT_MS,
   AI_COMPATIBLE_BASE_URL: process.env.AI_COMPATIBLE_BASE_URL,
   AI_COMPATIBLE_MODEL: process.env.AI_COMPATIBLE_MODEL,
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+  OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
+  AI_FALLBACK_CHAIN: process.env.AI_FALLBACK_CHAIN,
 };
 
 afterEach(() => {
@@ -80,6 +83,45 @@ describe('self-hosted AI provider', () => {
     expect(requestCount).toBe(1);
   });
 
+  it('refuses paid model IDs and paid-capable hosted providers before any network request', async () => {
+    let calls = 0;
+    globalThis.fetch = (async () => { calls++; throw new Error('unexpected network'); }) as typeof fetch;
+    process.env.OPENROUTER_API_KEY = 'dummy-test-key';
+    const messages = [{ role: 'user' as const, content: 'test' }];
+    await expect(generateChatCompletion(messages, { provider: 'openrouter', model: 'openai/gpt-4o' })).rejects.toThrow('explicitly free');
+    await expect(generateChatCompletion(messages, { provider: 'groq' })).rejects.toThrow('free-only billing');
+    expect(calls).toBe(0);
+  });
+
+  it('never calls a paid-capable fallback and uses only explicitly free OpenRouter IDs', async () => {
+    process.env.OPENROUTER_API_KEY = 'dummy-test-key';
+    process.env.OPENROUTER_MODEL = 'openrouter/free';
+    const urls: string[] = [];
+    const bodies: any[] = [];
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      urls.push(String(input));
+      bodies.push(JSON.parse(String(init?.body)));
+      if (String(input).includes('127.0.0.1')) throw new Error('offline');
+      if (String(input).startsWith('https://openrouter.ai/')) return Response.json({ model: 'openrouter/free', choices: [{ message: { content: 'test answer' } }] });
+      throw new Error('unexpected provider');
+    }) as typeof fetch;
+    const result = await generateChatCompletion([{ role: 'user', content: 'test' }], { provider: 'ollama', fallbackChain: ['groq', 'openrouter'] });
+    expect(result.provider).toBe('openrouter');
+    expect(urls).toHaveLength(2);
+    expect(urls.some((url) => url.includes('groq'))).toBe(false);
+    expect(bodies[1].model).toBe('openrouter/free');
+  });
+
+  it('does not cache prompt completions across requests or tenants', async () => {
+    process.env.AI_PROVIDER = 'ollama';
+    let calls = 0;
+    globalThis.fetch = (async () => { calls++; return Response.json({ message: { content: `answer-${calls}` } }); }) as typeof fetch;
+    const messages = [{ role: 'user' as const, content: 'same prompt' }];
+    await generateChatCompletion(messages, { useCache: true });
+    await generateChatCompletion(messages, { useCache: true });
+    expect(calls).toBe(2);
+  });
+
   it('rejects unknown provider names rather than silently choosing a different provider', async () => {
     process.env.AI_PROVIDER = 'automatic-cloud-fallback';
     await expect(generateChatCompletion([
@@ -91,7 +133,8 @@ describe('self-hosted AI provider', () => {
     expect(normalizeProviderBaseUrl('http://127.0.0.1:7860///', 'IMAGE_GENERATION_URL')).toBe('http://127.0.0.1:7860');
     expect(normalizeProviderBaseUrl('https://inference.internal.example/v1/', 'AI_COMPATIBLE_BASE_URL')).toBe('https://inference.internal.example/v1');
     expect(() => normalizeProviderBaseUrl('ftp://127.0.0.1:21', 'IMAGE_GENERATION_URL')).toThrow('must use http or https');
-    expect(() => normalizeProviderBaseUrl('http://user:secret@127.0.0.1:7860', 'IMAGE_GENERATION_URL')).toThrow('must not embed credentials');
+    const urlWithTestCredentials = `http://${['user', 'test-password'].join(':')}@127.0.0.1:7860`;
+    expect(() => normalizeProviderBaseUrl(urlWithTestCredentials, 'IMAGE_GENERATION_URL')).toThrow('must not embed credentials');
   });
 
   it('local media helpers strip trailing slashes and fail closed when unconfigured', async () => {

@@ -40,9 +40,6 @@ import {
   Calendar,
   CalendarDays,
   Sparkles,
-  Heart,
-  Share2,
-  MessageCircle,
   Zap,
   ChevronLeft,
   ChevronRight,
@@ -67,11 +64,6 @@ interface ContentItem {
   type: string;
   platform: string;
   status: string;
-  engagement: {
-    likes: number;
-    shares: number;
-    comments: number;
-  };
   aiGenerated: boolean;
   scheduledDate?: string;
   publishedDate?: string;
@@ -150,12 +142,6 @@ const platformColors: Record<string, string> = {
   website: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
   email: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
 };
-
-function formatNumber(value: number) {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return String(value);
-}
 
 // ─── Loading Skeleton ──────────────────────────────────────────────────────────
 
@@ -289,8 +275,7 @@ function CreateContentDialog({
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="scheduled">Scheduled</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="scheduled">Planned (calendar only)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -346,7 +331,7 @@ function ContentCard({ item, index }: { item: ContentItem; index: number }) {
                     {item.platform}
                   </Badge>
                   <Badge variant="outline" className={statusColors[item.status] || ""}>
-                    {item.status}
+                    {item.status === 'published' ? 'Published (unverified legacy)' : item.status === 'scheduled' ? 'Planned only' : item.status}
                   </Badge>
                 </div>
               </div>
@@ -354,18 +339,7 @@ function ContentCard({ item, index }: { item: ContentItem; index: number }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {/* Engagement Stats */}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Heart className="h-3.5 w-3.5 text-rose-500" /> {formatNumber(item.engagement.likes)}
-            </span>
-            <span className="flex items-center gap-1">
-              <Share2 className="h-3.5 w-3.5 text-blue-500" /> {formatNumber(item.engagement.shares)}
-            </span>
-            <span className="flex items-center gap-1">
-              <MessageCircle className="h-3.5 w-3.5 text-emerald-500" /> {formatNumber(item.engagement.comments)}
-            </span>
-          </div>
+          <p className="text-xs text-muted-foreground">Provider engagement data unavailable.</p>
           {/* Date & AI Badge */}
           <div className="flex items-center justify-between">
             {displayDate ? (
@@ -538,7 +512,12 @@ function ContentViewInner() {
       if (signal?.aborted) return;
       const result = json?.data ?? json;
       const list = Array.isArray(result) ? result : result?.items ?? result?.content ?? [];
-      setItems(list as ContentItem[]);
+      setItems(list.map((item: Record<string, unknown>) => ({
+        ...item,
+        platform: typeof item.platform === 'string' ? item.platform : 'unknown',
+        scheduledDate: item.scheduledAt || undefined,
+        publishedDate: item.publishedAt || undefined,
+      })) as ContentItem[]);
       setError(null);
     } catch (err: unknown) {
       if (signal?.aborted) return;
@@ -608,7 +587,7 @@ function ContentViewInner() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Content Calendar</h1>
-          <p className="text-muted-foreground">Plan, schedule, and manage your content.</p>
+          <p className="text-muted-foreground">Plan and manage drafts. Dates are calendar-only; automatic publishing is not available. Legacy published labels are unverified.</p>
         </div>
         <GlassCard>
           <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -634,7 +613,7 @@ function ContentViewInner() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Content Calendar</h1>
-          <p className="text-muted-foreground">Plan, schedule, and manage your content.</p>
+          <p className="text-muted-foreground">Plan and manage drafts. Dates are calendar-only; automatic publishing is not available. Legacy published labels are unverified.</p>
         </div>
         <Button
           onClick={() => setDialogOpen(true)}

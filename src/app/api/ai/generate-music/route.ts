@@ -31,6 +31,9 @@ export async function POST(req: NextRequest) {
     const model = typeof input.model === 'string' ? input.model : 'auto';
     if (!prompt || prompt.length > 1024) return errorResponse('Prompt is required and must be at most 1,024 characters', 400);
     if (!MODELS.has(model)) return errorResponse('Unsupported Mureka model', 400);
+    if (input.approveCharges !== true || actor.apiKeyId || !hasPermission(actor.role, 'manager')) {
+      return errorResponse('A manager must explicitly approve potential Mureka charges for this request.', 403);
+    }
 
     const integration = await getCompanyToolCredentials(actor.companyId, MUREKA_TOOL_NUMBER, ['MUREKA_API_KEY']);
     if (!integration) return errorResponse('Connect Mureka in Integrations before generating audio', 503);

@@ -105,8 +105,8 @@ interface RecentContent {
   type: string;
   platform: string;
   status: string;
-  publishedAt: string;
-  engagement: number;
+  publishedAt: string | null;
+  engagement: number | null;
 }
 
 interface RecentLead {
@@ -124,10 +124,10 @@ interface ActiveCampaign {
   name: string;
   platform: string;
   status: string;
-  reach: number;
-  engagement: number;
-  conversions: number;
-  startDate: string;
+  reach: number | null;
+  engagement: number | null;
+  conversions: number | null;
+  startDate: string | null;
 }
 
 interface AIInsight {
@@ -175,7 +175,7 @@ const itemVariants: Variants = {
 const kpiConfigs = [
   {
     key: "connectedSocialAccounts" as const,
-    label: "Connected Social Accounts",
+    label: "Stored Social Accounts",
     icon: Link2,
     gradient: "from-orange-500 to-amber-500",
     shadowColor: "shadow-orange-500/25",
@@ -211,7 +211,7 @@ const kpiConfigs = [
   },
   {
     key: "publishedContent" as const,
-    label: "Published Content",
+    label: "Legacy published labels (unverified)",
     icon: Send,
     gradient: "from-rose-500 to-pink-500",
     shadowColor: "shadow-rose-500/25",
@@ -229,7 +229,7 @@ const kpiConfigs = [
   },
   {
     key: "revenue" as const,
-    label: "Revenue",
+    label: "Won deal value (CRM)",
     icon: DollarSign,
     gradient: "from-amber-500 to-orange-600",
     shadowColor: "shadow-amber-500/25",
@@ -238,7 +238,7 @@ const kpiConfigs = [
   },
   {
     key: "aiAgentsActive" as const,
-    label: "AI Agents Active",
+    label: "Enabled Agent Configurations",
     icon: Bot,
     gradient: "from-cyan-500 to-blue-600",
     shadowColor: "shadow-cyan-500/25",
@@ -553,25 +553,11 @@ function DashboardViewInner() {
   const platformDist = data?.platformDistribution ?? [];
   const dealPipeline = data?.dealPipeline ?? [];
   const recentContentRaw: any[] = data?.recentContent ?? [];
-  const recentContent = recentContentRaw.map((item: any) => ({
-    ...item,
-    engagement: typeof item.engagement === 'string' ? (() => { try { const e = JSON.parse(item.engagement); return ((e.likes || 0) + (e.shares || 0) + (e.comments || 0) + (e.clicks || 0)); } catch { return 0; } })() : (item.engagement || 0),
-  }));
+  const recentContent = recentContentRaw;
   const recentLeads = data?.recentLeads ?? [];
   const activeCampaignsRaw: any[] = data?.activeCampaigns ?? [];
-  const activeCampaigns = activeCampaignsRaw.map((c: any) => {
-    const m = typeof c.metrics === 'string' ? (() => { try { return JSON.parse(c.metrics); } catch { return {}; } })() : (c.metrics || {});
-    return { ...c, reach: m.reach || 0, engagement: m.engagement || m.clicks || 0, conversions: m.conversions || 0, platform: c.type || 'multi_channel' };
-  });
+  const activeCampaigns = activeCampaignsRaw;
   const aiInsights = data?.aiInsights ?? [];
-
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(val);
 
   const insightIcon = (type: AIInsight["type"]) => {
     switch (type) {
@@ -648,7 +634,7 @@ function DashboardViewInner() {
           </p>
         </div>
         <p className="text-xs text-muted-foreground">
-          Last synced: {format(new Date(), "MMM d, yyyy 'at' h:mm a")}
+          Viewed: {format(new Date(), "MMM d, yyyy 'at' h:mm a")}
         </p>
       </motion.div>
 
@@ -663,7 +649,7 @@ function DashboardViewInner() {
           let subtitle: string | undefined;
 
           if (config.key === "revenue") {
-            displayValue = formatCurrency(rawValue);
+            displayValue = rawValue.toLocaleString();
           }
           if (config.key === "seoProgress") {
             displayValue = `${rawValue}%`;
@@ -676,7 +662,7 @@ function DashboardViewInner() {
             subtitle = `${pct}% of total leads`;
           }
           if (config.key === "aiAgentsActive") {
-            subtitle = "Running 24/7";
+            subtitle = "Enabled configurations; execution is not verified";
           }
 
           return (
@@ -691,9 +677,9 @@ function DashboardViewInner() {
         })}
       </motion.div>
 
-      {/* ── 2 & 3. Revenue Trend + Lead Funnel ── */}
+      {/* ── 2 & 3. Won Deal Value Trend + Lead Funnel ── */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Revenue Trend Area Chart */}
+        {/* Won Deal Value Trend Area Chart */}
         <motion.div variants={itemVariants}>
           <GlassCard>
             <CardHeader>
@@ -702,8 +688,8 @@ function DashboardViewInner() {
                   <BarChart3 className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">Revenue Trend</CardTitle>
-                  <CardDescription>Monthly revenue performance</CardDescription>
+                  <CardTitle className="text-base">Won Deal Value Trend</CardTitle>
+                  <CardDescription>CRM entries by close date; not verified payments. Currency unspecified.</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -767,18 +753,18 @@ function DashboardViewInner() {
                       tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                      tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                     />
                     <RechartsTooltip
                       content={
-                    <ChartTooltip valuePrefix="$" />
+                    <ChartTooltip />
                   }
                 />
                 <Legend />
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  name="Revenue"
+                  name="Won deal value"
                   stroke="#f97316"
                   strokeWidth={2}
                   fill="url(#revenueGradient)"
@@ -799,7 +785,7 @@ function DashboardViewInner() {
           ) : (
             <EmptyState
               icon={BarChart3}
-              message="No revenue data available yet"
+              message="No dated won deals available yet"
             />
           )}
         </CardContent>
@@ -982,7 +968,7 @@ function DashboardViewInner() {
                   tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                 />
                 <YAxis
                   type="category"
@@ -993,7 +979,7 @@ function DashboardViewInner() {
                   width={100}
                 />
                 <RechartsTooltip
-                  content={<ChartTooltip valuePrefix="$" />}
+                  content={<ChartTooltip />}
                 />
                 <Bar
                   dataKey="value"
@@ -1080,7 +1066,7 @@ function DashboardViewInner() {
                         variant="outline"
                         className={`capitalize ${contentStatusColor(item.status)}`}
                       >
-                        {item.status}
+                        {item.status === "published" ? "published (unverified)" : item.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-muted-foreground">
@@ -1092,7 +1078,7 @@ function DashboardViewInner() {
                       <span className="flex items-center justify-end gap-1">
                         <Eye className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="font-medium">
-                          {item.engagement.toLocaleString()}
+                          {item.engagement == null ? "—" : item.engagement.toLocaleString()}
                         </span>
                       </span>
                     </TableCell>
@@ -1186,7 +1172,7 @@ function DashboardViewInner() {
             <div>
               <CardTitle className="text-base">Active Campaigns</CardTitle>
               <CardDescription>
-                Currently running campaigns
+                Campaigns marked active internally; provider launch is not verified.
               </CardDescription>
             </div>
           </div>
@@ -1205,8 +1191,8 @@ function DashboardViewInner() {
                         {campaign.name}
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        {campaign.platform} &middot; Started{" "}
-                        {format(new Date(campaign.startDate), "MMM d")}
+                        {campaign.platform} &middot; Planned start{" "}
+                        {campaign.startDate ? format(new Date(campaign.startDate), "MMM d") : "—"}
                       </p>
                     </div>
                     <Badge
@@ -1220,7 +1206,7 @@ function DashboardViewInner() {
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
                       <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                        {campaign.reach.toLocaleString()}
+                        {campaign.reach == null ? "—" : campaign.reach.toLocaleString()}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
                         Reach
@@ -1228,7 +1214,7 @@ function DashboardViewInner() {
                     </div>
                     <div>
                       <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                        {campaign.engagement.toLocaleString()}
+                        {campaign.engagement == null ? "—" : campaign.engagement.toLocaleString()}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
                         Engagement
@@ -1236,7 +1222,7 @@ function DashboardViewInner() {
                     </div>
                     <div>
                       <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                        {campaign.conversions.toLocaleString()}
+                        {campaign.conversions == null ? "—" : campaign.conversions.toLocaleString()}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
                         Conversions

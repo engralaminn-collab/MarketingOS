@@ -1,8 +1,9 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { mkdir, readdir, rm, stat } from 'node:fs/promises';
+import { mkdir, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { db } from '@/lib/db';
+import { createClient, type Client } from '@libsql/client';
 
 /**
  * Backup service.
@@ -14,19 +15,6 @@ import { db } from '@/lib/db';
  */
 
 export const BACKUP_DIR = process.env.BACKUP_DIR || path.join(process.cwd(), 'backups');
-
-/**
- * Number of snapshots kept before the oldest are pruned. A malformed or
- * non-positive value must not silently disable retention (or prune the backup
- * that was just taken), so anything invalid falls back to 14.
- */
-function resolveRetention(raw: string | undefined): number {
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 14;
-}
-
-export const BACKUP_RETENTION = resolveRetention(process.env.BACKUP_RETENTION);
-const DEFAULT_RETENTION = BACKUP_RETENTION;
 
 /** Tables that must be present and are counted in every backup. */
 export const CRITICAL_TABLES = [
@@ -70,7 +58,7 @@ function sqliteFilePath(): string {
     throw new Error('Backups are only implemented for the file-backed SQLite database used by this deployment.');
   }
   const withoutScheme = raw.slice('file:'.length).split('?')[0];
-  return path.isAbsolute(withoutScheme) ? withoutScheme : path.resolve(process.cwd(), withoutScheme);
+  return path.isAbsolute(withoutScheme) ? withoutScheme : path.resolve(/*turbopackIgnore: true*/ process.cwd(), withoutScheme);
 }
 
 async function sha256(file: string): Promise<string> {
@@ -83,21 +71,21 @@ async function sha256(file: string): Promise<string> {
   });
 }
 
-/** Counts every user table; tolerates tables that do not exist yet. */
-async function countTables(): Promise<{ counts: Record<string, number>; rowCount: number }> {
-  const tables = await db.$queryRawUnsafe<Array<{ name: string }>>(
-    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma%' ORDER BY name"
-  );
+/** Count the snapshot itself, not a possibly-changing live database. */
+async function countTables(snapshot: Client): Promise<{ counts: Record<string, number>; rowCount: number }> {
+  const tables = await snapshot.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma%' ORDER BY name");
   const counts: Record<string, number> = {};
   let rowCount = 0;
-  for (const table of tables) {
+  for (const row of tables.rows) {
+    const name = String(row.name);
     try {
-      const result = await db.$queryRawUnsafe<Array<{ n: bigint | number }>>(`SELECT COUNT(*) as n FROM "${table.name}"`);
-      const value = Number(result[0]?.n ?? 0);
-      counts[table.name] = value;
+      const escapedName = name.replace(/"/g, '""');
+      const result = await snapshot.execute(`SELECT COUNT(*) as n FROM "${escapedName}"`);
+      const value = Number(result.rows[0]?.n ?? 0);
+      counts[name] = value;
       rowCount += value;
     } catch {
-      counts[table.name] = -1;
+      counts[name] = -1;
     }
   }
   return { counts, rowCount };
@@ -110,15 +98,12 @@ function timestamp(): string {
 export async function createBackup(options?: {
   kind?: 'manual' | 'scheduled' | 'pre_deploy';
   createdBy?: string | null;
-  retention?: number;
 }): Promise<BackupSummary> {
   const kind = options?.kind ?? 'manual';
-  const retention = options?.retention ?? DEFAULT_RETENTION;
   await mkdir(BACKUP_DIR, { recursive: true });
 
-  const filename = `marketingos_${timestamp()}_${kind}.db`;
+  const filename = `marketingos_${timestamp()}_${kind}_${randomUUID()}.db`;
   const target = path.join(BACKUP_DIR, filename);
-  await rm(target, { force: true });
 
   const source = sqliteFilePath();
   // VACUUM INTO needs the destination as a SQL string literal.
@@ -127,7 +112,11 @@ export async function createBackup(options?: {
 
   const info = await stat(target);
   const checksum = await sha256(target);
-  const { counts, rowCount } = await countTables();
+  const snapshot = createClient({ url: `file:${target}` });
+  let counts: Record<string, number>;
+  let rowCount: number;
+  try { ({ counts, rowCount } = await countTables(snapshot)); }
+  finally { snapshot.close(); }
 
   const record = await db.backupRecord.create({
     data: {
@@ -144,15 +133,8 @@ export async function createBackup(options?: {
     },
   });
 
-  const all = await db.backupRecord.findMany({ orderBy: { createdAt: 'desc' } });
-  for (const old of all.slice(retention)) {
-    try {
-      await rm(path.join(BACKUP_DIR, old.filename), { force: true });
-    } catch {
-      /* a missing file should not block pruning */
-    }
-    await db.backupRecord.update({ where: { id: old.id }, data: { status: 'pruned', error: 'Removed by retention policy' } });
-  }
+  // Backups are never pruned automatically. An owner-approved retention policy
+  // and independently verified recovery copy are required before deletion.
 
   return {
     id: record.id,
@@ -183,17 +165,21 @@ export async function verifyBackup(id: string): Promise<VerifyResult> {
   const record = await db.backupRecord.findUnique({ where: { id } });
   if (!record) throw new Error('Backup not found');
 
-  const file = path.join(record.location || BACKUP_DIR, record.filename);
+  const file = path.join(/*turbopackIgnore: true*/ record.location || BACKUP_DIR, record.filename);
   const checks: VerifyResult['checks'] = [];
 
-  const info = await stat(file).catch(() => null);
+  const info = await stat(/*turbopackIgnore: true*/ file).catch(() => null);
   checks.push({
     name: 'file_present',
     ok: Boolean(info),
     detail: info ? `${record.filename} (${info.size} bytes)` : `${record.filename} is missing from disk`,
   });
 
-  if (info) {
+  if (!info) {
+    await db.backupRecord.update({ where: { id }, data: { status: 'failed', error: 'Snapshot file is missing', verifiedAt: new Date() } });
+    return { ok: false, checks };
+  }
+  {
     const checksum = await sha256(file);
     checks.push({
       name: 'checksum_matches',
@@ -202,7 +188,6 @@ export async function verifyBackup(id: string): Promise<VerifyResult> {
     });
   }
 
-  const { createClient } = await import('@libsql/client');
   const client = createClient({ url: `file:${file}` });
   try {
     const integrity = await client.execute('PRAGMA integrity_check');
@@ -266,10 +251,10 @@ export async function listBackups(limit = 25): Promise<BackupSummary[]> {
 /** Reads the backup directory so orphaned files are visible too. */
 export async function backupFiles(): Promise<Array<{ name: string; size: number; modified: string }>> {
   try {
-    const names = (await readdir(BACKUP_DIR)).filter((name) => name.endsWith('.db'));
+    const names = (await readdir(/*turbopackIgnore: true*/ BACKUP_DIR)).filter((name) => name.endsWith('.db'));
     const files = await Promise.all(
       names.map(async (name) => {
-        const info = await stat(path.join(BACKUP_DIR, name));
+        const info = await stat(/*turbopackIgnore: true*/ path.join(/*turbopackIgnore: true*/ BACKUP_DIR, name));
         return { name, size: Number(info.size), modified: info.mtime.toISOString() };
       })
     );

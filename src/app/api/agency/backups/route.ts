@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getActor } from '@/lib/agency';
-import { hasPermission } from '@/lib/auth';
-import { BACKUP_DIR, BACKUP_RETENTION, backupFiles, createBackup, listBackups } from '@/lib/backup';
+import { getActor, isSystemAdministrator } from '@/lib/agency';
+import { BACKUP_DIR, backupFiles, createBackup, listBackups } from '@/lib/backup';
 
 /**
  * /api/agency/backups — verified SQLite snapshots.
  *
  * GET  lists every registered snapshot plus files found on disk, so an orphan
- *      left behind by a failed prune is visible instead of invisible.
- * POST takes a new snapshot (`VACUUM INTO` + SHA-256 manifest) and applies the
- *      retention policy.
+ *      left behind by a failed operation is visible instead of invisible.
+ * POST takes a new snapshot (`VACUUM INTO` + SHA-256 manifest). Automatic
+ *      deletion is disabled; retention requires separate owner approval.
  *
  * Backup metadata is deployment-wide (BackupRecord has no companyId), so both
- * verbs require an administrator. A regular member must not be able to trigger
+ * verbs require an interactive system administrator. A regular member cannot trigger
  * disk writes or enumerate deployment internals.
  */
 
@@ -26,7 +25,7 @@ function isBackupKind(value: unknown): value is BackupKind {
 export async function GET(req: Request) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!hasPermission(actor.role, 'admin')) {
+  if (!(await isSystemAdministrator(actor))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -36,14 +35,15 @@ export async function GET(req: Request) {
       data: backups,
       meta: {
         directory: BACKUP_DIR,
-        pruneAfter: BACKUP_RETENTION,
+        pruneAfter: null,
+        retentionNote: 'Automatic pruning is disabled; manage storage through an owner-approved policy.',
         files,
       },
     });
   } catch (error) {
     console.error('[GET /api/agency/backups]', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to list backups' },
+      { error: 'Failed to list backups' },
       { status: 500 },
     );
   }
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!hasPermission(actor.role, 'admin')) {
+  if (!(await isSystemAdministrator(actor))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('[POST /api/agency/backups]', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Backup failed' },
+      { error: 'Backup failed' },
       { status: 500 },
     );
   }

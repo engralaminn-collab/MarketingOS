@@ -18,7 +18,10 @@ export async function GET(req: NextRequest) {
     const contactId = searchParams.get('contactId');
     const status = searchParams.get('status');
 
-    const where: any = { companyId: payload.companyId };
+    // Older OTP rows contain raw codes in body/providerMessageId. Do not return
+    // them; preserve existing data for an owner-authorized remediation plan.
+    const visibleRows = { OR: [{ providerMessageId: null }, { NOT: { providerMessageId: { startsWith: 'otp_' } } }] };
+    const where: any = { companyId: payload.companyId, ...visibleRows };
     if (leadId) where.leadId = leadId;
     if (contactId) where.contactId = contactId;
     if (status) where.status = status;
@@ -32,20 +35,15 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    const stats = await db.smsMessage.groupBy({
-      by: ['status'],
-      where: { companyId: payload.companyId },
-      _count: true,
-    });
-
     return NextResponse.json({
       data: messages.map((m) => ({
         id: m.id,
         to: m.to,
         from: m.from,
         body: m.body,
-        status: m.status,
-        providerMessageId: m.providerMessageId,
+        status: m.providerMessageId?.startsWith('broadcast_') ? 'legacy_unverified' : m.status,
+        deliveryVerification: 'unverified',
+        providerMessageId: m.providerMessageId?.startsWith('broadcast_') ? null : m.providerMessageId,
         error: m.error,
         leadId: m.leadId,
         contactId: m.contactId,
@@ -53,7 +51,7 @@ export async function GET(req: NextRequest) {
         createdAt: m.createdAt.toISOString(),
         updatedAt: m.updatedAt.toISOString(),
       })),
-      stats: stats.map((s) => ({ status: s.status, count: s._count })),
+      note: 'Legacy message status is not independently verified. Historical OTP rows are withheld.',
     });
   } catch (err) {
     console.error('[GET /api/sms/messages]', err);

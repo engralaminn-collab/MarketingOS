@@ -1,25 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { storeMemory, retrieveMemories } from '@/lib/ai-extensions';
-export async function GET(req: NextRequest) {
-  try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
-    const payload = await verifyToken(token);
-    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
-    const { searchParams } = new URL(req.url);
-    const memories = await retrieveMemories(payload.companyId, searchParams.get('agentType') || 'general', searchParams.get('category') || undefined, 20);
-    return NextResponse.json({ data: memories });
-  } catch { return NextResponse.json({ error: 'Failed' }, { status: 500 }); }
+import { hasPermission, verifyToken } from '@/lib/auth';
+import { retrieveMemories } from '@/lib/ai-extensions';
+
+async function actorFor(req: NextRequest) {
+  const token = req.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+  const actor = token ? await verifyToken(token) : null;
+  return actor?.companyId && actor.userId ? actor : null;
 }
-export async function POST(req: NextRequest) {
+
+export async function GET(req: NextRequest) {
+  const actor = await actorFor(req);
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasPermission(actor.role, 'ai_agent_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   try {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'No token' }, { status: 401 });
-    const payload = await verifyToken(token);
-    if (!payload?.companyId) return NextResponse.json({ error: 'Invalid' }, { status: 401 });
-    const body = await req.json();
-    await storeMemory(payload.companyId, body.agentType || 'general', body.category || 'general', String(body.content || ''), body.metadata);
-    return NextResponse.json({ data: { stored: true } }, { status: 201 });
-  } catch { return NextResponse.json({ error: 'Failed' }, { status: 500 }); }
+    const params = new URL(req.url).searchParams;
+    const memories = await retrieveMemories(actor.companyId!, params.get('agentType') || 'general', params.get('category') || undefined, 20);
+    return NextResponse.json({ data: memories, note: 'Legacy memories are unapproved and are not used for agent execution.' }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch { return NextResponse.json({ error: 'Could not fetch memories.' }, { status: 500 }); }
+}
+
+export async function POST(req: NextRequest) {
+  const actor = await actorFor(req);
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasPermission(actor.role, 'ai_agent_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  return NextResponse.json({ error: 'Agent-managed memory is unavailable until review and approval controls are implemented. Nothing was saved.' }, { status: 503 });
 }

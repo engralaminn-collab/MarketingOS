@@ -34,9 +34,8 @@ export async function GET(req: NextRequest) {
         },
         select: { id: true },
       });
-      if (emp) {
-        where.employeeId = emp.id;
-      }
+      if (!emp) return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+      where.employeeId = emp.id;
     }
 
     const [conversations, total] = await Promise.all([

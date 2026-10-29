@@ -2,6 +2,13 @@
 
 Self-hosted marketing operations platform with CRM, campaigns, content, SEO, analytics, workflow automation, and AI agent execution.
 
+> **Work in progress — not production-ready.** This branch implements a bounded subset and
+> deliberately disables unverified sending, publishing and likeness rendering. It is not an
+> autonomous marketing system and has not been deployed or tested with live providers.
+> The inventory, blockers and verification limits in [docs/REPOSITORY-AUDIT-2026-10-29.md](docs/REPOSITORY-AUDIT-2026-10-29.md)
+> and [docs/TESTING-AND-DEPLOYMENT.md](docs/TESTING-AND-DEPLOYMENT.md) take precedence over
+> historical readiness or completeness claims elsewhere in the repository.
+
 ## Quick start
 
 Requirements: Node.js 22.23.2, Bun 1.x, and a reachable SQLite database path.
@@ -14,6 +21,14 @@ bun run dev
 The setup script is re-runnable: it preserves an existing `.env` and database, generates a strong `JWT_SECRET` only when the template value is blank, installs the locked dependencies, generates Prisma Client, applies non-destructive schema changes, and seeds the initial records. It never downloads AI models or overwrites existing credentials. Review `.env` (especially `ADMIN_SEED_PASSWORD`, database location, encryption keys, and AI provider settings) before exposing the service. To skip seeding: `SKIP_SEED=1 bash scripts/setup.sh`.
 
 For production, use the reviewed CI → image build → VPS deploy pipeline in `.github/workflows/`; do not run deployment by manually copying files. Configure the GitHub Actions `DEPLOY_HOST` and `DEPLOY_SSH_KEY` secrets and reconcile the server configuration with `docs/DEPLOYMENT.md`. TLS termination, reverse-proxy and PM2 configurations are checked in under `deploy/` and documented in `docs/DEPLOYMENT-REVERSE-PROXY.md`. Actual remote deployment cannot be enabled until those owner-controlled credentials and a server are configured.
+
+## SetupBot: secure integration onboarding
+
+After signing in, open **Connect → SetupBot** for a Bengali/English, one-question-at-a-time
+integration wizard. It saves encrypted, resumable drafts, checks Meta tokens and webhook
+challenges, and imports only after explicit confirmation. Configure `CREDENTIAL_ENCRYPTION_KEY`
+and HTTPS first. External handoff, Meta API version, custom fields, OTP limitations, data
+erasure, and provider-verification boundaries are documented in [docs/SETUP-BOT.md](docs/SETUP-BOT.md).
 
 ## Self-hosted AI
 
@@ -47,7 +62,7 @@ bun run build
 
 Production uses the SQLite database configured in `prisma/schema.prisma`; the database file must live in the persistent `./db` volume described in `docker-compose.prod.yml`. Back up both the database and the credential-encryption key. SQLite is suitable for smaller/self-hosted deployments but should be load-tested before multi-user high-write production use.
 
-## Agency operating model (100 departments · 2,000 agents · SOPs everywhere)
+## Agency seed catalog (optional; not evidence of a live workforce)
 
 The platform is one application that serves many clients. A client is configuration, not a deployment.
 
@@ -60,19 +75,18 @@ npm run backup:verify   # re-verify the newest snapshot
 - **100 departments**, each with its own `DepartmentRuntime`: model name, tier, temperature, system prompt,
   guardrails, knowledge scope and SOP binding. Isolation is `local` and fallback is `none` by default, so a
   department fails loudly instead of silently calling a hosted provider.
-- **2,000 agent specs** (`AGT-0001`…`AGT-2000`) across 20 role archetypes, plus **2,000 AI employees** that
-  execute them (20 per department). Every department is staffed.
+- The seed script defines up to **2,000 agent specs** (`AGT-0001`…`AGT-2000`) across 20 role archetypes.
+  Seeded records are not evidence that agents are running or executing work.
 - **120 SOPs**: one delivery procedure per department plus 12 cross-functional playbooks (onboarding, brand
   voice, publishing, SEO content, media, persona consent, SMS, leads, invoicing, backups, access, reporting).
 - **Per-client configuration** via `POST /api/clients`: channels, credential mode (`client_login` with
   auto-logout and password rotation, or `managed`), persona limit and a default brand voice — in one call.
-- **Face agents** (`BrandPersona`) built from client-supplied photos, with server-enforced consent, usage
-  scope and a gated render request.
+- **Brand persona records** store consent references and declared usage scope, but asset ownership and
+  consent evidence are not independently verified. Persona rendering and lip-sync are disabled.
 - **Verified backups**: `VACUUM INTO` snapshots with SHA-256 checksums, per-table manifests and a restore
   dry-run. `scripts/db-backup.sh` remains the deploy-time safeguard.
 
-Open **Agency Console** in the app, or `GET /api/agency/readiness`, to see every check recomputed from live
-data. Details and limits: [docs/AGENCY-OPERATIONS.md](docs/AGENCY-OPERATIONS.md).
+Open **Agency Console** in the app, or `GET /api/agency/readiness`, for tenant-scoped readiness information, not an assurance of end-to-end capability. Details and limits: [docs/AGENCY-OPERATIONS.md](docs/AGENCY-OPERATIONS.md).
 
 ## Open-source reference library
 

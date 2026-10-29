@@ -25,20 +25,13 @@ function parseMetrics(value: string | null): Record<string, unknown> {
 
 function campaignView(row: { id: string; name: string; type: string; status: string; budget: number | null; startDate: Date | null; endDate: Date | null; metrics: string; createdAt: Date; updatedAt: Date }) {
   const storedMetrics = parseMetrics(row.metrics);
-  const numericMetric = (key: string) => {
-    const value = storedMetrics[key];
-    return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
-  };
   return {
     ...row,
-    budget: row.budget ?? 0,
     description: typeof storedMetrics.description === 'string' ? storedMetrics.description : '',
-    metrics: {
-      reach: numericMetric('reach'),
-      impressions: numericMetric('impressions'),
-      clicks: numericMetric('clicks'),
-      conversions: numericMetric('conversions'),
-    },
+    // Legacy JSON has no source or verification metadata. It cannot establish
+    // real provider metrics, including zero, so it is not displayed as fact.
+    metrics: { reach: null, impressions: null, clicks: null, conversions: null },
+    metricsSource: 'unavailable',
   };
 }
 
@@ -55,9 +48,10 @@ export async function GET(req: NextRequest) {
     const campaigns = rows.map(campaignView);
     const summary = {
       activeCampaigns: campaigns.filter((campaign) => campaign.status === 'active').length,
-      totalBudget: campaigns.reduce((sum, campaign) => sum + campaign.budget, 0),
-      totalReach: campaigns.reduce((sum, campaign) => sum + campaign.metrics.reach, 0),
-      totalConversions: campaigns.reduce((sum, campaign) => sum + campaign.metrics.conversions, 0),
+      totalBudget: campaigns.reduce((sum, campaign) => sum + (campaign.budget ?? 0), 0),
+      budgetsMissing: campaigns.filter((campaign) => campaign.budget === null).length,
+      totalReach: null,
+      totalConversions: null,
     };
     return NextResponse.json({ campaigns, summary });
   } catch (error) {
@@ -88,9 +82,8 @@ export async function POST(req: NextRequest) {
     if (!startDate || Number.isNaN(startDate.getTime()) || !endDate || Number.isNaN(endDate.getTime())) return NextResponse.json({ error: 'Valid start and end dates are required' }, { status: 400 });
     if (endDate < startDate) return NextResponse.json({ error: 'End date must be on or after the start date' }, { status: 400 });
 
-    // Provider performance data is not enabled. Keep metrics explicitly empty/zero;
-    // only preserve the human-entered campaign description in this JSON field.
-    const metrics = JSON.stringify({ reach: 0, impressions: 0, clicks: 0, conversions: 0, description });
+    // No provider performance data exists. Do not store fabricated zero metrics.
+    const metrics = JSON.stringify({ description });
     const campaign = await db.campaign.create({
       data: {
         name,

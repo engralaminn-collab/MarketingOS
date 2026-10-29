@@ -40,10 +40,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (typeof data.type !== 'string' || !/^[a-z][a-z0-9_-]{0,63}$/i.test(data.type.trim())) return NextResponse.json({ error: 'Content type is invalid' }, { status: 400 });
       update.type = data.type.trim();
     }
+    if (data.status === 'published' || data.publishedAt !== undefined) {
+      return NextResponse.json({ error: 'Publication cannot be marked manually; a confirmed provider publication is required and is not yet implemented.' }, { status: 422 });
+    }
     if (data.status !== undefined) {
-      if (typeof data.status !== 'string' || !['draft', 'scheduled', 'published', 'archived'].includes(data.status)) return NextResponse.json({ error: 'Content status is invalid' }, { status: 400 });
+      if (typeof data.status !== 'string' || !['draft', 'scheduled', 'archived'].includes(data.status)) return NextResponse.json({ error: 'Content status is invalid' }, { status: 400 });
       update.status = data.status;
-      if (data.status === 'published' && data.publishedAt === undefined) update.publishedAt = new Date();
     }
     for (const field of ['platform', 'mediaType', 'hashtags'] as const) {
       if (data[field] !== undefined) {
@@ -65,7 +67,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         update[field] = value || null;
       }
     }
-    for (const field of ['scheduledAt', 'publishedAt'] as const) {
+    for (const field of ['scheduledAt'] as const) {
       if (data[field] !== undefined) {
         const date = parseDate(data[field]);
         if (date === undefined) return NextResponse.json({ error: `${field} is invalid` }, { status: 400 });
@@ -83,7 +85,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
     if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No supported fields to update' }, { status: 400 });
-    if (update.status === 'scheduled' && update.scheduledAt === undefined && !existing.scheduledAt) return NextResponse.json({ error: 'A schedule date is required for scheduled content' }, { status: 400 });
+    const nextStatus = typeof update.status === 'string' ? update.status : existing.status;
+    const nextSchedule = update.scheduledAt === undefined ? existing.scheduledAt : update.scheduledAt;
+    if (nextStatus === 'scheduled' && !nextSchedule) return NextResponse.json({ error: 'A schedule date is required for scheduled content' }, { status: 400 });
 
     const content = await db.content.update({ where: { id }, data: update });
     return NextResponse.json({ content });

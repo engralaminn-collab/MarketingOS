@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
 
     let faceImageUrl: string | null = await generateWithComfyUI(portraitPrompt, 1024, 1024).catch(() => null);
     if (!faceImageUrl && body.provider === 'pollinations') {
+      if (body.approveCharges !== true || payload.apiKeyId || !hasPermission(payload.role, 'manager')) return NextResponse.json({ error: 'A manager must explicitly approve potential hosted-provider charges.' }, { status: 403 });
       const free = await generateFreeCloudImage(portraitPrompt, 512, 512, 'pollinations').catch(() => null);
       faceImageUrl = free?.dataUrl || null;
     }

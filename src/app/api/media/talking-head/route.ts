@@ -17,7 +17,6 @@ export async function GET(req: Request) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const lipsyncUrl = process.env.LIPSYNC_ADAPTER_URL?.trim() || '';
   // Matches generateLocalSpeech (src/lib/local-tts.ts): only this variable is read.
   const localTts = Boolean(process.env.LOCAL_TTS_BASE_URL?.trim());
   const videoAdapter = Boolean(process.env.VIDEO_GENERATION_URL?.trim());
@@ -29,10 +28,8 @@ export async function GET(req: Request) {
         {
           id: 'lipsync-adapter',
           label: 'Photoreal lip-sync (local GPU)',
-          available: Boolean(lipsyncUrl),
-          detail: lipsyncUrl
-            ? 'A local lip-sync adapter is configured. Photo + audio are sent to it and the rendered clip comes back.'
-            : 'Not configured. Point LIPSYNC_ADAPTER_URL at a local SadTalker / Wav2Lip / LiveTalk-style service for neural lip-sync.',
+          available: false,
+          detail: 'Unavailable until consented asset binding and a durable worker are implemented.',
           env: 'LIPSYNC_ADAPTER_URL',
         },
         {
@@ -54,13 +51,14 @@ export async function GET(req: Request) {
         },
       ],
       configured: {
-        lipsyncAdapter: Boolean(lipsyncUrl),
+        lipsyncAdapter: false,
         localTts,
         videoAdapter,
         hostedMedia,
       },
       limits: {
-        retainedLocallyOnly: true,
+        retainedLocallyOnly: false,
+        storagePolicy: 'not verified',
         hostedFallback: false,
         maxScriptChars: 4000,
         maxPhotoBytes: 6 * 1024 * 1024,

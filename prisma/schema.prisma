@@ -54,6 +54,10 @@ model Company {
   keywordTrackers KeywordTracker[]
   workflows       Workflow[]
   workflowRuns    WorkflowRun[]
+  setupSessions   SetupSession[]
+  setupImport     SetupImport?
+  setupResources  SetupManagedResource[]
+  setupReceipts   SetupHandoffReceipt[]
 }
 
 // ==================== USER & ROLES ====================
@@ -75,6 +79,7 @@ model User {
   aiChatMessages AiChatMessage[]
   createdContents Content[] @relation("ContentCreator")
   sessions      UserSession[]
+  setupSessions SetupSession[]
   apiKeysCreated ApiKey[] @relation("ApiKeyCreator")
   notifications  Notification[]  // notifications addressed to this user
   sentMessages   Message[]  @relation("MessageSender")
@@ -1805,4 +1810,75 @@ model BackupRecord {
   createdAt     DateTime @default(now())
 
   @@index([createdAt])
+}
+
+// ==================== SECURE CLIENT SETUP ====================
+
+/// One resumable, encrypted draft per signed-in client and company.
+model SetupSession {
+  id             String   @id @default(cuid())
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStep    String
+  status         String   @default("in_progress") // in_progress | paused | review | completed
+  encryptedData  String   // AES-256-GCM; includes answers, checks and custom field definitions
+  version        Int      @default(0) // optimistic concurrency across tabs
+  lastActivityAt DateTime @default(now())
+  completedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([companyId, userId])
+  @@index([companyId, status])
+  @@index([userId])
+}
+
+/// Confirmed handoff inside this project. The entire structured payload is encrypted.
+model SetupImport {
+  id               String   @id @default(cuid())
+  companyId        String   @unique
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  encryptedPayload String
+  verification     String   @default("unverified") // verified | partial | unverified
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+/// Hashed account identifier only; never a password or an OTP.
+model AuthLoginAttempt {
+  accountHash String   @id
+  failures    Int      @default(0)
+  lockedUntil DateTime?
+  updatedAt   DateTime @updatedAt
+}
+
+/// References to records written by SetupBot, so an admin can erase only
+/// credentials that have not since been replaced outside the setup flow.
+model SetupManagedResource {
+  id                    String   @id @default(cuid())
+  companyId             String
+  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  kind                  String   // social_account | tool_connection
+  resourceId            String
+  credentialFingerprint String   // keyed digest; never the credential
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([companyId, kind, resourceId])
+  @@index([companyId])
+}
+
+/// Durable per-project idempotency receipts; no credentials or payloads.
+model SetupHandoffReceipt {
+  id                 String   @id @default(cuid())
+  companyId          String
+  company            Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  idempotencyKey     String
+  payloadFingerprint String
+  createdAt          DateTime @default(now())
+
+  @@unique([companyId, idempotencyKey])
+  @@index([companyId, createdAt])
 }

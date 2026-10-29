@@ -193,10 +193,10 @@ export default function KnowledgeWikiView() {
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight">Knowledge Wiki, Agent Memory & Context Studio</h1>
-          <Badge variant="secondary">[[WikiLinks]] · Cited RAG · Hindsight Memory · Context-Mode</Badge>
+          <Badge variant="secondary">Wiki links · Citation search · Memory controls incomplete</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          Persistent Markdown knowledge base (llm_wiki / SiYuan), cited vector RAG (docGPT), episodic/procedural memory (OpenViking / Hindsight), and context-window compression.
+          Workspace wiki and citation search. Default local search uses lexical feature hashing, not semantic embeddings. Restricted knowledge and unapproved memories are withheld.
         </p>
       </div>
 
@@ -380,8 +380,8 @@ export default function KnowledgeWikiView() {
           <div className="grid gap-6 lg:grid-cols-12">
             <Card className="lg:col-span-5">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Record Durable Agent Memory</CardTitle>
-                <CardDescription>Episodic events, procedural rules, and Hindsight lessons recalled by agents</CardDescription>
+                <CardTitle className="text-base">Agent memory unavailable</CardTitle>
+                <CardDescription>Memory creation and agent recall are disabled until review and approval controls exist.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
@@ -406,17 +406,17 @@ export default function KnowledgeWikiView() {
                     placeholder="e.g. Plain-text 60-word founder emails achieved 3.1x reply rate vs HTML newsletters for UKVI partner outreach."
                   />
                 </div>
-                <Button className="w-full" onClick={handleStoreMemory}>Store in Memory Graph</Button>
+                <Button className="w-full" onClick={handleStoreMemory} disabled>Memory storage unavailable</Button>
               </CardContent>
             </Card>
 
             <Card className="lg:col-span-7">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Persisted Agent Memories</CardTitle>
+                <CardTitle className="text-base">Agent Memories</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 max-h-96 overflow-y-auto">
                 {(wiki?.memories || []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-8 text-center">No agent memories recorded yet.</p>
+                  <p className="text-sm text-muted-foreground py-8 text-center">Memories are withheld until review and access controls are implemented.</p>
                 ) : (
                   wiki!.memories.map((m) => (
                     <div key={m.id} className="rounded border p-3 text-xs space-y-1">

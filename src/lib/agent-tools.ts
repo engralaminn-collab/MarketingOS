@@ -6,7 +6,7 @@ import {
   type ChatMessage,
   type ToolFunctionDefinition,
 } from '@/lib/ai-provider';
-import { analyzeAiWritingTells, retrieveMemories, storeMemory } from '@/lib/ai-extensions';
+import { analyzeAiWritingTells } from '@/lib/ai-extensions';
 import { cosineSimilarity } from '@/lib/free-ai-stack';
 
 export interface AgentTraceStep {
@@ -62,7 +62,7 @@ export const AGENT_TOOL_DEFINITIONS: ToolFunctionDefinition[] = [
     type: 'function',
     function: {
       name: 'save_agent_memory',
-      description: 'Persist an episodic, semantic, or procedural lesson to workspace agent memory.',
+      description: 'Unavailable: agent-managed memory requires governance and approval.',
       parameters: {
         type: 'object',
         properties: {
@@ -242,13 +242,15 @@ export async function executeAgentTool(
         db.content.count({ where: { companyId: ctx.companyId } }),
         db.ticket.count({ where: { companyId: ctx.companyId, status: { not: 'closed' } } }),
         db.employee.count({ where: { companyId: ctx.companyId } }),
-        db.knowledgeNode.count({ where: { companyId: ctx.companyId } }),
+        db.knowledgeNode.count({ where: { companyId: ctx.companyId, accessLevel: { in: ['public', 'company'] } } }),
       ]);
       return JSON.stringify({
         leads,
         contacts,
         dealsCount: deals._count,
-        pipelineValueUsd: deals._sum.value || 0,
+        crmDealValueAllStages: deals._sum.value ?? 0,
+        currency: 'unspecified',
+        provenance: 'CRM entries, not verified revenue or campaign attribution',
         campaigns,
         contentItems: contents,
         openTickets: tickets,
@@ -286,8 +288,8 @@ export async function executeAgentTool(
     case 'search_knowledge_wiki': {
       const query = String(args.query || '').trim();
       const [nodes, sops, qEmbed] = await Promise.all([
-        db.knowledgeNode.findMany({ where: { companyId: ctx.companyId }, take: 80 }),
-        db.sop.findMany({ where: { companyId: ctx.companyId }, take: 30 }),
+        db.knowledgeNode.findMany({ where: { companyId: ctx.companyId, accessLevel: { in: ['public', 'company'] } }, take: 80 }),
+        db.sop.findMany({ where: { companyId: ctx.companyId, departmentId: null, applicableRoles: '[]', isActive: true }, take: 30 }),
         generateEmbeddingVector(query),
       ]);
       const docs = [
@@ -312,18 +314,9 @@ export async function executeAgentTool(
       return JSON.stringify({ topCitations: ranked.slice(0, 4) });
     }
 
-    case 'save_agent_memory': {
-      const cat = String(args.category || 'episodic').slice(0, 40);
-      const content = String(args.content || '').slice(0, 2000);
-      const saved = await storeMemory(ctx.companyId, 'free-agent', cat, content);
-      return JSON.stringify({ stored: true, memoryId: saved.id, category: cat });
-    }
-
-    case 'recall_agent_memory': {
-      const cat = typeof args.category === 'string' && args.category ? args.category : undefined;
-      const memories = await retrieveMemories(ctx.companyId, 'all', cat, 8);
-      return JSON.stringify({ count: memories.length, memories });
-    }
+    case 'save_agent_memory':
+    case 'recall_agent_memory':
+      return JSON.stringify({ error: 'Agent-managed memory is disabled until approval and access controls are implemented.' });
 
     case 'audit_copy_humanizer': {
       const report = analyzeAiWritingTells(String(args.text || ''));

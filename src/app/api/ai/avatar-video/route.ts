@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         `A ${config.ethnicity || 'asian'} ${config.gender || 'female'} presenter speaking naturally to camera. Scene: ${String(script).slice(0, 400)}`,
         duration,
       );
-      if (videoUrl) videoStatus = 'completed';
+      if (videoUrl) videoStatus = 'generic-clip-ready';
     } catch {
       videoStatus = 'unavailable';
     }
@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
           videoUrl,
           videoStatus,
           audioUrl,
+          note: 'The optional clip is generic, not a face- or lip-synced avatar. Audio and video are separate and not assembled.',
         },
       },
       { status: 201 },

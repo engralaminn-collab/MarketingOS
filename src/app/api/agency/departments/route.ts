@@ -1,3 +1,4 @@
+import { hasPermission } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { getActor } from '@/lib/agency';
 import { db } from '@/lib/db';
@@ -10,10 +11,11 @@ import { db } from '@/lib/db';
 export async function GET(req: Request) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasPermission(actor.role, 'ai_agent_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const [departments, runtimes, employees, agents, sops] = await Promise.all([
     db.department.findMany({ where: { companyId: actor.companyId }, orderBy: [{ level: 'asc' }, { sortOrder: 'asc' }] }),
-    db.departmentRuntime.findMany(),
+    db.departmentRuntime.findMany({ where: { departmentId: { in: (await db.department.findMany({ where: { companyId: actor.companyId }, select: { id: true } })).map((row) => row.id) } } }),
     db.employee.groupBy({ by: ['departmentId'], where: { companyId: actor.companyId }, _count: true }),
     db.agentSpec.groupBy({ by: ['departmentId'], where: { companyId: actor.companyId }, _count: true }),
     db.sop.groupBy({ by: ['departmentId'], where: { companyId: actor.companyId, isActive: true, departmentId: { not: null } }, _count: true }),

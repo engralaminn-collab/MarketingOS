@@ -1406,6 +1406,7 @@ function AudioStudio() {
   });
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("auto");
+  const [approveCharges, setApproveCharges] = useState(false);
   const [task, setTask] = useState<MusicTaskStart | null>(null);
   const statusPath = task?.taskId ? `/api/ai/music-status?taskId=${encodeURIComponent(task.taskId)}` : null;
   const { data: status, isLoading: isChecking, error: statusError, refetch } = useApiQuery<MusicTaskStatus>(
@@ -1414,7 +1415,7 @@ function AudioStudio() {
   );
 
   const generateMutation = useApiMutation<
-    { prompt: string; model: string },
+    { prompt: string; model: string; approveCharges: boolean },
     MusicTaskStart
   >({
     method: "POST",
@@ -1438,9 +1439,14 @@ function AudioStudio() {
       toast.error("Enter a soundtrack prompt of up to 1,024 characters.");
       return;
     }
+    if (!approveCharges) {
+      toast.error("A manager must approve potential charges for this request.");
+      return;
+    }
     setTask(null);
-    generateMutation.mutate({ prompt: cleanPrompt, model });
-  }, [prompt, model, generateMutation]);
+    setApproveCharges(false);
+    generateMutation.mutate({ prompt: cleanPrompt, model, approveCharges: true });
+  }, [prompt, model, approveCharges, generateMutation]);
 
   const handleVoiceover = useCallback(() => {
     const cleanText = voiceText.trim();
@@ -1541,7 +1547,8 @@ function AudioStudio() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={handleGenerate} disabled={!prompt.trim() || generateMutation.isLoading}>
+          <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={approveCharges} onChange={(event) => setApproveCharges(event.target.checked)} disabled={generateMutation.isLoading} /> I approve potential provider charges for this request.</label>
+          <Button onClick={handleGenerate} disabled={!prompt.trim() || !approveCharges || generateMutation.isLoading}>
             {generateMutation.isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Starting...</> : <><Sparkles className="mr-2 h-4 w-4" />Generate instrumental</>}
           </Button>
         </div>

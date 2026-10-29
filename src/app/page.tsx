@@ -76,6 +76,7 @@ const WorkforceView = lazy(() => import('@/components/views/workforce-view').the
 const AiAgentsView = lazy(() => import('@/components/views/ai-agents-view').then(m => ({ default: m.AiAgentsView })));
 const SettingsView = lazy(() => import('@/components/views/settings-view').then(m => ({ default: m.SettingsView })));
 const IntegrationsView = lazy(() => import('@/components/views/integrations-view').then(m => ({ default: m.IntegrationsView })));
+const SetupBotView = lazy(() => import('@/components/views/setup-bot-view').then(m => ({ default: m.SetupBotView })));
 const MessagesView = lazy(() => import('@/components/views/messages-view'));
 const AnnouncementsView = lazy(() => import('@/components/views/announcements-view'));
 const AuditLogsView = lazy(() => import('@/components/views/audit-logs-view'));
@@ -131,6 +132,7 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   'agency-console': AgencyConsoleView,
   deployments: DeploymentsView,
   integrations: IntegrationsView,
+  'setup-bot': SetupBotView,
   subscriptions: SettingsView,
   settings: SettingsView,
   students: StudentsView,
@@ -165,6 +167,7 @@ const navItems: NavItem[] = [
   { id: 'deployments', label: 'Deployments & Hosting', icon: <Rocket className="w-4 h-4" />, section: 'Management' },
   { id: 'ecosystem', label: 'Ecosystem Library', icon: <Boxes className="w-4 h-4" />, badge: '190', section: 'Connect' },
   { id: 'integrations', label: 'Integrations', icon: <Plug className="w-4 h-4" />, badge: '116', section: 'Connect' },
+  { id: 'setup-bot', label: 'SetupBot', icon: <Bot className="w-4 h-4" />, badge: 'Guide', section: 'Connect' },
   { id: 'social-accounts', label: 'Social Accounts', icon: <Link2 className="w-4 h-4" />, badge: 'OAuth', section: 'Connect' },
   { id: 'outreach-hub', label: 'SMS, VoIP & Scraper', icon: <Phone className="w-4 h-4" />, badge: 'Live', section: 'Connect' },
   { id: 'free-ai-hub', label: 'Free AI Agent Hub', icon: <Zap className="w-4 h-4" />, badge: '17 Free', section: 'AI' },
@@ -265,7 +268,8 @@ function Sidebar() {
             {sections.map((section) => {
               const sectionItems = navItems.filter(n =>
                 n.section === section &&
-                (n.id !== 'deployments' || ['super_admin', 'company_owner'].includes(user?.role || ''))
+                (n.id !== 'deployments' || ['super_admin', 'company_owner'].includes(user?.role || '')) &&
+                (n.id !== 'setup-bot' || ['super_admin', 'superadmin', 'company_owner', 'admin', 'client_user'].includes(user?.role || ''))
               );
               if (sectionItems.length === 0) return null;
               return (

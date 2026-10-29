@@ -111,6 +111,13 @@ const ROLE_HIERARCHY: Record<string, number> = {
 
 const ROLE_ALIASES: Record<string, string> = { superadmin: 'super_admin' };
 const DOMAIN_ROLE_MEMBERS: Record<string, ReadonlySet<string>> = {
+  // Equal numeric ranks do not imply cross-domain authority: for example an
+  // SEO manager or teacher must not manage social credentials or content.
+  content_manager: new Set(['super_admin', 'company_owner', 'admin', 'manager', 'content_manager']),
+  social_media_manager: new Set(['super_admin', 'company_owner', 'admin', 'manager', 'social_media_manager']),
+  seo_manager: new Set(['super_admin', 'company_owner', 'admin', 'manager', 'seo_manager']),
+  ai_agent_manager: new Set(['super_admin', 'company_owner', 'admin', 'manager', 'ai_agent_manager']),
+  customer_support: new Set(['super_admin', 'company_owner', 'admin', 'manager', 'customer_support']),
   teacher: new Set(['super_admin', 'company_owner', 'admin', 'manager', 'teacher']),
   accountant: new Set(['super_admin', 'company_owner', 'admin', 'manager', 'accountant']),
   student: new Set(['super_admin', 'company_owner', 'admin', 'manager', 'teacher', 'student']),
@@ -245,10 +252,11 @@ export async function verifyToken(token: string): Promise<VerifiedToken | null> 
     if (companyId) {
       const membership = Array.isArray(session.user.companyUsers) ? session.user.companyUsers[0] : null;
       if (!membership || !membership.company.isActive) return null;
-      payload.role = session.user.isSuperAdmin ? 'super_admin' : membership.role;
+      // A company-scoped role label must never grant deployment-wide admin.
+      payload.role = session.user.isSuperAdmin ? 'super_admin' : normalizeRole(membership.role) === 'super_admin' ? 'admin' : membership.role;
     } else if (institutionId) {
       if (session.user.institutionId !== institutionId || !session.user.institution?.isActive) return null;
-      payload.role = session.user.isSuperAdmin ? 'super_admin' : session.user.role;
+      payload.role = session.user.isSuperAdmin ? 'super_admin' : normalizeRole(session.user.role) === 'super_admin' ? 'admin' : session.user.role;
     } else {
       return null;
     }
@@ -290,7 +298,7 @@ async function verifyApiKey(token: string): Promise<VerifiedToken | null> {
         return {
           userId: user.id,
           email: user.email,
-          role: user.isSuperAdmin ? 'super_admin' : membership.role,
+          role: user.isSuperAdmin ? 'super_admin' : normalizeRole(membership.role) === 'super_admin' ? 'admin' : membership.role,
           companyId: key.companyId,
           institutionId: '',
           apiKeyId: key.id,

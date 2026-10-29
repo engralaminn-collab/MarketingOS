@@ -9,7 +9,8 @@ async function getZai(): Promise<any | null> {
   if (!isZaiMediaEnabled()) return null;
   if (zaiInstance) return zaiInstance;
   try {
-    const mod = await import('z-ai-web-dev-sdk');
+    // Optional runtime-only adapter. It is not shipped in the default build.
+    const mod = await import(/*turbopackIgnore: true*/ 'z-ai-web-dev-sdk');
     const ZAI = (mod as any).default ?? mod;
     zaiInstance = await ZAI.create();
     return zaiInstance;
@@ -119,7 +120,7 @@ export async function generateFreeCloudImage(
     }
   }
 
-  if (preferred === 'pollinations' || process.env.POLLINATIONS_IMAGE_ENABLED === 'true') {
+  if (preferred === 'pollinations') {
     try {
       const seed = Math.floor(Math.random() * 1_000_000);
       const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
@@ -159,14 +160,9 @@ export async function transcribeFreeSpeech(params: {
       model: process.env.LOCAL_STT_MODEL || 'whisper-1',
     });
   }
-  if (process.env.GROQ_API_KEY) {
-    endpoints.push({
-      name: 'groq-whisper-large-v3-turbo',
-      url: 'https://api.groq.com/openai/v1/audio/transcriptions',
-      key: process.env.GROQ_API_KEY,
-      model: 'whisper-large-v3-turbo',
-    });
-  }
+  // No hosted fallback: uploading audio off-premises may incur charges and
+  // requires an explicit privacy/cost approval flow, which is not implemented.
+
 
   for (const ep of endpoints) {
     try {
@@ -196,7 +192,7 @@ export async function transcribeFreeSpeech(params: {
         }
       }
     } catch {
-      // try next configured free STT endpoint
+      // local STT failed; no hosted fallback
     }
   }
   return null;
