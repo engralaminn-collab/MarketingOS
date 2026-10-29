@@ -2,7 +2,7 @@
  * Complete 100% Free AI & Agent Services Registry + Code Generators + ModelDeck Telemetry.
  *
  * Covers:
- *  1. 17 Free LLM Providers (Groq, Google AI Studio, Cerebras, OpenRouter :free, GitHub Models,
+ *  1. 16 configured LLM adapters (Groq, Google AI Studio, Cerebras, OpenRouter :free,
  *     Cloudflare Workers AI, SambaNova, Chutes, Pollinations, Zhipu GLM, ModelScope,
  *     SiliconFlow, Mistral, NVIDIA NIM, Hugging Face, Ollama Local, OpenAI-Compatible)
  *  2. 7 Free Embedding Providers + deterministic 128-dim local semantic vector engine
@@ -22,7 +22,6 @@ export type FreeLlmProviderId =
   | 'gemini'
   | 'cerebras'
   | 'openrouter'
-  | 'github-models'
   | 'cloudflare'
   | 'sambanova'
   | 'chutes'
@@ -87,25 +86,20 @@ export const FREE_LLM_PROVIDERS: FreeLlmProviderSpec[] = [
   {
     id: 'groq',
     name: 'Groq Cloud',
-    badge: '⭐ Fastest LPU',
+    badge: 'Free tier · quota-limited',
     tier: 'no-card',
     baseUrl: 'https://api.groq.com/openai/v1',
     envKey: 'GROQ_API_KEY',
-    defaultModel: 'qwen/qwen3-32b',
+    defaultModel: 'openai/gpt-oss-20b',
     freeModels: [
-      'llama-3.3-70b-versatile',
-      'llama-3.1-8b-instant',
-      'qwen/qwen3-32b',
-      'qwen/qwen3-30b-a3b',
       'openai/gpt-oss-120b',
       'openai/gpt-oss-20b',
-      'meta-llama/llama-4-scout-17b-16e-instruct',
-      'moonshotai/kimi-k2-instruct',
+      'qwen/qwen3.8-27b',
     ],
-    limits: '~30–100 RPM, generous daily token cap, no card required',
+    limits: 'Model-specific free limits; check the live Groq organization limits before production use',
     signupUrl: 'https://console.groq.com',
     rpmEstimate: 30,
-    rpdEstimate: 14400,
+    rpdEstimate: 1000,
     supportsToolCalling: true,
     requiresKey: true,
   },
@@ -160,7 +154,7 @@ export const FREE_LLM_PROVIDERS: FreeLlmProviderSpec[] = [
     tier: 'aggregator',
     baseUrl: 'https://openrouter.ai/api/v1',
     envKey: 'OPENROUTER_API_KEY',
-    defaultModel: 'qwen/qwen3-32b:free',
+    defaultModel: 'openrouter/free',
     freeModels: [
       'qwen/qwen3-32b:free',
       'qwen/qwen3-235b-a22b:free',
@@ -179,33 +173,10 @@ export const FREE_LLM_PROVIDERS: FreeLlmProviderSpec[] = [
       'meta-llama/llama-4-scout-17b-16e-instruct:free',
       'nvidia/llama-3.1-nemotron-70b-instruct:free',
     ],
-    limits: '~20 RPM free (50 RPD without credit; 1,000 RPD after one-time $10 unlock)',
+    limits: 'Free-model requests are rate-limited; verify the current live OpenRouter limits and model roster',
     signupUrl: 'https://openrouter.ai/keys',
     rpmEstimate: 20,
     rpdEstimate: 200,
-    supportsToolCalling: true,
-    requiresKey: true,
-  },
-  {
-    id: 'github-models',
-    name: 'GitHub Models',
-    tier: 'no-card',
-    baseUrl: 'https://models.inference.ai.azure.com',
-    envKey: 'GITHUB_MODELS_TOKEN',
-    defaultModel: 'gpt-4o-mini',
-    freeModels: [
-      'gpt-4o-mini',
-      'gpt-4.1',
-      'gpt-4.1-mini',
-      'Phi-4',
-      'Mistral-small',
-      'DeepSeek-R1',
-      'Llama-3.3-70B-Instruct',
-    ],
-    limits: '~10–15 RPM (150 RPD) with GitHub PAT',
-    signupUrl: 'https://github.com/settings/tokens',
-    rpmEstimate: 15,
-    rpdEstimate: 150,
     supportsToolCalling: true,
     requiresKey: true,
   },

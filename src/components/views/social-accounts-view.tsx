@@ -37,6 +37,7 @@ import {
   ExternalLink,
   AlertTriangle,
   CircleDot,
+  Send,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -66,6 +67,15 @@ interface SocialAccountsResponse {
   connectedPlatforms: string[];
   missingPlatforms: string[];
   requirements: Record<string, PlatformRequirement>;
+  publishingPlatformsAvailable?: string[];
+}
+
+interface ContentDraft {
+  id: string;
+  title: string;
+  body: string | null;
+  status: string;
+  mediaUrl?: string | null;
 }
 
 // ─── Platform Config ───────────────────────────────────────────────────────────
@@ -131,6 +141,11 @@ const WIZARD_STEPS = [
 export function SocialAccountsView() {
   // Data
   const { data, isLoading, refetch } = useApiQuery<SocialAccountsResponse>("/api/social-accounts");
+  const { data: contentData, refetch: refetchContent } = useApiQuery<{ content: ContentDraft[] }>("/api/content?status=draft");
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [selectedContentId, setSelectedContentId] = useState("");
+  const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [destinationId, setDestinationId] = useState("");
 
   // Wizard state
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -171,6 +186,22 @@ export function SocialAccountsView() {
   >({
     method: "POST",
     path: "/api/social-accounts/test",
+  });
+
+  const publishMutation = useApiMutation<
+    { contentId: string; socialAccountId: string; destinationId?: string },
+    { data?: { status?: string; platform?: string; postId?: string }; error?: string }
+  >({
+    method: "POST",
+    path: "/api/social/publish",
+    onSuccess: (result) => {
+      toast.success(`Published to ${result.data?.platform || "social platform"} (post ID confirmed)`);
+      refetch();
+      refetchContent();
+      setPublishOpen(false);
+      setDestinationId("");
+    },
+    onError: (err) => toast.error(err),
   });
 
   const resetWizard = () => {
@@ -246,7 +277,27 @@ export function SocialAccountsView() {
   };
 
   const accounts = data?.accounts || [];
+  const publishablePlatforms = data?.publishingPlatformsAvailable || ["Facebook", "Instagram", "LinkedIn", "X", "Pinterest", "Telegram"];
+  const publishableAccounts = accounts.filter((account) => account.status === "active" && publishablePlatforms.includes(account.platform));
+  const drafts = contentData?.content || [];
+  const selectedAccount = publishableAccounts.find((account) => account.id === selectedAccountId);
   const selectedRequirements = selectedPlatform ? data?.requirements?.[selectedPlatform] : undefined;
+
+  const handlePublishDraft = async () => {
+    if (!selectedContentId || !selectedAccountId) {
+      toast.error("Choose a content draft and a verified publishable account.");
+      return;
+    }
+    try {
+      await publishMutation.mutateAsync({
+        contentId: selectedContentId,
+        socialAccountId: selectedAccountId,
+        ...(destinationId.trim() ? { destinationId: destinationId.trim() } : {}),
+      });
+    } catch {
+      // Error is surfaced by the mutation's onError handler.
+    }
+  };
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -260,13 +311,24 @@ export function SocialAccountsView() {
             Social Media Accounts
           </h1>
           <p className="text-muted-foreground mt-1">
-            Verify and store social access tokens. Posting and automatic sync are not implemented.
+            Verify social tokens and publish approved drafts to supported connected accounts.
           </p>
         </div>
-        <Button onClick={openWizard} className="bg-orange-600 hover:bg-orange-700 text-white gap-2">
-          <Plus className="h-4 w-4" />
-          Connect Account
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setPublishOpen(true)}
+            disabled={publishableAccounts.length === 0 || drafts.length === 0}
+            className="gap-2"
+          >
+            <Send className="h-4 w-4" />
+            Publish Draft
+          </Button>
+          <Button onClick={openWizard} className="bg-orange-600 hover:bg-orange-700 text-white gap-2">
+            <Plus className="h-4 w-4" />
+            Connect Account
+          </Button>
+        </div>
       </div>
 
       {/* Security Notice */}
@@ -277,7 +339,7 @@ export function SocialAccountsView() {
       >
         <Lock className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
         <p className="text-sm text-blue-800 dark:text-blue-200">
-          <span className="font-semibold">Access tokens are encrypted at rest.</span> Tokens are sent only to the selected provider's profile endpoint during verification. Posting and automatic sync are not enabled.
+          <span className="font-semibold">Access tokens are encrypted at rest.</span> Publishing is available for Facebook, Instagram, LinkedIn, X, Pinterest, and Telegram when the account has the required publish permissions. YouTube/TikTok publishing and automatic sync are not implemented yet.
         </p>
       </motion.div>
 
@@ -306,7 +368,7 @@ export function SocialAccountsView() {
             </div>
             <h3 className="text-lg font-semibold">No verified accounts</h3>
             <p className="text-muted-foreground text-sm mt-1 max-w-md">
-              Verify and store tokens for supported social accounts. Publishing and automatic sync are not available in this build.
+              Connect a verified account, then use Publish Draft for supported platforms. Automatic sync is not available in this build.
             </p>
             <Button
               onClick={openWizard}
@@ -898,6 +960,66 @@ export function SocialAccountsView() {
                 Edit Token
               </Button>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Publish Draft Dialog ─────────────────────────────────────────── */}
+      <Dialog open={publishOpen} onOpenChange={setPublishOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Publish Approved Draft</DialogTitle>
+            <DialogDescription>
+              Sends the selected saved draft to one connected platform. The platform must grant publishing permissions. A success response includes the platform post ID.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="publish-content">Content draft</Label>
+              <select
+                id="publish-content"
+                value={selectedContentId}
+                onChange={(event) => setSelectedContentId(event.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Choose a saved draft</option>
+                {drafts.map((draft) => <option key={draft.id} value={draft.id}>{draft.title}</option>)}
+              </select>
+              {drafts.length === 0 && <p className="text-xs text-muted-foreground">No saved drafts found. Generate or save content in Content Studio first.</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="publish-account">Connected social account</Label>
+              <select
+                id="publish-account"
+                value={selectedAccountId}
+                onChange={(event) => setSelectedAccountId(event.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Choose a verified account</option>
+                {publishableAccounts.map((account) => <option key={account.id} value={account.id}>{account.platform} · {account.accountName}</option>)}
+              </select>
+              {selectedAccount?.platform === "Instagram" && <p className="text-xs text-muted-foreground">Instagram feed publishing requires a public HTTPS image URL on the saved content.</p>}
+              {selectedAccount?.platform === "Pinterest" && <p className="text-xs text-muted-foreground">Pinterest requires a public HTTPS image and a board ID below.</p>}
+            </div>
+            {(selectedAccount?.platform === "Pinterest" || selectedAccount?.platform === "Telegram") && (
+              <div className="space-y-2">
+                <Label htmlFor="publish-destination">{selectedAccount.platform === "Pinterest" ? "Pinterest board ID" : "Telegram chat/channel ID"}</Label>
+                <Input
+                  id="publish-destination"
+                  value={destinationId}
+                  onChange={(event) => setDestinationId(event.target.value)}
+                  placeholder={selectedAccount.platform === "Pinterest" ? "Board ID" : "@channel or chat ID"}
+                />
+              </div>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setPublishOpen(false)} disabled={publishMutation.isLoading}>Cancel</Button>
+              <Button onClick={handlePublishDraft} disabled={publishMutation.isLoading || !selectedContentId || !selectedAccountId} className="gap-2">
+                {publishMutation.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                Publish now
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">Publishing is an external action. Review the draft and destination before confirming. YouTube and TikTok are not yet supported by this publishing adapter.</p>
           </div>
         </DialogContent>
       </Dialog>

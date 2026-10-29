@@ -90,7 +90,8 @@ export async function GET(req: NextRequest) {
       connectedPlatforms,
       missingPlatforms,
       requirements: PLATFORM_REQUIREMENTS,
-      publishingAdaptersAvailable: false,
+      publishingAdaptersAvailable: true,
+      publishingPlatformsAvailable: ['Facebook', 'Instagram', 'LinkedIn', 'X', 'Pinterest', 'Telegram'],
       syncAdaptersAvailable: false,
     });
   } catch (error) {
