@@ -100,6 +100,17 @@ export async function POST(req: NextRequest) {
     const mediaUrl = content.mediaUrl ? httpsUrl(content.mediaUrl) : null;
     if (content.mediaUrl && !mediaUrl) return NextResponse.json({ error: 'Media URL must be a valid public HTTPS URL' }, { status: 400 });
 
+    let engagement: Record<string, unknown> = {};
+    try {
+      const parsed = JSON.parse(content.engagement || '{}');
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) engagement = parsed;
+    } catch {
+      engagement = {};
+    }
+    const publishedTo = Array.isArray(engagement.publishedTo) ? engagement.publishedTo as Array<Record<string, unknown>> : [];
+    if (publishedTo.some((item) => item.socialAccountId === account.id)) {
+      return NextResponse.json({ error: 'This content is already marked as published to this social account; duplicate publishing was blocked.' }, { status: 409 });
+    }
     let providerPostId = '';
     let provider = account.platform;
 
@@ -188,17 +199,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `${provider} did not return a post ID; publication was not marked successful` }, { status: 502 });
     }
 
-    let engagement: Record<string, unknown> = {};
-    try {
-      const parsed = JSON.parse(content.engagement || '{}');
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) engagement = parsed;
-    } catch {
-      engagement = {};
-    }
-    const publishedTo = Array.isArray(engagement.publishedTo) ? engagement.publishedTo as Array<Record<string, unknown>> : [];
-    if (publishedTo.some((item) => item.socialAccountId === account.id)) {
-      return NextResponse.json({ error: 'This content is already marked as published to this social account; duplicate publishing was blocked.' }, { status: 409 });
-    }
     publishedTo.push({ socialAccountId: account.id, platform: account.platform, postId: providerPostId, publishedAt: new Date().toISOString() });
     await db.content.update({
       where: { id: content.id },
