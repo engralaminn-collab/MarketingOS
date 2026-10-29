@@ -104,6 +104,39 @@ describe('self-hosted AI provider', () => {
     expect(config.automaticPaidFallback).toBe(false);
   });
 
+  it('falls back from unreachable Ollama to a configured free Groq API', async () => {
+    process.env.AI_PROVIDER = 'ollama';
+    delete process.env.AI_FALLBACK_CHAIN;
+    process.env.GROQ_API_KEY = 'test-groq-key';
+    delete process.env.OPENROUTER_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.GOOGLE_AI_STUDIO_KEY;
+    delete process.env.MISTRAL_API_KEY;
+    delete process.env.CLOUDFLARE_API_TOKEN;
+    delete process.env.CLOUDFLARE_ACCOUNT_ID;
+
+    const requested: string[] = [];
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      requested.push(url);
+      if (url.includes('127.0.0.1:11434/api/chat')) throw new Error('Ollama unavailable');
+      if (url === 'https://api.groq.com/openai/v1/chat/completions') {
+        return new Response(JSON.stringify({
+          model: 'test-groq-model',
+          choices: [{ message: { content: 'Answer from the configured free provider.' } }],
+          usage: { prompt_tokens: 10, completion_tokens: 8 },
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      throw new Error(`Unexpected provider URL: ${url}`);
+    }) as typeof fetch;
+
+    const result = await generateChatCompletion([{ role: 'user', content: 'Test failover' }]);
+    expect(result.provider).toBe('groq');
+    expect(result.content).toBe('Answer from the configured free provider.');
+    expect(result.attempts?.length).toBe(2);
+    expect(requested.length).toBe(2);
+  });
+
   it('rejects unknown provider names rather than silently choosing a different provider', async () => {
     process.env.AI_PROVIDER = 'automatic-cloud-fallback';
     await expect(generateChatCompletion([
