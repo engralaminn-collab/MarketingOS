@@ -159,7 +159,7 @@ export default function OutreachHubView() {
           <Badge variant="secondary">SMS · VoIP · Unified Inbox · Firecrawl</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          SMS gateway & templates (httpSMS / Twilio), VoIP dialer (Telnyx / Twilio SIP), Unified Inbox AI Auto-Reply (Chatwoot / WACRM), and SSRF-safe Firecrawl scraper.
+          SMS and voice sending are disabled until consent, opt-out suppression and human approval are implemented. The inbox and scraper remain available; legacy delivery statuses are unverified.
         </p>
       </div>
 
@@ -176,7 +176,7 @@ export default function OutreachHubView() {
             <Card className="lg:col-span-5">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Send Transactional / Consented SMS</CardTitle>
-                <CardDescription>Routes via Twilio or Android httpSMS gateway; logs honest blocked state if unconfigured</CardDescription>
+                <CardDescription>Sending is disabled; consent, opt-out suppression and approvals are not yet implemented.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
@@ -187,22 +187,22 @@ export default function OutreachHubView() {
                   <Label className="text-xs">SMS Copy ({smsBody.length}/160 chars)</Label>
                   <Textarea rows={3} value={smsBody} onChange={(e) => setSmsBody(e.target.value)} />
                 </div>
-                <Button className="w-full" onClick={handleSendSms} disabled={sendingSms}>
-                  <Send className="mr-1.5 h-4 w-4" /> {sendingSms ? 'Dispatching...' : 'Send SMS'}
+                <Button className="w-full" onClick={handleSendSms} disabled={true}>
+                  <Send className="mr-1.5 h-4 w-4" /> {sendingSms ? 'Dispatching...' : 'SMS sending unavailable'}
                 </Button>
 
                 <div className="border-t pt-3 space-y-2">
                   <Label className="text-xs font-semibold">Create Reusable SMS Template</Label>
                   <Input placeholder="Template title (e.g. UKVI Interview Reminder)" value={tplTitle} onChange={(e) => setTplTitle(e.target.value)} className="h-8 text-xs" />
                   <Textarea rows={2} placeholder="Template body..." value={tplBody} onChange={(e) => setTplBody(e.target.value)} className="text-xs" />
-                  <Button size="sm" variant="outline" className="w-full" onClick={handleCreateTemplate}>Save Template</Button>
+                  <Button size="sm" variant="outline" className="w-full" onClick={handleCreateTemplate} disabled>Saving templates unavailable</Button>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="lg:col-span-7">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">SMS Delivery Audit & Saved Templates</CardTitle>
+                <CardTitle className="text-base">SMS history & example templates (unverified)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {smsTemplates.length > 0 && (
@@ -251,7 +251,7 @@ export default function OutreachHubView() {
             <Card className="lg:col-span-5">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">VoIP Click-to-Dial & Script Prompter</CardTitle>
-                <CardDescription>Telnyx / Twilio Voice / SIP outbound bridge</CardDescription>
+                <CardDescription>Outbound calling is unavailable until consent and approvals are implemented.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
@@ -262,8 +262,8 @@ export default function OutreachHubView() {
                   <Label className="text-xs">Call Script / Advisory Notes</Label>
                   <Textarea rows={4} value={voipScript} onChange={(e) => setVoipScript(e.target.value)} />
                 </div>
-                <Button className="w-full" onClick={handlePlaceCall} disabled={calling}>
-                  <PhoneCall className="mr-1.5 h-4 w-4" /> {calling ? 'Dialing...' : 'Initiate VoIP Call'}
+                <Button className="w-full" onClick={handlePlaceCall} disabled={true}>
+                  <PhoneCall className="mr-1.5 h-4 w-4" /> {calling ? 'Dialing...' : 'Calling unavailable'}
                 </Button>
               </CardContent>
             </Card>

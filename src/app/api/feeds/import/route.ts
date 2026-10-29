@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { emitEvent } from '@/lib/events';
 
 // POST /api/feeds/import — convert a feed item into a Content row
@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
+    if (!payload.userId || !hasPermission(payload.role, 'content_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const body = await req.json();
     const { itemId } = body;
     if (!itemId) return NextResponse.json({ error: 'itemId is required' }, { status: 400 });

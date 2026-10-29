@@ -74,7 +74,7 @@ interface ReadinessReport {
   company: { id: string; name: string; slug: string };
   overall: { pass: boolean; passed: number; total: number };
   checks: ReadinessCheck[];
-  counts: Record<string, number>;
+  counts: Record<string, number | null>;
   models: { localRuntimes: number; externalRuntimes: number; fallbackEnabled: number; modelNames: string[] };
 }
 
@@ -241,7 +241,7 @@ export function AgencyConsoleView() {
   const clients = useApiQuery<{ data: ClientRow[]; meta: { deploymentModel: string } }>('/api/clients');
   const voices = useApiQuery<{ data: VoiceRow[] }>('/api/brand/voices');
   const personas = useApiQuery<{ data: PersonaRow[]; meta: { limit: number; used: number } }>('/api/brand/personas');
-  const backups = useApiQuery<{ data: BackupRow[]; meta: { directory: string; pruneAfter: number } }>('/api/agency/backups');
+  const backups = useApiQuery<{ data: BackupRow[]; meta: { directory: string; pruneAfter: number | null } }>('/api/agency/backups');
 
   const [agentQuery, setAgentQuery] = useState('');
   const [agentDept, setAgentDept] = useState('all');
@@ -317,11 +317,10 @@ export function AgencyConsoleView() {
               )}
             </div>
             <h2 className="text-xl font-bold tracking-tight md:text-2xl">
-              100 departments, 2,000 agents, SOPs everywhere — verified, not assumed
+              Agency configuration and workforce inventory
             </h2>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Every department runs as its own local model with its own prompt, guardrails and SOP. Client workspaces are configuration,
-              not new applications: onboarding a client is a form, not a deployment. Nothing here calls a hosted AI provider.
+              Counts describe stored configuration, not verified autonomous execution. Provider routing, backups, and each workspace require independent operational review.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -344,10 +343,10 @@ export function AgencyConsoleView() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat icon={Building2} label="Departments" value={String(report?.counts.departments ?? '—')} hint={`${report?.counts.departmentsWithRuntime ?? 0} have their own model runtime`} accent="from-sky-500 to-cyan-500" />
+        <Stat icon={Building2} label="Departments" value={String(report?.counts.departments ?? '—')} hint={`${report?.counts.departmentsWithRuntime ?? 0} stored runtime definitions`} accent="from-sky-500 to-cyan-500" />
         <Stat icon={Users} label="Agents" value={(report?.counts.agents ?? 0).toLocaleString()} hint="Versioned specs bound to a department and SOP" accent="from-emerald-500 to-teal-500" />
         <Stat icon={FileCheck2} label="SOPs" value={String(report?.counts.sops ?? '—')} hint={`${report?.counts.departmentsWithSop ?? 0}/${report?.counts.departments ?? 0} departments covered`} accent="from-violet-500 to-fuchsia-500" />
-        <Stat icon={DatabaseBackup} label="Verified backups" value={String(report?.counts.verifiedBackups ?? 0)} hint={report?.counts.backups ? `${report.counts.backups} snapshot(s) registered` : 'Take the first snapshot now'} accent="from-amber-500 to-orange-500" />
+        <Stat icon={DatabaseBackup} label="Deployment backups" value="Restricted" hint="System administrator access required" accent="from-amber-500 to-orange-500" />
       </div>
 
       <Tabs defaultValue="readiness" className="space-y-4">
@@ -466,8 +465,8 @@ export function AgencyConsoleView() {
                   <code className="font-mono text-[10px]">{backups.data?.meta.directory ?? './backups'}</code>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Snapshots kept</span>
-                  <span className="font-semibold text-foreground">{backups.data?.meta.pruneAfter ?? 14}</span>
+                  <span>Automatic pruning</span>
+                  <span className="font-semibold text-foreground">Disabled</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Latest snapshot</span>
@@ -1039,7 +1038,8 @@ export function AgencyConsoleView() {
               </p>
             </CardHeader>
             <CardContent className="space-y-2">
-              {backupRows.length === 0 && (
+              {backups.error && <p className="text-xs text-muted-foreground">Backup information requires an interactive system administrator.</p>}
+              {!backups.error && backupRows.length === 0 && (
                 <div className="rounded-lg border border-dashed p-6 text-center">
                   <DatabaseBackup className="mx-auto h-6 w-6 text-muted-foreground/60" />
                   <p className="mt-2 text-xs font-medium">No backup has been taken yet</p>

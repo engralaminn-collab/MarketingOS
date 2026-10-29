@@ -16,8 +16,8 @@
 # Any failure exits non-zero so the deployment stops with data intact.
 #
 #   DATABASE_URL       file: URL, absolute (required)
-#   BACKUP_PATH        path to the verified backup (required unless ALLOW_NO_BACKUP=1)
-#   ALLOW_NO_BACKUP    set to 1 only on a first deploy with no existing database
+#   BACKUP_PATH        path to a distinct, integrity-checked backup (required for existing databases)
+#   A backup is mandatory for every existing database; no bypass is accepted.
 #
 set -euo pipefail
 
@@ -33,29 +33,25 @@ case "${DB_PATH}" in /*) ;; *) fail "Database path must be absolute: ${DB_PATH}"
 
 # ── 1. A verified backup must exist before we touch the schema ─────────────
 if [ -f "${DB_PATH}" ]; then
-  if [ "${ALLOW_NO_BACKUP:-0}" != "1" ]; then
-    [ -n "${BACKUP_PATH:-}" ] \
-      || fail "BACKUP_PATH is empty but ${DB_PATH} exists.
-       Run scripts/db-backup.sh first. Refusing to change the schema of a
-       database that has not been backed up."
-    [ -f "${BACKUP_PATH}" ] \
-      || fail "BACKUP_PATH does not exist: ${BACKUP_PATH}"
-    [ -s "${BACKUP_PATH}" ] \
-      || fail "BACKUP_PATH is empty: ${BACKUP_PATH}"
-    log "Backup confirmed present: ${BACKUP_PATH}"
-  else
-    log "⚠️  ALLOW_NO_BACKUP=1 — proceeding without a backup by explicit request."
-  fi
+  [ -n "${BACKUP_PATH:-}" ] || fail "BACKUP_PATH is required for an existing database."
+  [ -f "${BACKUP_PATH}" ] && [ -s "${BACKUP_PATH}" ] || fail "A non-empty backup file is required."
+  [ ! "${DB_PATH}" -ef "${BACKUP_PATH}" ] || fail "BACKUP_PATH must be a distinct file from the database."
+  command -v sqlite3 >/dev/null 2>&1 || fail "sqlite3 is required to verify the backup."
+  BACKUP_CHECK="$(sqlite3 "${BACKUP_PATH}" 'PRAGMA integrity_check;' 2>&1)" || fail "Backup verification failed."
+  [ "${BACKUP_CHECK}" = "ok" ] || fail "Backup integrity_check failed."
+  log "Backup integrity verified: ${BACKUP_PATH}"
+  FROM_ARGS=(--from-url "${DATABASE_URL}")
 else
   log "No database at ${DB_PATH} yet — this is a first-time initialisation."
   mkdir -p "$(dirname "${DB_PATH}")"
+  FROM_ARGS=(--from-empty)
 fi
 
 # ── 2. Inspect the pending diff before applying anything ───────────────────
 log "Computing the pending schema diff ..."
 DIFF_SQL=""
 if DIFF_SQL="$(bunx prisma migrate diff \
-      --from-url "${DATABASE_URL}" \
+      "${FROM_ARGS[@]}" \
       --to-schema-datamodel prisma/schema.prisma \
       --script 2>/dev/null)"; then
 
@@ -68,11 +64,10 @@ if DIFF_SQL="$(bunx prisma migrate diff \
   printf '%s\n' "${DIFF_SQL}" | sed 's/^/     | /' >&2
 
   # ── 3. Block destructive statements ──────────────────────────────────────
-  # DROP TABLE / DROP COLUMN destroy data. Prisma also emits table rebuilds for
-  # SQLite; those are fine, but an outright DROP of a real table is not.
+  # Refuse all table/index drops, including SQLite rebuilds; these need a
+  # reviewed migration and restore rehearsal instead of automatic sync.
   DESTRUCTIVE="$(printf '%s\n' "${DIFF_SQL}" \
-    | grep -iE '^\s*(DROP\s+TABLE|ALTER\s+TABLE\s+.*\s+DROP\s+COLUMN)' \
-    | grep -viE '"_prisma_|_new"|_old"|__temp' || true)"
+    | grep -iE '^[[:space:]]*(DROP[[:space:]]+(TABLE|INDEX)|ALTER[[:space:]]+TABLE[[:space:]]+.*[[:space:]]+DROP[[:space:]]+COLUMN)' || true)"
 
   if [ -n "${DESTRUCTIVE}" ]; then
     printf '❌ %s\n' "Refusing to apply a destructive schema change automatically." >&2
@@ -83,8 +78,7 @@ if DIFF_SQL="$(bunx prisma migrate diff \
     exit 1
   fi
 else
-  log "⚠️  Could not compute a diff (new database, or the schema engine is unavailable)."
-  log "    Continuing: db push below still refuses destructive changes on its own."
+  fail "Could not compute the schema diff. No schema changes were attempted."
 fi
 
 # ── 4. Apply, without --accept-data-loss ───────────────────────────────────

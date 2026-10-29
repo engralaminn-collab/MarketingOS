@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       take: 100,
     });
 
-    return NextResponse.json({ content });
+    return NextResponse.json({ content: content.map((item) => ({ ...item, publicationVerification: item.status === 'published' ? 'unverified_legacy' : null, engagementSource: 'unverified_legacy' })), publishingAvailable: false, schedulingNote: 'Scheduled dates are calendar planning only; no automatic publisher is configured.' });
   } catch (error) {
     console.error('[GET /api/content]', error);
     return NextResponse.json({ error: 'Failed to fetch content' }, { status: 500 });
@@ -59,8 +59,14 @@ export async function POST(req: NextRequest) {
 
     const title = typeof body.title === 'string' ? body.title.trim() : '';
     const type = typeof body.type === 'string' ? body.type.trim() : '';
-    const allowedStatuses = ['draft', 'scheduled', 'published'];
-    const status = typeof body.status === 'string' && allowedStatuses.includes(body.status) ? body.status : 'draft';
+    if (body.status === 'published' || body.publishedAt !== undefined) {
+      return NextResponse.json({ error: 'Publication cannot be marked manually; a confirmed provider publication is required and is not yet implemented.' }, { status: 422 });
+    }
+    const allowedStatuses = ['draft', 'scheduled'];
+    if (body.status !== undefined && (typeof body.status !== 'string' || !allowedStatuses.includes(body.status))) {
+      return NextResponse.json({ error: 'Content status is invalid' }, { status: 400 });
+    }
+    const status = typeof body.status === 'string' ? body.status : 'draft';
     if (!title || title.length > 180) return NextResponse.json({ error: 'Title is required and must be 180 characters or fewer' }, { status: 400 });
     if (!/^[a-z][a-z0-9_-]{0,63}$/i.test(type)) return NextResponse.json({ error: 'Content type is invalid' }, { status: 400 });
 
@@ -70,7 +76,7 @@ export async function POST(req: NextRequest) {
     }
     if ((bodyText?.length || 0) > 100_000) return NextResponse.json({ error: 'Content body exceeds 100 KB' }, { status: 400 });
 
-    const scheduledValue = body.scheduledAt ?? body.scheduledDate;
+    const scheduledValue = body.scheduledAt ?? body.scheduledDate ?? null;
     const scheduledAt = parseDate(scheduledValue);
     if (scheduledAt === undefined) return NextResponse.json({ error: 'Schedule date is invalid' }, { status: 400 });
     if (status === 'scheduled' && !scheduledAt) return NextResponse.json({ error: 'A schedule date is required for scheduled content' }, { status: 400 });
@@ -97,7 +103,7 @@ export async function POST(req: NextRequest) {
         thumbnailUrl: safeUrlField(body.thumbnailUrl),
         hashtags: typeof body.hashtags === 'string' ? body.hashtags.slice(0, 2_000) : null,
         scheduledAt: scheduledAt ?? null,
-        publishedAt: status === 'published' ? new Date() : null,
+        publishedAt: null,
         engagement: '{}',
         aiGenerated: false,
         creatorId: actor.userId,
@@ -109,8 +115,8 @@ export async function POST(req: NextRequest) {
     await emitEvent({
       companyId: actor.companyId,
       userId: actor.userId,
-      type: content.status === 'published' ? 'content.published' : 'content.created',
-      title: content.status === 'published' ? 'Content marked published' : 'New content created',
+      type: 'content.created',
+      title: 'New content created',
       description: `"${content.title}" (${content.type}${content.platform ? ', ' + content.platform : ''})`,
       resourceType: 'content',
       resourceId: content.id,

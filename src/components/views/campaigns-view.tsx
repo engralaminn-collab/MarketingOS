@@ -54,10 +54,10 @@ import { PublishingAndEmailSequencePanel } from "@/components/studio/publishing-
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface CampaignMetric {
-  reach: number;
-  impressions: number;
-  clicks: number;
-  conversions: number;
+  reach: number | null;
+  impressions: number | null;
+  clicks: number | null;
+  conversions: number | null;
 }
 
 interface Campaign {
@@ -65,9 +65,9 @@ interface Campaign {
   name: string;
   type: string;
   status: string;
-  budget: number;
-  startDate: string;
-  endDate: string;
+  budget: number | null;
+  startDate: string | null;
+  endDate: string | null;
   description?: string;
   metrics: CampaignMetric;
   dailyMetrics?: Array<{ date: string; value: number }>;
@@ -78,8 +78,9 @@ interface CampaignsData {
   summary: {
     activeCampaigns: number;
     totalBudget: number;
-    totalReach: number;
-    totalConversions: number;
+    totalReach: number | null;
+    totalConversions: number | null;
+    budgetsMissing: number;
   };
 }
 
@@ -118,15 +119,13 @@ function GlassCard({
   );
 }
 
-function formatCurrency(value: number) {
-  if (value == null || isNaN(value)) return "$0";
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${value.toLocaleString()}`;
+function formatCurrency(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return "—";
+  return value.toLocaleString(); // The current schema does not record currency.
 }
 
-function formatNumber(value: number) {
-  if (value == null || isNaN(value)) return "0";
+function formatNumber(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return "—";
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
   return value.toLocaleString();
@@ -154,19 +153,6 @@ const statusColors: Record<string, string> = {
   draft: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/20",
   paused: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
 };
-
-function SparklineBar({ value, max }: { value: number; max: number }) {
-  const height = max > 0 ? Math.max(4, (value / max) * 100) : 4;
-  return (
-    <motion.div
-      className="w-2.5 rounded-full bg-gradient-to-t from-orange-500 to-blue-500"
-      initial={{ height: 0 }}
-      animate={{ height: `${height}%` }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      style={{ minHeight: 4 }}
-    />
-  );
-}
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 
@@ -412,7 +398,7 @@ function CampaignCard({ campaign, index }: { campaign: Campaign; index: number }
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <CalendarDays className="h-3.5 w-3.5" />
               <span className="text-xs">
-                {format(new Date(campaign.startDate), "MMM d")} – {format(new Date(campaign.endDate), "MMM d")}
+                {campaign.startDate ? format(new Date(campaign.startDate), "MMM d") : "—"} – {campaign.endDate ? format(new Date(campaign.endDate), "MMM d") : "—"}
               </span>
             </div>
           </div>
@@ -437,12 +423,7 @@ function CampaignCard({ campaign, index }: { campaign: Campaign; index: number }
                 <p className="text-sm font-semibold">{formatNumber(campaign.metrics.conversions)}</p>
               </div>
             </div>
-            <div className="flex items-end justify-center gap-1.5 h-10">
-              <SparklineBar value={campaign.metrics.reach} max={campaign.metrics.impressions || campaign.metrics.reach} />
-              <SparklineBar value={campaign.metrics.impressions} max={campaign.metrics.impressions || 1} />
-              <SparklineBar value={campaign.metrics.clicks} max={campaign.metrics.impressions || 1} />
-              <SparklineBar value={campaign.metrics.conversions} max={campaign.metrics.impressions || 1} />
-            </div>
+            <p className="text-center text-xs text-muted-foreground">Provider metrics are unavailable.</p>
           </div>
         </CardContent>
       </GlassCard>
@@ -533,7 +514,7 @@ function CampaignsViewInner() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
-          <p className="text-muted-foreground">Manage and track your marketing campaigns.</p>
+          <p className="text-muted-foreground">Campaign status and budgets are internal planning records, not proof of delivery or spend. Provider metrics are unavailable.</p>
         </div>
         <GlassCard>
           <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -548,7 +529,7 @@ function CampaignsViewInner() {
     );
   }
 
-  const summary = data?.summary ?? { activeCampaigns: 0, totalBudget: 0, totalReach: 0, totalConversions: 0 };
+  const summary = data?.summary ?? { activeCampaigns: 0, totalBudget: 0, totalReach: null, totalConversions: null, budgetsMissing: 0 };
   const campaigns = data?.campaigns ?? [];
 
   return (
@@ -562,7 +543,7 @@ function CampaignsViewInner() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
-          <p className="text-muted-foreground">Manage and track your marketing campaigns.</p>
+          <p className="text-muted-foreground">Campaign status and budgets are internal planning records, not proof of delivery or spend. Provider metrics are unavailable.</p>
         </div>
         <Button
           onClick={() => setDialogOpen(true)}
@@ -576,7 +557,7 @@ function CampaignsViewInner() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard
           icon={Rocket}
-          label="Active Campaigns"
+          label="Active (internal)"
           value={String(summary.activeCampaigns)}
           gradient="from-orange-600 to-red-500"
           shadowColor="shadow-orange-600/25"
@@ -584,8 +565,8 @@ function CampaignsViewInner() {
         />
         <KPICard
           icon={DollarSign}
-          label="Total Budget"
-          value={formatCurrency(summary.totalBudget)}
+          label="Planned budget (known only)"
+          value={`${formatCurrency(summary.totalBudget)}${summary.budgetsMissing ? " (partial)" : ""}`}
           gradient="from-amber-500 to-orange-600"
           shadowColor="shadow-amber-500/25"
           index={1}

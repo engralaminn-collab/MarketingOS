@@ -31,6 +31,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'AI video rendering is unavailable. Configure a self-hosted ComfyUI API workflow, or explicitly enable the hosted Z.AI adapter and accept any applicable charges.' }, { status: 503 });
     }
 
+    if (!localVideoConfigured && hostedVideoEnabled && (input.provider !== 'zai' || input.approveCharges !== true || actor.apiKeyId || !hasPermission(actor.role, 'manager'))) {
+      return NextResponse.json({ error: 'Hosted video generation requires explicit provider selection and a manager’s charge approval.' }, { status: 403 });
+    }
     const shouldSave = input.saveToContent !== false;
     const draft = shouldSave ? await db.content.create({
       data: {

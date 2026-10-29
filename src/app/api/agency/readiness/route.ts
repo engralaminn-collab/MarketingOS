@@ -1,3 +1,4 @@
+import { hasPermission } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { buildReadiness, getActor } from '@/lib/agency';
 
@@ -5,6 +6,7 @@ import { buildReadiness, getActor } from '@/lib/agency';
 export async function GET(req: Request) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasPermission(actor.role, 'ai_agent_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   try {
     const report = await buildReadiness(actor.companyId);
     return NextResponse.json({ data: report });

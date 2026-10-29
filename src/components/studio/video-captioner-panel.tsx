@@ -39,9 +39,8 @@ const IMAGE_PROMPT_RECIPES = [
 ];
 
 export function VideoCaptionerAndVoicePanel() {
-  const [transcript, setTranscript] = useState(
-    'Welcome to our Q4 growth review. Today we decided to shift 40% of ad spend into high-intent comparison pages and free calculators. Action item: Sarah will publish the UKVI 28-day CAS calculator by Friday and Marcus will configure Groq + Ollama fallback routing.',
-  );
+  const [transcript, setTranscript] = useState('');
+  const [approveAiProcessing, setApproveAiProcessing] = useState(false);
   const [translateTo, setTranslateTo] = useState('none');
   const [processing, setProcessing] = useState(false);
   const [captionResult, setCaptionResult] = useState<{
@@ -49,6 +48,8 @@ export function VideoCaptionerAndVoicePanel() {
     vtt: string;
     translatedSrt: string | null;
     meetingNotes: { summary: string; actionItems: string[]; decisions: string[] };
+    captionTiming: string;
+    meetingNotesSource: string;
   } | null>(null);
 
   // Browser Web Speech live dictation
@@ -62,7 +63,8 @@ export function VideoCaptionerAndVoicePanel() {
 
   // Free Cloud Image + gpt4o-image-prompts builder
   const [imgPrompt, setImgPrompt] = useState(IMAGE_PROMPT_RECIPES[0].prompt);
-  const [imgProvider, setImgProvider] = useState<'pollinations' | 'huggingface' | 'cloudflare' | 'comfyui'>('pollinations');
+  const [imgProvider, setImgProvider] = useState<'pollinations' | 'huggingface' | 'cloudflare' | 'comfyui'>('comfyui');
+  const [approveImageCharges, setApproveImageCharges] = useState(false);
   const [generatingImg, setGeneratingImg] = useState(false);
   const [generatedImgUrl, setGeneratedImgUrl] = useState<string | null>(null);
 
@@ -72,10 +74,10 @@ export function VideoCaptionerAndVoicePanel() {
     try {
       const res = await apiFetch<{ data: NonNullable<typeof captionResult> }>('/api/ai/transcribe', {
         method: 'POST',
-        body: JSON.stringify({ transcript, translateTo }),
+        body: JSON.stringify({ transcript, translateTo, analyzeWithAi: approveAiProcessing }),
       });
       setCaptionResult(res.data);
-      toast.success('Generated SRT, WebVTT & Doodle-Note meeting action items');
+      toast.success('Caption draft and meeting-note suggestions prepared; review before use.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Captioning failed');
     } finally {
@@ -86,7 +88,7 @@ export function VideoCaptionerAndVoicePanel() {
   function toggleDictation() {
     const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRec) {
-      toast.info('Browser Web Speech API requires Chrome/Edge. Paste transcript or use Groq Whisper API.');
+      toast.info('Browser dictation is unavailable. Paste a transcript or configure local STT.');
       return;
     }
     if (dictating && recognitionRef.current) {
@@ -139,11 +141,14 @@ export function VideoCaptionerAndVoicePanel() {
 
   async function handleGenerateFreeImage() {
     if (!imgPrompt.trim()) return;
+    if (imgProvider !== 'comfyui' && !approveImageCharges) { toast.error('A manager must approve potential hosted-provider charges.'); return; }
     setGeneratingImg(true);
+    const approved = approveImageCharges;
+    setApproveImageCharges(false);
     try {
       const res = await apiFetch<{ data: { imageUrl: string; provider: string } }>('/api/ai/generate-image', {
         method: 'POST',
-        body: JSON.stringify({ prompt: imgPrompt, size: '1024x1024', provider: imgProvider }),
+        body: JSON.stringify({ prompt: imgPrompt, size: '1024x1024', provider: imgProvider, approveCharges: approved }),
       });
       setGeneratedImgUrl(res.data.imageUrl);
       toast.success(`Rendered via ${res.data.provider}`);
@@ -173,7 +178,7 @@ export function VideoCaptionerAndVoicePanel() {
               <Captions className="h-4 w-4 text-orange-500" /> VideoCaptioner, Voice Dictation & Doodle-Note Meeting Extractor
             </CardTitle>
             <CardDescription>
-              Generate `.srt` & `.vtt` subtitles, translate captions, dictate live via microphone, and extract meeting action items.
+              Timestamps from pasted text are estimates, not audio alignment. Browser dictation may transmit audio to your browser provider.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -196,7 +201,8 @@ export function VideoCaptionerAndVoicePanel() {
               </div>
             )}
 
-            <Textarea rows={4} value={transcript} onChange={(e) => setTranscript(e.target.value)} />
+            <Textarea rows={4} value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Paste a transcript" />
+            <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={approveAiProcessing} onChange={(event) => setApproveAiProcessing(event.target.checked)} /> I approve sending this transcript to the configured AI provider for translation and notes (manager only).</label>
             <div className="flex flex-wrap items-center gap-2">
               <Label className="text-xs">Subtitle Translation:</Label>
               <select
@@ -219,7 +225,7 @@ export function VideoCaptionerAndVoicePanel() {
               <div className="grid gap-3 md:grid-cols-2 pt-2">
                 <div className="rounded border p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold">SRT / WebVTT Subtitles</span>
+                    <span className="text-xs font-semibold">SRT / WebVTT · {captionResult.captionTiming}</span>
                     <div className="flex gap-1">
                       <Button size="sm" variant="outline" className="h-6 text-[11px]" onClick={() => downloadText('captions.srt', captionResult.srt)}>
                         <Download className="mr-1 h-3 w-3" /> .SRT
@@ -235,7 +241,7 @@ export function VideoCaptionerAndVoicePanel() {
                 </div>
 
                 <div className="rounded border p-3 space-y-2 text-xs">
-                  <div className="font-semibold">Doodle-Note Structured Meeting Summary</div>
+                  <div className="font-semibold">Suggested meeting summary · {captionResult.meetingNotesSource}</div>
                   <p className="text-muted-foreground">{captionResult.meetingNotes.summary}</p>
                   <div className="font-semibold pt-1">Action Items:</div>
                   <ul className="list-disc pl-4 space-y-0.5">
@@ -256,7 +262,7 @@ export function VideoCaptionerAndVoicePanel() {
             <CardTitle className="text-base flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-orange-500" /> GPT-4o / FLUX Marketing Image Prompt Builder
             </CardTitle>
-            <CardDescription>Curated art-direction prompt recipes + free Pollinations / HF FLUX / ComfyUI rendering</CardDescription>
+            <CardDescription>Local ComfyUI or explicitly approved hosted image providers. Check provider pricing and privacy.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-wrap gap-1.5">
@@ -273,7 +279,7 @@ export function VideoCaptionerAndVoicePanel() {
                 onChange={(e) => setImgProvider(e.target.value as typeof imgProvider)}
                 className="h-9 rounded border bg-background px-2 text-xs flex-1"
               >
-                <option value="pollinations">Pollinations.ai (Free Keyless)</option>
+                <option value="pollinations">Pollinations.ai (hosted)</option>
                 <option value="huggingface">Hugging Face FLUX.1-schnell</option>
                 <option value="cloudflare">Cloudflare Workers FLUX</option>
                 <option value="comfyui">Self-Hosted ComfyUI</option>
@@ -282,6 +288,7 @@ export function VideoCaptionerAndVoicePanel() {
                 {generatingImg ? 'Rendering...' : 'Render'}
               </Button>
             </div>
+            {imgProvider !== 'comfyui' && <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={approveImageCharges} onChange={(event) => setApproveImageCharges(event.target.checked)} /> I approve potential provider charges and sharing this prompt (manager only).</label>}
             {generatedImgUrl && (
               <div className="rounded border p-2">
                 <img src={generatedImgUrl} alt="Generated campaign creative" className="w-full rounded" />

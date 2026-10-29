@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { routeTask } from '@/lib/workforce/engine';
 
 export async function POST(req: NextRequest) {
@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
 
     const payload = await verifyToken(token);
     if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!hasPermission(payload.role, 'ai_agent_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const companyId = payload.companyId;
     if (!companyId) {
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { title, description, type, complexity } = body;
 
-    if (!title || !description || !type) {
+    if (typeof title !== 'string' || !title.trim() || title.length > 160 || typeof description !== 'string' || !description.trim() || description.length > 8_000 || typeof type !== 'string' || !type.trim() || type.length > 64 || (complexity !== undefined && !['simple', 'standard', 'complex', 'enterprise'].includes(complexity))) {
       return NextResponse.json(
         { error: 'title, description, and type are required' },
         { status: 400 }

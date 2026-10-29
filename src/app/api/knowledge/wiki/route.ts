@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { generateChatCompletion, generateEmbeddingVector } from '@/lib/ai-provider';
-import { retrieveMemories } from '@/lib/ai-extensions';
 import { cosineSimilarity } from '@/lib/free-ai-stack';
 
 function extractWikiLinks(markdown: string): string[] {
@@ -17,18 +16,17 @@ export async function GET(req: NextRequest) {
     const actor = await verifyToken(token);
     if (!actor?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
-    const [nodes, sops, memories] = await Promise.all([
+    const [nodes, sops] = await Promise.all([
       db.knowledgeNode.findMany({
-        where: { companyId: actor.companyId },
+        where: { companyId: actor.companyId, accessLevel: { in: ['public', 'company'] } },
         orderBy: { updatedAt: 'desc' },
         take: 120,
       }),
       db.sop.findMany({
-        where: { companyId: actor.companyId },
+        where: { companyId: actor.companyId, departmentId: null, isActive: true },
         orderBy: { updatedAt: 'desc' },
         take: 40,
       }),
-      retrieveMemories(actor.companyId, 'all', undefined, 30),
     ]);
 
     const titleToId = new Map<string, string>(nodes.map((n) => [n.title.toLowerCase(), n.id]));
@@ -74,7 +72,8 @@ export async function GET(req: NextRequest) {
           category: s.category,
           purpose: s.description || '',
         })),
-        memories,
+        memories: [],
+        note: 'Restricted and role-specific knowledge and unapproved memories are withheld.',
       },
     });
   } catch (error) {
@@ -101,8 +100,8 @@ export async function POST(req: NextRequest) {
       if (!question) return NextResponse.json({ error: 'Question is required' }, { status: 400 });
 
       const [nodes, sops, qVec] = await Promise.all([
-        db.knowledgeNode.findMany({ where: { companyId: actor.companyId }, take: 120 }),
-        db.sop.findMany({ where: { companyId: actor.companyId }, take: 40 }),
+        db.knowledgeNode.findMany({ where: { companyId: actor.companyId, accessLevel: { in: ['public', 'company'] } }, take: 120 }),
+        db.sop.findMany({ where: { companyId: actor.companyId, departmentId: null, isActive: true }, take: 40 }),
         generateEmbeddingVector(question),
       ]);
 
@@ -166,6 +165,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    if (!hasPermission(actor.role, 'manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
     // Create or Update Wiki Page
     const id = typeof body.id === 'string' && body.id.trim() ? body.id.trim() : null;
     const title = String(body.title || '').trim().slice(0, 160);
@@ -184,7 +185,7 @@ export async function POST(req: NextRequest) {
       : content.replace(/[#*`\[\]]/g, '').replace(/\s+/g, ' ').trim().slice(0, 240);
 
     if (id) {
-      const existing = await db.knowledgeNode.findFirst({ where: { id, companyId: actor.companyId } });
+      const existing = await db.knowledgeNode.findFirst({ where: { id, companyId: actor.companyId, accessLevel: { in: ['public', 'company'] } } });
       if (!existing) return NextResponse.json({ error: 'Wiki page not found' }, { status: 404 });
       const updated = await db.knowledgeNode.update({
         where: { id },
@@ -226,11 +227,13 @@ export async function DELETE(req: NextRequest) {
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const actor = await verifyToken(token);
     if (!actor?.companyId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!hasPermission(actor.role, 'manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const id = new URL(req.url).searchParams.get('id')?.trim();
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
 
-    await db.knowledgeNode.deleteMany({ where: { id, companyId: actor.companyId } });
+    const deleted = await db.knowledgeNode.deleteMany({ where: { id, companyId: actor.companyId, accessLevel: { in: ['public', 'company'] } } });
+    if (!deleted.count) return NextResponse.json({ error: 'Wiki page not found' }, { status: 404 });
     return NextResponse.json({ data: { deleted: true } });
   } catch {
     return NextResponse.json({ error: 'Delete failed' }, { status: 500 });

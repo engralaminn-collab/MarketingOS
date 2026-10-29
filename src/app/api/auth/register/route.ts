@@ -2,11 +2,12 @@ import { randomBytes } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { hashPassword, createSessionToken } from '@/lib/auth';
-import { ipFromRequest, rateLimiter } from '@/lib/security';
+import { ipFromRequest, isSecureTransport, rateLimiter } from '@/lib/security';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
+  if (!isSecureTransport(req)) return NextResponse.json({ error: 'A secure HTTPS connection is required.' }, { status: 426 });
   const ipLimit = rateLimiter(`auth-register-ip:${ipFromRequest(req)}`, { maxRequests: 5, windowMs: 60 * 60_000 });
   if (!ipLimit.allowed) return tooManyRequests(ipLimit.retryAfterMs);
 

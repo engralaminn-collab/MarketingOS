@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, Send, CheckCircle2, Layers } from 'lucide-react';
+import { Mail, CheckCircle2, Layers } from 'lucide-react';
 import { apiFetch } from '@/hooks/use-api';
 import { toast } from 'sonner';
 
@@ -44,8 +43,6 @@ export function PublishingAndEmailSequencePanel({ onSaved }: { onSaved?: () => v
   const seq = LIFECYCLE_SEQUENCES.find((s) => s.id === selectedSeqId) || LIFECYCLE_SEQUENCES[0];
   const activeStep = seq.emails[stepIdx] || seq.emails[0];
 
-  const [toEmail, setToEmail] = useState('');
-  const [adapter, setAdapter] = useState<'auto' | 'resend' | 'brevo' | 'webhook' | 'stage'>('stage');
   const [subject, setSubject] = useState(activeStep.subject);
   const [html, setHtml] = useState(activeStep.body);
   const [sending, setSending] = useState(false);
@@ -72,13 +69,9 @@ export function PublishingAndEmailSequencePanel({ onSaved }: { onSaved?: () => v
     try {
       const res = await apiFetch<{ data: { status: string; adapter: string; note?: string } }>('/api/email/send', {
         method: 'POST',
-        body: JSON.stringify({ to: toEmail, subject, html, adapter }),
+        body: JSON.stringify({ subject, html, adapter: 'stage' }),
       });
-      toast.success(
-        res.data.status === 'sent'
-          ? `Dispatched via ${res.data.adapter}`
-          : res.data.note || 'Staged in Editorial & Newsletter Queue'
-      );
+      toast.success(res.data.note || 'Email draft saved; nothing was sent.');
       onSaved?.();
     } catch (e: any) {
       toast.error(e.message || 'Email dispatch failed');
@@ -94,13 +87,13 @@ export function PublishingAndEmailSequencePanel({ onSaved }: { onSaved?: () => v
           <div>
             <CardTitle className="text-base flex items-center gap-2">
               <Mail className="h-4 w-4 text-primary" />
-              Ghost / Buffer Approval Queue & Lifecycle Email Sequence Studio
+              Email Draft Studio
             </CardTitle>
             <CardDescription className="text-xs">
-              Multi-step drip sequences & editorial newsletters with Resend (3k/mo free), Brevo (300/day free), SMTP/Webhook, and Content Queue staging
+              Example sequences are editable drafts. Live delivery and automatic sequences are unavailable until consent, suppression and approvals are implemented.
             </CardDescription>
           </div>
-          <Badge variant="secondary">Resend · Brevo · Ghost · Buffer</Badge>
+          <Badge variant="secondary">Drafts only</Badge>
         </div>
       </CardHeader>
       <CardContent className="grid gap-4 lg:grid-cols-12">
@@ -143,30 +136,12 @@ export function PublishingAndEmailSequencePanel({ onSaved }: { onSaved?: () => v
         </div>
 
         <div className="lg:col-span-8 space-y-2.5">
-          <div className="grid gap-2 sm:grid-cols-3">
-            <Input
-              value={toEmail}
-              onChange={(e) => setToEmail(e.target.value)}
-              placeholder="Recipient (optional when staging)"
-              className="sm:col-span-2"
-            />
-            <Select value={adapter} onValueChange={(v: any) => setAdapter(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="stage">Stage in Approval Queue</SelectItem>
-                <SelectItem value="auto">Auto (Resend → Brevo → Webhook)</SelectItem>
-                <SelectItem value="resend">Resend API</SelectItem>
-                <SelectItem value="brevo">Brevo Transactional</SelectItem>
-                <SelectItem value="webhook">SMTP / n8n Webhook</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject line" />
           <Textarea value={html} onChange={(e) => setHtml(e.target.value)} rows={4} className="font-mono text-xs" />
           <div className="flex justify-end gap-2">
             <Button onClick={dispatchEmail} disabled={sending} className="gap-1.5">
-              {adapter === 'stage' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Send className="h-3.5 w-3.5" />}
-              {sending ? 'Processing...' : adapter === 'stage' ? 'Stage in Editorial Queue' : 'Send / Stage Sequence Step'}
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {sending ? 'Saving...' : 'Save email draft'}
             </Button>
           </div>
         </div>

@@ -14,8 +14,12 @@ export const GET = withAuth(
     try {
       const { id } = await _context.params!;
 
-      const userRecord = await db.user.findUnique({
-        where: { id },
+      const scope = _context.user.companyId
+        ? { companyUsers: { some: { companyId: _context.user.companyId } } }
+        : _context.user.institutionId ? { institutionId: _context.user.institutionId } : null;
+      if (!scope) return NextResponse.json({ error: "User not found" }, { status: 404 });
+      const userRecord = await db.user.findFirst({
+        where: { id, ...scope },
         select: {
           id: true,
           email: true,
@@ -73,6 +77,8 @@ export const PUT = withAuth(
   async (request, { user, params }) => {
     try {
       const { id } = await params!;
+      const systemAdmin = user.sessionId && (await db.user.findUnique({ where: { id: user.userId }, select: { isSuperAdmin: true } }))?.isSuperAdmin;
+      if (!systemAdmin) return NextResponse.json({ error: "Global account changes require an interactive system administrator. Use team membership controls for workspace access." }, { status: 403 });
       const body = await request.json();
 
       const existing = await db.user.findUnique({ where: { id } });
@@ -147,9 +153,9 @@ export const PUT = withAuth(
       // Password (hashed)
       if (body.password !== undefined) {
         const rawPassword = String(body.password);
-        if (rawPassword.length < 6) {
+        if (rawPassword.length < 12 || rawPassword.length > 128) {
           return NextResponse.json(
-            { error: "Password must be at least 6 characters" },
+            { error: "Password must be 12–128 characters" },
             { status: 400 }
           );
         }
@@ -214,6 +220,8 @@ export const DELETE = withAuth(
   async (request, { user, params }) => {
     try {
       const { id } = await params!;
+      const systemAdmin = user.sessionId && (await db.user.findUnique({ where: { id: user.userId }, select: { isSuperAdmin: true } }))?.isSuperAdmin;
+      if (!systemAdmin) return NextResponse.json({ error: "Global account changes require an interactive system administrator. Use team membership controls for workspace access." }, { status: 403 });
 
       // Prevent self-deletion
       if (id === user.userId) {

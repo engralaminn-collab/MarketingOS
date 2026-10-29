@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { AGENT_TOOL_DEFINITIONS, runMultiStepFreeAgent } from '@/lib/agent-tools';
 import type { AiProviderName } from '@/lib/ai-provider';
 
@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
     if (!actor?.companyId || !actor.userId) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
+
+    if (!hasPermission(actor.role, 'ai_agent_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const body = await req.json().catch(() => null);
     const goal = typeof body?.goal === 'string' ? body.goal.trim() : '';

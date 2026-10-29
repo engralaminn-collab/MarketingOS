@@ -2,9 +2,7 @@ import {
   FREE_LLM_PROVIDERS,
   OPENROUTER_FREE_CURATED,
   computeLocalSemanticEmbedding,
-  getCachedCompletion,
   recordProviderCall,
-  setCachedCompletion,
   type FreeLlmProviderId,
 } from './free-ai-stack';
 
@@ -126,7 +124,7 @@ function parseProviderName(rawInput?: string): AiProviderName {
   if (raw === 'disabled' || raw === 'none' || raw === 'off') {
     throw new AiProviderError(
       'AI_DISABLED',
-      'AI features are disabled. Set AI_PROVIDER to ollama, groq, gemini, cerebras, openrouter, or another free provider to enable inference.',
+      'AI features are disabled. Configure self-hosted inference or an explicitly free OpenRouter model to enable it.',
       503,
     );
   }
@@ -221,30 +219,25 @@ function resolveProviderEndpoint(provider: AiProviderName, modelOverride?: strin
     };
   }
 
+  // Most hosted providers can bill once free allowances are exhausted. Until
+  // a provider-side hard spending cap and approval policy are integrated, only
+  // OpenRouter's explicitly free model IDs may be used by this router.
+  if (provider !== 'openrouter') {
+    throw new AiProviderError('AI_MISCONFIGURED', `Hosted provider "${provider}" is disabled because free-only billing cannot be enforced.`, 403);
+  }
   const spec = FREE_LLM_PROVIDERS.find((p) => p.id === provider);
   if (!spec) {
     throw new AiProviderError('AI_MISCONFIGURED', `Unsupported AI_PROVIDER "${provider}".`, 500);
   }
 
-  let baseUrl = spec.baseUrl;
-  if (provider === 'cloudflare') {
-    const accountId = (process.env.CLOUDFLARE_ACCOUNT_ID || '').trim();
-    if (!accountId) {
-      throw new AiProviderError(
-        'AI_MISCONFIGURED',
-        'CLOUDFLARE_ACCOUNT_ID is required when AI_PROVIDER=cloudflare.',
-        500,
-      );
-    }
-    baseUrl = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/v1`;
-  }
+  const baseUrl = spec.baseUrl;
 
   const envModelKey = `${provider.toUpperCase().replace(/-/g, '_')}_MODEL`;
   const model = (modelOverride || process.env[envModelKey] || spec.defaultModel).trim();
-  const apiKey = (
-    process.env[spec.envKey] ||
-    (provider === 'gemini' ? process.env.GOOGLE_AI_STUDIO_KEY || '' : '')
-  ).trim();
+  if (provider === 'openrouter' && model !== 'openrouter/free' && !model.endsWith(':free')) {
+    throw new AiProviderError('AI_MISCONFIGURED', 'OpenRouter requires an explicitly free model ID (:free or openrouter/free). Paid models are disabled.', 403);
+  }
+  const apiKey = (process.env[spec.envKey] || '').trim();
 
   if (spec.requiresKey && !apiKey) {
     throw new AiProviderError(
@@ -404,11 +397,10 @@ async function invokeSingleProvider(
     }
 
     if (!response.ok) {
-      const detail = (await response.text().catch(() => '')).slice(0, 240);
       recordProviderCall({ provider, latencyMs: Date.now() - startedAt, error: `HTTP ${response.status}` });
       throw new AiProviderError(
         'AI_UPSTREAM_ERROR',
-        `Self-hosted AI provider returned HTTP ${response.status}${detail ? `: ${detail}` : ''}`,
+        `Self-hosted AI provider returned HTTP ${response.status}`,
         502,
       );
     }
@@ -437,7 +429,7 @@ async function invokeSingleProvider(
     };
   }
 
-  // OpenAI-compatible /chat/completions path (used by all 16 free cloud providers, openai-compatible, and Ollama w/ tools)
+  // OpenAI-compatible /chat/completions path (self-hosted or explicitly free OpenRouter model)
   const openAiBase =
     provider === 'ollama'
       ? `${resolved.baseUrl}/v1`
@@ -458,7 +450,6 @@ async function invokeSingleProvider(
 
   // Retry once on 429 rate-limit with short backoff
   let lastStatus = 0;
-  let lastDetail = '';
   for (let attempt = 0; attempt < 2; attempt++) {
     let response: Response;
     try {
@@ -492,11 +483,10 @@ async function invokeSingleProvider(
 
     if (!response.ok) {
       lastStatus = response.status;
-      lastDetail = (await response.text().catch(() => '')).slice(0, 240);
       recordProviderCall({ provider, latencyMs: Date.now() - startedAt, error: `HTTP ${lastStatus}` });
       throw new AiProviderError(
         'AI_UPSTREAM_ERROR',
-        `AI provider "${resolved.provider}" returned HTTP ${lastStatus}${lastDetail ? `: ${lastDetail}` : ''}`,
+        `AI provider "${resolved.provider}" returned HTTP ${lastStatus}`,
         502,
       );
     }
@@ -537,7 +527,7 @@ async function invokeSingleProvider(
 
   throw new AiProviderError(
     'AI_UPSTREAM_ERROR',
-    `AI provider "${resolved.provider}" returned HTTP ${lastStatus}${lastDetail ? `: ${lastDetail}` : ''}`,
+    `AI provider "${resolved.provider}" returned HTTP ${lastStatus}`,
     502,
   );
 }
@@ -551,33 +541,23 @@ export async function generateChatCompletion(
   }
 
   const primaryProvider = parseProviderName(options.provider);
+  // Enforce policy before consulting the process-wide cache as well as before
+  // every network attempt, including fallbacks.
+  if (!['ollama', 'openai-compatible', 'openrouter'].includes(primaryProvider)) {
+    throw new AiProviderError('AI_MISCONFIGURED', `Hosted provider "${primaryProvider}" is disabled because free-only billing cannot be enforced.`, 403);
+  }
+  const requestedModel = options.model || process.env.OPENROUTER_MODEL || 'qwen/qwen3-32b:free';
+  if (primaryProvider === 'openrouter' && requestedModel !== 'openrouter/free' && !requestedModel.trim().endsWith(':free')) {
+    throw new AiProviderError('AI_MISCONFIGURED', 'OpenRouter requires an explicitly free model ID (:free or openrouter/free). Paid models are disabled.', 403);
+  }
   const explicitChain = options.fallbackChain ?? parseFallbackChainFromEnv();
   const providersToTry: AiProviderName[] = [
     primaryProvider,
     ...explicitChain.filter((p) => p !== primaryProvider),
   ];
 
-  // Prompt cache check (only for deterministic non-tool queries when explicitly enabled)
-  const canCache =
-    options.useCache === true &&
-    (!options.tools || options.tools.length === 0) &&
-    (options.temperature ?? 0.2) <= 0.3;
-  const cacheKey = canCache
-    ? JSON.stringify({ p: primaryProvider, m: options.model || '', msgs: messages })
-    : '';
-
-  if (canCache) {
-    const hit = getCachedCompletion(cacheKey);
-    if (hit) {
-      recordProviderCall({ provider: hit.provider, latencyMs: 1, cached: true });
-      return {
-        content: hit.content,
-        provider: hit.provider as AiProviderName,
-        model: hit.model,
-        cached: true,
-      };
-    }
-  }
+  // The old process-wide completion cache was not scoped by tenant. Do not
+  // cache prompts or completions until tenant-aware retention is implemented.
 
   const attempts: NonNullable<ChatCompletionResult['attempts']> = [];
   let lastError: unknown = null;
@@ -595,9 +575,6 @@ export async function generateChatCompletion(
         status: 'ok',
         latencyMs: Date.now() - started,
       });
-      if (canCache && res.content) {
-        setCachedCompletion(cacheKey, { content: res.content, model: res.model, provider: res.provider });
-      }
       return attempts.length > 1 ? { ...res, attempts } : res;
     } catch (err) {
       lastError = err;
@@ -642,36 +619,17 @@ export async function generateEmbeddingVector(text: string): Promise<{
         }
       }
     } catch {
-      // Fall back to deterministic local semantic vector so Wiki/RAG always works
+      // Fall back to explicitly labelled lexical hashing, not semantic embeddings
     }
   }
 
-  if (embedProvider === 'gemini' && process.env.GEMINI_API_KEY) {
-    try {
-      const model = 'gemini-embedding-001';
-      const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: { parts: [{ text }] } }),
-          signal: AbortSignal.timeout(10_000),
-        },
-      );
-      if (resp.ok) {
-        const data = (await resp.json()) as { embedding?: { values?: number[] } };
-        if (data.embedding?.values?.length) {
-          return { vector: data.embedding.values, provider: 'gemini', model };
-        }
-      }
-    } catch {
-      // Fall back to deterministic local semantic vector
-    }
+  if (embedProvider !== 'local' && embedProvider !== 'ollama') {
+    throw new AiProviderError('AI_MISCONFIGURED', 'Hosted embeddings are disabled until free-only billing is enforceable.', 403);
   }
 
   return {
     vector: computeLocalSemanticEmbedding(text, 128),
-    provider: 'local-semantic',
+    provider: 'local-lexical-hash',
     model: 'marketingos-bm25-trigram-128d',
   };
 }

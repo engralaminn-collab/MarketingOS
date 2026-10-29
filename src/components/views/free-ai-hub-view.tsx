@@ -96,7 +96,7 @@ export default function FreeAiHubView() {
   );
   const [selectedProvider, setSelectedProvider] = useState('ollama');
   const [selectedModel, setSelectedModel] = useState('qwen2.5:7b');
-  const [fallbackCsv, setFallbackCsv] = useState('groq,cerebras,openrouter,gemini,ollama');
+  const [fallbackCsv, setFallbackCsv] = useState('');
   const [runningAgent, setRunningAgent] = useState(false);
   const [agentOutput, setAgentOutput] = useState<{
     answer: string;
@@ -195,11 +195,11 @@ export default function FreeAiHubView() {
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">100% Free AI & Autonomous Agent Hub</h1>
-            <Badge variant="secondary">$0 Stack · 17 Providers · 11 Live Tools · 23 MCP Servers</Badge>
+            <h1 className="text-2xl font-bold tracking-tight">AI Provider & Tool Hub</h1>
+            <Badge variant="secondary">Local-first · provider costs and privacy require review</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            Multi-provider free LLM router (Groq, Gemini, Cerebras, OpenRouter :free, Ollama), ModelDeck RPM/RPD meters, Radiant tool traces & runnable Python/MCP exports.
+            Self-hosted models and explicitly free OpenRouter model IDs are supported. Local endpoints must be trusted; quotas, billing and data handling are not verified.
           </p>
         </div>
         {hub?.activeStatus && (
@@ -212,7 +212,7 @@ export default function FreeAiHubView() {
       <Tabs defaultValue="playground" className="space-y-4">
         <TabsList className="flex flex-wrap h-auto gap-1">
           <TabsTrigger value="playground" className="gap-1.5"><Bot className="h-4 w-4" /> Tool-Calling Agent Loop</TabsTrigger>
-          <TabsTrigger value="providers" className="gap-1.5"><Activity className="h-4 w-4" /> 17 Free Providers & Quotas</TabsTrigger>
+          <TabsTrigger value="providers" className="gap-1.5"><Activity className="h-4 w-4" /> Provider configuration</TabsTrigger>
           <TabsTrigger value="openrouter" className="gap-1.5"><Sparkles className="h-4 w-4" /> OpenRouter :free Explorer</TabsTrigger>
           <TabsTrigger value="stack" className="gap-1.5"><Layers className="h-4 w-4" /> Multimodal, MCP & Hardware</TabsTrigger>
           <TabsTrigger value="code" className="gap-1.5"><Code2 className="h-4 w-4" /> Export agent.py & MCP JSON</TabsTrigger>
@@ -224,12 +224,12 @@ export default function FreeAiHubView() {
             <Card className="lg:col-span-5">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Autonomous Tool-Calling Agent</CardTitle>
-                <CardDescription>Executes real SQLite CRM, Knowledge Wiki RAG, UKVI, Humanizer & UTM tools in a multi-step loop</CardDescription>
+                <CardDescription>Bounded tool loop. Knowledge uses keyword search; memory access is disabled. Review every result.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-xs">Primary Free Provider</Label>
+                    <Label className="text-xs">Primary provider</Label>
                     <select
                       value={selectedProvider}
                       onChange={(e) => {
@@ -256,11 +256,11 @@ export default function FreeAiHubView() {
                 </div>
 
                 <div>
-                  <Label className="text-xs">Multi-Provider Fallback Chain (429 / offline resilience)</Label>
+                  <Label className="text-xs">Optional fallback IDs (must be configured and trusted)</Label>
                   <Input
                     value={fallbackCsv}
                     onChange={(e) => setFallbackCsv(e.target.value)}
-                    placeholder="groq,cerebras,openrouter,gemini,ollama"
+                    placeholder="Leave empty for no fallback"
                     className="h-8 text-xs font-mono"
                   />
                 </div>
@@ -362,6 +362,7 @@ export default function FreeAiHubView() {
 
         {/* ── TAB 2: 17 FREE LLM PROVIDERS & MODELDECK QUOTA METERS ── */}
         <TabsContent value="providers" className="space-y-4">
+          <p className="text-xs text-muted-foreground">Configured is not a connectivity check. Provider quota and usage data are unavailable; local resource costs also apply.</p>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {(hub?.providers || []).map((p) => {
               const t = hub?.telemetry.find((m) => m.id === p.id);
@@ -377,7 +378,7 @@ export default function FreeAiHubView() {
                         <CardDescription className="text-xs mt-0.5">{p.limits}</CardDescription>
                       </div>
                       <Badge variant={t?.configured ? 'default' : 'outline'} className="text-[10px]">
-                        {t?.configured ? 'Ready' : `Set ${p.envKey}`}
+                        {t?.configured ? 'Configured' : 'Not verified'}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -437,10 +438,10 @@ export default function FreeAiHubView() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle className="text-base">
-                    OpenRouter `:free` Zero-Cost Model Catalog ({hub?.openRouterFree.count || 0} models · {hub?.openRouterFree.source || 'curated'})
+                    OpenRouter `:free` Model Catalog ({hub?.openRouterFree.count || 0} models · {hub?.openRouterFree.source || 'curated'})
                   </CardTitle>
                   <CardDescription>
-                    Every model ending in `:free` costs $0/M input and $0/M output tokens. Click Use to route your agent through it.
+                    Free model availability and quotas change. Verify provider pricing, privacy and limits; curated entries may be stale.
                   </CardDescription>
                 </div>
                 <Input
@@ -485,11 +486,12 @@ export default function FreeAiHubView() {
 
         {/* ── TAB 4: EMBEDDINGS, SPEECH/IMAGE, FRAMEWORKS, 23 MCP SERVERS & HARDWARE ── */}
         <TabsContent value="stack" className="space-y-4">
+          <p className="text-xs text-muted-foreground">Reference catalog only, not verified installed integrations. Local fallback uses lexical hashing, not semantic embeddings; hosted embeddings and STT fallback are disabled.</p>
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-1.5"><Server className="h-4 w-4" /> 23 Free MCP Servers (Click to Toggle in Config)</CardTitle>
-                <CardDescription>Plug directly into Claude Desktop, Cursor, LibreChat, Open WebUI, or custom agents</CardDescription>
+                <CardTitle className="text-base flex items-center gap-1.5"><Server className="h-4 w-4" /> MCP reference examples (not installed)</CardTitle>
+                <CardDescription>Generated configuration is only an example; audit packages and permissions before installation.</CardDescription>
               </CardHeader>
               <CardContent className="max-h-80 overflow-y-auto space-y-1.5">
                 {(hub?.infraAndFrameworks.mcpServers || []).map((mcp) => {
@@ -534,7 +536,7 @@ export default function FreeAiHubView() {
                   </div>
                 ))}
                 <div className="pt-2 space-y-1.5">
-                  <div className="font-semibold uppercase tracking-wider text-muted-foreground">8 Proven $0 Stack Blueprints</div>
+                  <div className="font-semibold uppercase tracking-wider text-muted-foreground">Reference blueprints (not verified)</div>
                   {(hub?.infraAndFrameworks.quickStartPaths || []).map((q) => (
                     <div key={q.goal} className="rounded bg-muted/40 p-2">
                       <strong>{q.goal}:</strong> {q.recipe}
@@ -547,7 +549,7 @@ export default function FreeAiHubView() {
 
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Free Embeddings (RAG & Memory)</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Embedding reference catalog</CardTitle></CardHeader>
               <CardContent className="space-y-2 text-xs">
                 {(hub?.embeddings || []).map((e) => (
                   <div key={e.provider} className="border-b pb-1.5 last:border-0">
@@ -560,7 +562,7 @@ export default function FreeAiHubView() {
             </Card>
 
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Free Whisper STT, Neural TTS & Image</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Speech and image reference catalog</CardTitle></CardHeader>
               <CardContent className="space-y-2 text-xs">
                 {(hub?.multimodal.stt || []).slice(0, 4).map((s) => (
                   <div key={s.service} className="border-b pb-1.5">
@@ -578,7 +580,7 @@ export default function FreeAiHubView() {
             </Card>
 
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Free Agent Frameworks & Vector Infra</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Framework and vector references</CardTitle></CardHeader>
               <CardContent className="space-y-1.5 text-xs max-h-72 overflow-y-auto">
                 {(hub?.infraAndFrameworks.frameworks || []).map((f) => (
                   <div key={f.name} className="border-b pb-1 last:border-0">
@@ -597,10 +599,10 @@ export default function FreeAiHubView() {
             <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-3">
               <div>
                 <CardTitle className="text-base flex items-center gap-1.5">
-                  <ShieldCheck className="h-4 w-4 text-emerald-600" /> Production-Ready Free Agent Scripts
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" /> Example agent scripts — not production-ready
                 </CardTitle>
                 <CardDescription>
-                  Pre-configured for <strong>{selectedProvider}</strong> ({selectedModel}) with multi-provider fallback & {selectedMcp.length} MCP servers
+                  Example for <strong>{selectedProvider}</strong> ({selectedModel}); no fallback. {selectedMcp.length} MCP configuration examples, not installed.
                 </CardDescription>
               </div>
               <div className="flex flex-wrap gap-1.5">

@@ -120,3 +120,18 @@ export function ipFromRequest(request: Request): string {
   }
   return "127.0.0.1";
 }
+
+/**
+ * Credential-bearing requests must arrive over HTTPS in production. When TLS
+ * terminates at a reverse proxy, that proxy must overwrite X-Forwarded-Proto
+ * and direct access to the application port must be blocked.
+ */
+export function isSecureTransport(request: Request): boolean {
+  if (process.env.NODE_ENV !== 'production') return true;
+  const forwarded = request.headers.get('x-forwarded-proto')?.split(',')[0].trim().toLowerCase();
+  try {
+    return (forwarded || new URL(request.url).protocol.replace(':', '')) === 'https';
+  } catch {
+    return false;
+  }
+}

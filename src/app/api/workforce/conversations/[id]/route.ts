@@ -19,8 +19,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
 
-    const conversation = await db.workforceConversation.findUnique({
-      where: { id },
+    const conversation = await db.workforceConversation.findFirst({
+      where: { id, companyId, userId: payload.userId },
       include: {
         employee: {
           select: {

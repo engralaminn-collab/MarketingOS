@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken, hashPassword, ROLE_LABELS } from '@/lib/auth';
+import { verifyToken, hashPassword, ROLE_LABELS, ROLES } from '@/lib/auth';
 
 // GET /api/users — List users (admin+ only) with pagination + search
 // Returns users in the current admin's company
@@ -101,8 +101,15 @@ export async function POST(req: NextRequest) {
     if (!name || !email || !password) {
       return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 });
     }
-    if (String(password).length < 8) {
-      return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
+    if (typeof password !== 'string' || password.length < 12 || password.length > 128) {
+      return NextResponse.json({ error: 'Password must be 12–128 characters' }, { status: 400 });
+    }
+    const requestedRole = typeof role === 'string' ? role : 'team_member';
+    if (!ROLES.includes(requestedRole as (typeof ROLES)[number]) || ['super_admin', 'company_owner'].includes(requestedRole)) {
+      return NextResponse.json({ error: 'Unsupported role for this workspace.' }, { status: 403 });
+    }
+    if (requestedRole === 'admin' && !['company_owner', 'super_admin'].includes(payload.role)) {
+      return NextResponse.json({ error: 'Only a workspace owner can create an administrator.' }, { status: 403 });
     }
 
     const existing = await db.user.findUnique({ where: { email: String(email) } });
@@ -124,7 +131,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.id,
         companyId: payload.companyId,
-        role: role || 'team_member',
+        role: requestedRole,
       },
     });
 
@@ -133,7 +140,7 @@ export async function POST(req: NextRequest) {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: role || 'team_member',
+        role: requestedRole,
       },
     }, { status: 201 });
   } catch (err) {

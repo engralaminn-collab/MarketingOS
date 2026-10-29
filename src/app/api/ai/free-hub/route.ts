@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import {
   FREE_EMBEDDING_PROVIDERS,
   FREE_INFRA_AND_FRAMEWORKS,
   FREE_LLM_PROVIDERS,
   FREE_SPEECH_AND_IMAGE_SERVICES,
   buildRunnableAgentCode,
-  getModelDeckTelemetry,
   type FreeLlmProviderId,
 } from '@/lib/free-ai-stack';
 import {
@@ -30,9 +29,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         data: {
-          activeStatus,
-          providers: FREE_LLM_PROVIDERS,
-          telemetry: getModelDeckTelemetry(),
+          activeStatus: { provider: activeStatus.provider, model: activeStatus.model, status: activeStatus.status, reachable: activeStatus.reachable, detail: activeStatus.detail },
+          providers: FREE_LLM_PROVIDERS.filter((provider) => ['ollama', 'openai-compatible', 'openrouter'].includes(provider.id)).map((provider) => ({ ...provider, badge: undefined, limits: 'Availability, quotas, pricing and local resource cost not verified.' })),
+          // Process-global telemetry is not tenant-scoped and estimated quota
+          // meters are not authoritative provider limits.
+          telemetry: [],
+          telemetryNote: 'Unavailable: provider quotas and usage are not verified per workspace.',
           openRouterFree,
           embeddings: FREE_EMBEDDING_PROVIDERS,
           multimodal: FREE_SPEECH_AND_IMAGE_SERVICES,
@@ -58,6 +60,7 @@ export async function POST(req: NextRequest) {
     const action = String(body?.action || 'export-code');
 
     if (action === 'test-provider') {
+      if (!actor.userId || !hasPermission(actor.role, 'ai_agent_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       const provider = String(body?.provider || 'ollama') as FreeLlmProviderId;
       const model = typeof body?.model === 'string' && body.model.trim() ? body.model.trim() : undefined;
       const fallbackChain = Array.isArray(body?.fallbackChain) ? body.fallbackChain : undefined;
@@ -92,6 +95,9 @@ export async function POST(req: NextRequest) {
     const provider = (body?.provider || 'openrouter') as FreeLlmProviderId;
     const model = String(body?.model || 'qwen/qwen3-32b:free');
     const mcpServers = Array.isArray(body?.mcpServers) ? body.mcpServers.map(String) : undefined;
+    if (!['ollama', 'openrouter'].includes(provider) || !/^[A-Za-z0-9._:/-]{1,160}$/.test(model) || (provider === 'openrouter' && model !== 'openrouter/free' && !model.endsWith(':free'))) {
+      return NextResponse.json({ error: 'Export supports Ollama or an explicitly free OpenRouter model only.' }, { status: 400 });
+    }
     const code = buildRunnableAgentCode({ provider, model, mcpServers });
     return NextResponse.json({ data: code });
   } catch (error) {

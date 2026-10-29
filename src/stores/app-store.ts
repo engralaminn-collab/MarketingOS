@@ -4,6 +4,7 @@ export type ViewId =
   | 'dashboard'
   | 'workforce'
   | 'integrations'
+  | 'setup-bot'
   | 'social-accounts'
   | 'ai-command'
   | 'media-studio'
@@ -73,6 +74,7 @@ interface AppState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isSidebarOpen: boolean;
+  setupLanguage: 'bn' | 'en';
 
   // Academic & HRM scope. Loaded from /api/institution once the user is
   // authenticated; the academic views read institution.id when creating records.
@@ -83,6 +85,7 @@ interface AppState {
 
   // Actions
   setUser: (user: AuthUser | null) => void;
+  setSetupLanguage: (language: 'bn' | 'en') => void;
   setInstitution: (institution: ActiveInstitution | null) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
@@ -96,10 +99,16 @@ export const useAppStore = create<AppState>((set) => ({
   isAuthenticated: false,
   isLoading: true,
   isSidebarOpen: true,
+  setupLanguage: 'bn',
   institution: null,
   activeView: 'dashboard',
 
-  setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
+  setUser: (user) => set((state) => ({
+    user, isAuthenticated: !!user, isLoading: false,
+    // Clients begin with onboarding after sign-in; other roles keep their current view.
+    activeView: user?.role === 'client_user' && !state.isAuthenticated ? 'setup-bot' : state.activeView,
+  })),
+  setSetupLanguage: (setupLanguage) => set({ setupLanguage }),
   setInstitution: (institution) => set({ institution }),
   logout: () => {
     if (typeof window !== 'undefined') {

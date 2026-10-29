@@ -86,12 +86,15 @@ test('ModelDeck telemetry and response cache track calls and hits accurately', (
 
 test('buildRunnableAgentCode exports runnable Python, Bash, and MCP JSON', () => {
   const bundle = stack.buildRunnableAgentCode({
-    provider: 'groq',
-    model: 'llama-3.3-70b-versatile',
+    provider: 'openrouter',
+    model: 'qwen/qwen3-32b:free',
     mcpServers: ['filesystem', 'playwright', 'memory'],
   });
   assert.ok(bundle.listFreePy.includes('openrouter.ai/api/v1/models'));
   assert.ok(bundle.agentPy.includes('call_with_fallback'));
+  assert.ok(!bundle.agentPy.includes('Groq Fallback'));
+  assert.throws(() => stack.buildRunnableAgentCode({ provider: 'openrouter', model: 'paid/model' }));
+  assert.throws(() => stack.buildRunnableAgentCode({ provider: 'openrouter', model: 'x\"; unsafe()' }));
   assert.ok(bundle.ollamaSetupSh.includes('ollama pull'));
   const parsedMcp = JSON.parse(bundle.mcpConfigJson);
   assert.ok(parsedMcp.mcpServers.filesystem);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { hasPermission, verifyToken } from '@/lib/auth';
 import { getEmployeeById } from '@/lib/workforce/engine';
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -111,6 +111,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     const payload = await verifyToken(token);
     if (!payload) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    if (!hasPermission(payload.role, 'ai_agent_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const companyId = payload.companyId;
     if (!companyId) {

@@ -687,7 +687,10 @@ export function buildRunnableAgentCode(params: {
   ollamaSetupSh: string;
   mcpConfigJson: string;
 } {
-  const spec = FREE_LLM_PROVIDERS.find((p) => p.id === params.provider) || FREE_LLM_PROVIDERS[4];
+  if (!['ollama', 'openrouter'].includes(params.provider) || !/^[A-Za-z0-9._:/-]{1,160}$/.test(params.model) || (params.provider === 'openrouter' && params.model !== 'openrouter/free' && !params.model.endsWith(':free'))) {
+    throw new Error('Code export requires Ollama or an explicitly free OpenRouter model.');
+  }
+  const spec = FREE_LLM_PROVIDERS.find((p) => p.id === params.provider)!;
   const baseUrl = spec.id === 'ollama' ? 'http://localhost:11434/v1' : spec.baseUrl;
   const envVar = spec.id === 'ollama' ? 'OLLAMA_API_KEY' : spec.envKey;
   const model = params.model || spec.defaultModel;
@@ -707,16 +710,13 @@ for m in free:
     print(" •", m)
 `;
 
-  const agentPy = `# agent.py — Production Tool-Calling Free AI Agent (with Multi-Provider Fallback)
+  const agentPy = `# agent.py — Unverified example; review dependencies, privacy and provider terms before use
 # Run: pip install openai && export ${envVar}="your-free-key" && python agent.py
 import os, json, time, urllib.parse, urllib.request
 from openai import OpenAI
 
 PROVIDERS = [
     {"name": "${spec.name}", "base_url": "${baseUrl}", "api_key": os.environ.get("${envVar}", "${spec.id === 'ollama' ? 'ollama' : ''}"), "model": "${model}"},
-    {"name": "Groq Fallback", "base_url": "https://api.groq.com/openai/v1", "api_key": os.environ.get("GROQ_API_KEY", ""), "model": "qwen/qwen3-32b"},
-    {"name": "OpenRouter :free", "base_url": "https://openrouter.ai/api/v1", "api_key": os.environ.get("OPENROUTER_API_KEY", ""), "model": "qwen/qwen3-32b:free"},
-    {"name": "Ollama Local", "base_url": "http://localhost:11434/v1", "api_key": "ollama", "model": "qwen3:8b"},
 ]
 
 def get_weather(city: str) -> str:
@@ -772,7 +772,7 @@ def call_with_fallback(messages):
                     time.sleep(2 ** attempt)
                     continue
                 break
-    raise RuntimeError(f"All configured free providers failed: {last_err}")
+    raise RuntimeError("Configured provider failed; no fallback was attempted")
 
 if __name__ == "__main__":
     messages = [{"role": "user", "content": "What's the weather in Tokyo and summarize Mount Fuji for a travel campaign."}]

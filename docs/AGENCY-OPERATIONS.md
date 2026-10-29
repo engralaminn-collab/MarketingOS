@@ -138,7 +138,7 @@ npm run backup:list      # show the register
 
 A snapshot is only marked `verified` after all five checks pass: file present, checksum matches, SQLite
 `integrity_check` returns `ok`, the 18 critical tables exist, and key row counts match the recorded manifest.
-Retention keeps the newest 14 by default (`BACKUP_RETENTION`). `./backups` and `./db` are gitignored — copy
+Automatic backup pruning is disabled; set an owner-approved retention policy and monitor disk usage. `./backups` and `./db` are gitignored — copy
 them off-host as part of your own disaster-recovery plan; a backup on the same disk is not a backup.
 
 ---

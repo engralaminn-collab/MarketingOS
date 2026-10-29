@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getActor } from '@/lib/agency';
+import { hasPermission } from '@/lib/auth';
 import { db } from '@/lib/db';
 
 const parse = (value: string) => {
@@ -14,6 +15,7 @@ const parse = (value: string) => {
 export async function GET(req: Request) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasPermission(actor.role, 'content_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const [personas, config, voices] = await Promise.all([
     db.brandPersona.findMany({ where: { companyId: actor.companyId }, orderBy: { createdAt: 'asc' } }),
@@ -45,6 +47,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasPermission(actor.role, 'content_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const body = await req.json().catch(() => null);
   if (!body || typeof body.name !== 'string' || !body.name.trim()) {
@@ -60,10 +63,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `This workspace allows ${limit} personas. Raise the limit in the client configuration first.` }, { status: 409 });
   }
 
-  const consentGranted = Boolean(body.consentGranted);
+  const consentGranted = body.consentGranted === true;
   const consentOwner = typeof body.consentOwner === 'string' ? body.consentOwner.trim().slice(0, 160) : '';
   const consentProof = typeof body.consentProof === 'string' ? body.consentProof.trim().slice(0, 300) : '';
   const requestedStatus = typeof body.status === 'string' ? body.status : 'draft';
+  if (!['draft', 'ready', 'paused', 'retired'].includes(requestedStatus)) return NextResponse.json({ error: 'Invalid persona status' }, { status: 400 });
   if (requestedStatus === 'ready' && (!consentGranted || !consentOwner || !consentProof)) {
     return NextResponse.json(
       { error: 'A persona cannot be activated without consentGranted, consentOwner and consentProof on record.' },
@@ -85,13 +89,15 @@ export async function POST(req: Request) {
     status: consentGranted && consentOwner && consentProof ? requestedStatus : 'draft',
   };
 
-  const persona = body.id
-    ? await db.brandPersona.updateMany({ where: { id: String(body.id), companyId: actor.companyId }, data }).then(async () => {
-        const updated = await db.brandPersona.findFirst({ where: { id: String(body.id), companyId: actor.companyId } });
-        if (!updated) throw new Error('Persona not found');
-        return updated;
-      })
-    : await db.brandPersona.create({ data: { ...data, companyId: actor.companyId } });
+  let persona;
+  if (body.id) {
+    const result = await db.brandPersona.updateMany({ where: { id: String(body.id), companyId: actor.companyId }, data });
+    if (result.count === 0) return NextResponse.json({ error: 'Persona not found' }, { status: 404 });
+    persona = await db.brandPersona.findFirst({ where: { id: String(body.id), companyId: actor.companyId } });
+    if (!persona) return NextResponse.json({ error: 'Persona not found' }, { status: 404 });
+  } else {
+    persona = await db.brandPersona.create({ data: { ...data, companyId: actor.companyId } });
+  }
 
   return NextResponse.json(
     {

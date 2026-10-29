@@ -1,3 +1,4 @@
+import { hasPermission } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { getActor } from '@/lib/agency';
 import { db } from '@/lib/db';
@@ -6,22 +7,23 @@ import { db } from '@/lib/db';
 export async function GET(req: Request) {
   const actor = await getActor(req);
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasPermission(actor.role, 'ai_agent_manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
   const departmentId = searchParams.get('departmentId');
   const category = searchParams.get('category');
   const q = (searchParams.get('q') || '').trim();
 
-  const where: Record<string, unknown> = { companyId: actor.companyId, isActive: true };
-  if (departmentId) where.departmentId = departmentId;
+  const where: Record<string, unknown> = { companyId: actor.companyId, isActive: true, departmentId: null, applicableRoles: '[]' };
+  if (departmentId) return NextResponse.json({ error: 'Department-specific SOP access is unavailable until role-aware policies are implemented.' }, { status: 403 });
   if (category && category !== 'all') where.category = category;
   if (q) where.OR = [{ name: { contains: q } }, { description: { contains: q } }, { category: { contains: q } }];
 
   const [rows, departments, total, categories] = await Promise.all([
     db.sop.findMany({ where, orderBy: [{ departmentId: 'asc' }, { name: 'asc' }], take: 400 }),
     db.department.findMany({ where: { companyId: actor.companyId }, select: { id: true, name: true, code: true } }),
-    db.sop.count({ where: { companyId: actor.companyId, isActive: true } }),
-    db.sop.groupBy({ by: ['category'], where: { companyId: actor.companyId, isActive: true }, _count: true }),
+    db.sop.count({ where: { companyId: actor.companyId, isActive: true, departmentId: null, applicableRoles: '[]' } }),
+    db.sop.groupBy({ by: ['category'], where: { companyId: actor.companyId, isActive: true, departmentId: null, applicableRoles: '[]' }, _count: true }),
   ]);
 
   const deptById = new Map(departments.map((d) => [d.id, d]));
