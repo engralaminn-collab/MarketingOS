@@ -111,6 +111,55 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
+        if (type === 'send_email') {
+          const to = text(config.to, 320);
+          const subject = text(config.subject || wf.name, 180);
+          const html = text(config.html || config.body, 100_000) || workingText;
+          if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(to)) throw new Error('send_email requires a valid recipient email in config.to');
+          if (!subject || !html) throw new Error('send_email requires a subject and body, or an earlier AI draft step');
+          const from = text(process.env.EMAIL_FROM, 320) || 'noreply@marketingos.local';
+          const record = await db.content.create({
+            data: { title: subject, body: html, type: 'email', platform: 'email', status: 'draft', companyId: actor.companyId, creatorId: actor.userId, aiGenerated: Boolean(workingText) },
+            select: { id: true },
+          });
+
+          let sentBy: string | null = null;
+          if (process.env.RESEND_API_KEY) {
+            const response = await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ from, to: [to], subject, html }),
+              signal: AbortSignal.timeout(15_000),
+            });
+            if (response.ok) sentBy = 'resend';
+            else throw new Error(`Resend rejected email delivery (HTTP ${response.status})`);
+          } else if (process.env.BREVO_API_KEY) {
+            const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+              method: 'POST',
+              headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sender: { email: from, name: 'MarketingOS' }, to: [{ email: to }], subject, htmlContent: html }),
+              signal: AbortSignal.timeout(15_000),
+            });
+            if (response.ok) sentBy = 'brevo';
+            else throw new Error(`Brevo rejected email delivery (HTTP ${response.status})`);
+          } else if (process.env.EMAIL_WEBHOOK_URL) {
+            const response = await fetch(process.env.EMAIL_WEBHOOK_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ from, to, subject, html }),
+              signal: AbortSignal.timeout(15_000),
+            });
+            if (response.ok) sentBy = 'webhook';
+            else throw new Error(`Email webhook rejected delivery (HTTP ${response.status})`);
+          } else {
+            throw new Error('Email delivery is not configured. Set RESEND_API_KEY, BREVO_API_KEY, or EMAIL_WEBHOOK_URL; use draft_email to save without sending.');
+          }
+
+          await db.content.update({ where: { id: record.id }, data: { status: 'published', publishedAt: new Date() } });
+          outputs.push({ step: i + 1, type, status: 'sent', provider: sentBy, contentId: record.id, durationMs: Date.now() - startedAt });
+          continue;
+        }
+
         if (type === 'save_draft' || type === 'create_content_draft' || type === 'draft_email' || type === 'email') {
           const title = text(config.title || config.subject || wf.name, 180);
           const contentBody = text(config.body, 100_000) || workingText;
