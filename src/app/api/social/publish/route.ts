@@ -38,7 +38,7 @@ async function postJson(url: string, token: string, body: Record<string, unknown
     const message = clean(payload.error?.message, 300);
     throw new Error(`Platform rejected the post (HTTP ${response.status})${message ? `: ${message}` : ''}`);
   }
-  return payload;
+  return { ...payload, id: payload.id || response.headers.get('x-restli-id') || undefined };
 }
 
 /**
