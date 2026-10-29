@@ -9,12 +9,22 @@ export const GET = withAuth(async (request, { params }) => {
       where: { id },
       include: {
         user: {
-          select: { id: true, name: true, email: true, avatar: true },
-          include: { studentProfile: { select: { studentId: true } } },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            studentProfile: { select: { studentId: true } },
+          },
         },
         fee: {
-          select: { id: true, amount: true, paidAmount: true, status: true },
-          include: { feeStructure: { select: { name: true, frequency: true } } },
+          select: {
+            id: true,
+            amount: true,
+            paidAmount: true,
+            status: true,
+            feeStructure: { select: { name: true, frequency: true } },
+          },
         },
       },
     });

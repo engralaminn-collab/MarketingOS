@@ -39,7 +39,7 @@ The codebase contains CRM, campaigns/content, analytics, feeds/market intelligen
 ## Agency operating model
 
 - `DepartmentRuntime` gives every department its own model profile (prompt, tier, temperature, guardrails, knowledge scope, SOP binding). `isolationMode=local` and `fallbackPolicy=none` are the defaults; the readiness audit fails if a hosted provider key is configured or a department allows fallback.
-- `AgentSpec` holds 2,000 executable agent definitions; `Employee` holds the 2,464 staff that run them. Departments, agents and SOPs are data rows, so growth needs no deploy.
+- `AgentSpec` holds 2,000 executable agent definitions; `Employee` holds the staff that run them (2,000 after `npm run agency:seed`, 20 per department). Departments, agents and SOPs are data rows, so growth needs no deploy.
 - A client is a `Company` + `ClientConfig` row (`POST /api/clients`), with `credentialMode`, `autoLogoutMinutes`, `passwordRotationDays`, allowed channels and a default `BrandVoice`. There is no per-client application, fork or deployment.
 - `BrandPersona` builds face agents only from client-supplied photos and refuses to activate or render without recorded consent and an in-scope channel.
 - Backups: `scripts/db-backup.sh` for deploy-time safety, `scripts/agency-backup.ts` for scheduled snapshots verified against a manifest. `./db` and `./backups` are gitignored and must be replicated off-host by the operator.

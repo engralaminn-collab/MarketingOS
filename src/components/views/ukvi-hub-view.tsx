@@ -97,7 +97,7 @@ export default function UkviHubView() {
       return;
     }
     try {
-      await apiFetch('/api/leads', {
+      await apiFetch('/api/crm/leads', {
         method: 'POST',
         body: JSON.stringify({
           name: studentName,

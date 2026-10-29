@@ -32,7 +32,10 @@ function adapterBase(): string | null {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const actor = await getActor(req);
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const base = adapterBase();
   return NextResponse.json({
     data: {

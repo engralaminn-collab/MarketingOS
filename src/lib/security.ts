@@ -3,7 +3,6 @@
 // ───────────────────────────────────────────────────────────────────────────────
 
 import { db } from "@/lib/db";
-import { hasPermission } from "@/lib/auth";
 
 // ─── Rate Limiter ──────────────────────────────────────────────────────────────
 
@@ -120,27 +119,4 @@ export function ipFromRequest(request: Request): string {
     }
   }
   return "127.0.0.1";
-}
-
-// ─── Role Hierarchy (single source of truth from auth.ts) ───────────────────────
-
-/** @deprecated Use `hasPermission` from @/lib/auth instead */
-export const ROLE_HIERARCHY = {
-  super_admin: 100,
-  company_owner: 90,
-  admin: 80,
-  manager: 70,
-  social_media_manager: 60,
-  content_manager: 60,
-  seo_manager: 60,
-  ai_agent_manager: 60,
-  customer_support: 50,
-  team_member: 40,
-  client_user: 30,
-  viewer: 20,
-} as const;
-
-/** @deprecated Use `hasPermission` from @/lib/auth instead */
-export function hasMinRole(userRole: string, requiredRole: string): boolean {
-  return hasPermission(userRole, requiredRole);
 }

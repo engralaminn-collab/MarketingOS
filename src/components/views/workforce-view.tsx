@@ -21,6 +21,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import { apiFetch } from '@/hooks/use-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
@@ -235,28 +236,6 @@ interface DeptNode {
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-
-const getToken = () => {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('mos_token') || '';
-};
-
-const apiFetch = async (url: string, options?: RequestInit) => {
-  const token = getToken();
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...options?.headers,
-    },
-  });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(data.error || `HTTP ${res.status}`);
-  }
-  return res.json();
-};
 
 const parseJsonSafe = <T,>(str: string, fallback: T): T => {
   try {

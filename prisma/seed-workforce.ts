@@ -1,4 +1,5 @@
 import { db as prisma } from '../src/lib/db';
+import { CORE_DEPARTMENTS } from './departments';
 
 // ==================== NAME DATA ====================
 const FIRST_NAMES = [
@@ -28,92 +29,8 @@ const LAST_NAMES = [
 ];
 
 // ==================== DEPARTMENT DEFINITIONS ====================
-interface DeptDef {
-  name: string; code: string; level: number; parentId?: string;
-  icon: string; color: string; description: string; sortOrder: number;
-}
 
-const DEPARTMENTS: DeptDef[] = [
-  // Level 0 - Executive
-  { name:'Executive Office', code:'EXE', level:0, icon:'Crown', color:'#f59e0b', description:'Strategic leadership and company-wide decision making', sortOrder:1 },
-  { name:'Marketing', code:'MKT', level:0, icon:'Megaphone', color:'#ef4444', description:'Brand awareness, lead generation, and customer acquisition', sortOrder:2 },
-  { name:'Sales', code:'SAL', level:0, icon:'DollarSign', color:'#22c55e', description:'Revenue generation and deal closing', sortOrder:3 },
-  { name:'Finance', code:'FIN', level:0, icon:'Calculator', color:'#6366f1', description:'Financial planning, accounting, and compliance', sortOrder:4 },
-  { name:'Engineering', code:'ENG', level:0, icon:'Code2', color:'#0ea5e9', description:'Software development and technical infrastructure', sortOrder:5 },
-  { name:'Operations', code:'OPS', level:0, icon:'Settings', color:'#8b5cf6', description:'Business operations and process optimization', sortOrder:6 },
-  { name:'Human Resources', code:'HR', level:0, icon:'Users', color:'#ec4899', description:'Talent acquisition, development, and employee relations', sortOrder:7 },
-  { name:'Customer Experience', code:'CX', level:0, icon:'Heart', color:'#f97316', description:'Customer satisfaction, support, and success', sortOrder:8 },
-  { name:'Product', code:'PRD', level:0, icon:'Package', color:'#14b8a6', description:'Product strategy, design, and lifecycle management', sortOrder:9 },
-  { name:'Data & Analytics', code:'DAT', level:0, icon:'BarChart3', color:'#06b6d4', description:'Data infrastructure, analytics, and business intelligence', sortOrder:10 },
-  { name:'Creative', code:'CRE', level:0, icon:'Palette', color:'#d946ef', description:'Visual design, video production, and creative assets', sortOrder:11 },
-  { name:'Legal & Compliance', code:'LEG', level:0, icon:'Shield', color:'#64748b', description:'Legal affairs, regulatory compliance, and risk management', sortOrder:12 },
 
-  // Level 1-2 - Marketing sub-departments
-  { name:'Content Marketing', code:'MKT-CNT', level:2, parentId:'MKT', icon:'FileText', color:'#f87171', description:'Blog posts, articles, whitepapers, and long-form content', sortOrder:1 },
-  { name:'Social Media Marketing', code:'MKT-SOC', level:2, parentId:'MKT', icon:'Share2', color:'#fb923c', description:'Social media strategy, posting, and community management', sortOrder:2 },
-  { name:'SEO & SEM', code:'MKT-SEO', level:2, parentId:'MKT', icon:'Search', color:'#a3e635', description:'Search engine optimization and paid search', sortOrder:3 },
-  { name:'Email Marketing', code:'MKT-EML', level:2, parentId:'MKT', icon:'Mail', color:'#fbbf24', description:'Email campaigns, automation, and deliverability', sortOrder:4 },
-  { name:'Performance Marketing', code:'MKT-PER', level:2, parentId:'MKT', icon:'Target', color:'#34d399', description:'Paid advertising, ROAS optimization, and attribution', sortOrder:5 },
-  { name:'Brand Strategy', code:'MKT-BRN', level:2, parentId:'MKT', icon:'Sparkles', color:'#c084fc', description:'Brand positioning, guidelines, and identity', sortOrder:6 },
-  { name:'Growth Marketing', code:'MKT-GRW', level:2, parentId:'MKT', icon:'TrendingUp', color:'#2dd4bf', description:'Growth experiments, viral loops, and funnel optimization', sortOrder:7 },
-  { name:'Partnership Marketing', code:'MKT-PAR', level:2, parentId:'MKT', icon:'Handshake', color:'#818cf8', description:'Co-marketing, affiliate programs, and strategic partnerships', sortOrder:8 },
-
-  // Level 3 - Marketing teams
-  { name:'Blog Writing Team', code:'MKT-CNT-BLG', level:3, parentId:'MKT-CNT', icon:'PenTool', color:'#fca5a5', description:'Blog content creation and editorial calendar', sortOrder:1 },
-  { name:'Content SEO Team', code:'MKT-CNT-SEO', level:3, parentId:'MKT-CNT', icon:'FileSearch', color:'#fdba74', description:'SEO-optimized content and keyword strategy', sortOrder:2 },
-  { name:'Social Content Team', code:'MKT-SOC-CNT', level:3, parentId:'MKT-SOC', icon:'ImagePlus', color:'#fde68a', description:'Social media content creation and curation', sortOrder:1 },
-  { name:'Community Management', code:'MKT-SOC-COM', level:3, parentId:'MKT-SOC', icon:'MessageCircle', color:'#d9f99d', description:'Community engagement and social listening', sortOrder:2 },
-  { name:'Technical SEO Team', code:'MKT-SEO-TEC', level:3, parentId:'MKT-SEO', icon:'Code', color:'#86efac', description:'Technical SEO audits and implementation', sortOrder:1 },
-  { name:'Link Building Team', code:'MKT-SEO-LNK', level:3, parentId:'MKT-SEO', icon:'Link', color:'#bbf7d0', description:'Backlink acquisition and link strategy', sortOrder:2 },
-  { name:'Email Design Team', code:'MKT-EML-DSN', level:3, parentId:'MKT-EML', icon:'LayoutTemplate', color:'#fcd34d', description:'Email template design and HTML production', sortOrder:1 },
-  { name:'Email Automation Team', code:'MKT-EML-AUT', level:3, parentId:'MKT-EML', icon:'Zap', color:'#fef08a', description:'Drip campaigns, triggers, and automation flows', sortOrder:2 },
-
-  // Sales sub-departments
-  { name:'Inside Sales', code:'SAL-INS', level:2, parentId:'SAL', icon:'Phone', color:'#4ade80', description:'Inbound lead qualification and closing', sortOrder:1 },
-  { name:'Enterprise Sales', code:'SAL-ENT', level:2, parentId:'SAL', icon:'Building2', color:'#22c55e', description:'Enterprise deal management and strategic accounts', sortOrder:2 },
-  { name:'Sales Development', code:'SAL-SDR', level:2, parentId:'SAL', icon:'UserPlus', color:'#16a34a', description:'Outbound prospecting and initial outreach', sortOrder:3 },
-  { name:'Sales Operations', code:'SAL-OPS', level:2, parentId:'SAL', icon:'PieChart', color:'#15803d', description:'Sales processes, tools, and analytics', sortOrder:4 },
-
-  // Finance sub-departments
-  { name:'Accounting', code:'FIN-ACC', level:2, parentId:'FIN', icon:'Receipt', color:'#818cf8', description:'Financial reporting, AP/AR, and reconciliation', sortOrder:1 },
-  { name:'FP&A', code:'FIN-FPA', level:2, parentId:'FIN', icon:'TrendingUp', color:'#6366f1', description:'Financial planning, budgeting, and forecasting', sortOrder:2 },
-  { name:'Treasury', code:'FIN-TRS', level:2, parentId:'FIN', icon:'Vault', color:'#4f46e5', description:'Cash management and treasury operations', sortOrder:3 },
-
-  // Engineering sub-departments
-  { name:'Frontend', code:'ENG-FE', level:2, parentId:'ENG', icon:'Monitor', color:'#38bdf8', description:'UI/UX implementation and client-side applications', sortOrder:1 },
-  { name:'Backend', code:'ENG-BE', level:2, parentId:'ENG', icon:'Server', color:'#0ea5e9', description:'Server-side development and APIs', sortOrder:2 },
-  { name:'DevOps', code:'ENG-OPS', level:2, parentId:'ENG', icon:'Container', color:'#0284c7', description:'Infrastructure, CI/CD, and deployment', sortOrder:3 },
-  { name:'AI/ML', code:'ENG-AI', level:2, parentId:'ENG', icon:'Brain', color:'#0369a1', description:'Machine learning models and AI systems', sortOrder:4 },
-  { name:'QA', code:'ENG-QA', level:2, parentId:'ENG', icon:'CheckCircle', color:'#075985', description:'Quality assurance and testing', sortOrder:5 },
-
-  // Operations sub-departments
-  { name:'Project Management', code:'OPS-PM', level:2, parentId:'OPS', icon:'Kanban', color:'#a78bfa', description:'Project planning, execution, and delivery', sortOrder:1 },
-  { name:'Supply Chain', code:'OPS-SC', level:2, parentId:'OPS', icon:'Truck', color:'#8b5cf6', description:'Supply chain management and logistics', sortOrder:2 },
-
-  // CX sub-departments
-  { name:'Customer Support', code:'CX-SUP', level:2, parentId:'CX', icon:'Headphones', color:'#fb923c', description:'Customer issue resolution and support', sortOrder:1 },
-  { name:'Customer Success', code:'CX-SUC', level:2, parentId:'CX', icon:'Award', color:'#f97316', description:'Onboarding, adoption, and retention', sortOrder:2 },
-
-  // Product sub-departments
-  { name:'Product Design', code:'PRD-DES', level:2, parentId:'PRD', icon:'Figma', color:'#2dd4bf', description:'UX research and product design', sortOrder:1 },
-  { name:'Product Management', code:'PRD-PM', level:2, parentId:'PRD', icon:'ClipboardList', color:'#14b8a6', description:'Product roadmap and feature prioritization', sortOrder:2 },
-
-  // Data sub-departments
-  { name:'Business Intelligence', code:'DAT-BI', level:2, parentId:'DAT', icon:'LineChart', color:'#22d3ee', description:'Dashboards, reporting, and insights', sortOrder:1 },
-  { name:'Data Engineering', code:'DAT-DE', level:2, parentId:'DAT', icon:'Database', color:'#06b6d4', description:'Data pipelines, warehousing, and ETL', sortOrder:2 },
-
-  // Creative sub-departments
-  { name:'Graphic Design', code:'CRE-GFX', level:2, parentId:'CRE', icon:'Paintbrush', color:'#e879f9', description:'Visual design, branding, and print assets', sortOrder:1 },
-  { name:'Video Production', code:'CRE-VID', level:2, parentId:'CRE', icon:'Video', color:'#d946ef', description:'Video creation, editing, and motion graphics', sortOrder:2 },
-
-  // HR sub-departments
-  { name:'Talent Acquisition', code:'HR-TAL', level:2, parentId:'HR', icon:'UserCheck', color:'#f472b6', description:'Recruiting, interviewing, and hiring', sortOrder:1 },
-  { name:'Learning & Development', code:'HR-LND', level:2, parentId:'HR', icon:'GraduationCap', color:'#ec4899', description:'Training, upskilling, and career development', sortOrder:2 },
-
-  // Legal sub-departments
-  { name:'Corporate Legal', code:'LEG-COR', level:2, parentId:'LEG', icon:'Scale', color:'#94a3b8', description:'Contracts, corporate governance, and IP', sortOrder:1 },
-  { name:'Compliance', code:'LEG-CMP', level:2, parentId:'LEG', icon:'ShieldCheck', color:'#64748b', description:'Regulatory compliance and audit', sortOrder:2 },
-];
 
 // ==================== ROLE TEMPLATES BY DEPARTMENT ====================
 const DEPT_ROLE_CONFIG: Record<string, {
@@ -367,7 +284,7 @@ async function main() {
   // 3. Seed Departments
   console.log('\n🏢 Seeding Departments...');
   const deptMap: Record<string, string> = {}; // code → id
-  for (const d of DEPARTMENTS) {
+  for (const d of CORE_DEPARTMENTS) {
     const existing = await prisma.department.findFirst({ where: { code: d.code, companyId } });
     if (existing) {
       deptMap[d.code] = existing.id;
@@ -377,8 +294,8 @@ async function main() {
       name: d.name, code: d.code, description: d.description,
       level: d.level, sortOrder: d.sortOrder, icon: d.icon, color: d.color, companyId,
     };
-    if (d.parentId && deptMap[d.parentId]) {
-      data.parentId = deptMap[d.parentId];
+    if (d.parent && deptMap[d.parent]) {
+      data.parentId = deptMap[d.parent];
     }
     const created = await prisma.department.create({ data });
     deptMap[d.code] = created.id;

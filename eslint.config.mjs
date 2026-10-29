@@ -44,7 +44,17 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "no-useless-escape": "off",
   },
 }, {
-  ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts", "examples/**", "skills"]
+  ignores: [
+    "node_modules/**",
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "examples/**",
+    "skills",
+    // PM2 loads this file with CommonJS `require`, which cannot use ESM imports.
+    "deploy/pm2/ecosystem.config.cjs",
+  ]
 }];
 
 export default eslintConfig;

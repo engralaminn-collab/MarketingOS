@@ -11,6 +11,20 @@ outside Git and must be checked against the running host before deployment.
 
 ---
 
+## 0. Reverse proxy, TLS and process management
+
+The application listens on plain HTTP at `127.0.0.1:3000`. Reviewed, checked-in
+configurations live in `deploy/`:
+
+- `deploy/caddy/Caddyfile` — TLS termination for the Compose deployment
+- `deploy/nginx/marketingos.conf` — Nginx + certbot
+- `deploy/pm2/ecosystem.config.cjs` — bare-metal PM2, single instance (SQLite)
+
+See [DEPLOYMENT-REVERSE-PROXY.md](DEPLOYMENT-REVERSE-PROXY.md). The repository
+root `Caddyfile` is the sandbox preview proxy and must not be deployed.
+
+---
+
 ## 1. The pipeline
 
 ```

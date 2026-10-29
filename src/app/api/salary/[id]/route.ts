@@ -10,10 +10,13 @@ export const GET = withAuth(async (request, { params }) => {
       where: { id },
       include: {
         user: {
-          select: { id: true, name: true, email: true, avatar: true },
-          include: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
             employeeProfile: {
-              include: {
+              select: {
                 department: { select: { name: true } },
                 designation: { select: { title: true } },
               },

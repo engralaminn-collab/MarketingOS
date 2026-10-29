@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, hasPermission, type SessionUser as AuthUser } from "@/lib/auth";
+import { rateLimiter } from "@/lib/security";
 
 export type { AuthUser };
 
@@ -23,7 +24,19 @@ type AuthHandler = (
 interface WithAuthOptions {
   minRole?: string;
   allowPublic?: boolean;
+  /**
+   * Requests allowed per authenticated user per minute. Set to 0 to disable
+   * (only for endpoints that already carry their own limiter, e.g. login).
+   */
+  maxRequestsPerMinute?: number;
 }
+
+/**
+ * Default per-user budget for every authenticated route. Chosen well above the
+ * busiest dashboard view so normal use never sees a 429, while still stopping
+ * a runaway script from pinning the single SQLite writer.
+ */
+const DEFAULT_REQUESTS_PER_MINUTE = 600;
 
 export function withAuth(
   handler: AuthHandler,
@@ -51,6 +64,27 @@ export function withAuth(
     // Enforce minimum role if specified
     if (options?.minRole && !hasPermission(user.role, options.minRole)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Per-user request budget (in-process; see docs/DEPLOYMENT-REVERSE-PROXY.md
+    // for the edge-level limiter used in front of multi-instance deployments).
+    const budget = options?.maxRequestsPerMinute ?? DEFAULT_REQUESTS_PER_MINUTE;
+    if (budget > 0) {
+      const limit = rateLimiter(`user:${user.userId}`, {
+        maxRequests: budget,
+        windowMs: 60_000,
+      });
+      if (!limit.allowed) {
+        return NextResponse.json(
+          { error: "Too many requests. Please retry shortly." },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(Math.max(1, Math.ceil(limit.retryAfterMs / 1000))),
+            },
+          }
+        );
+      }
     }
 
     return handler(request, { user, params });

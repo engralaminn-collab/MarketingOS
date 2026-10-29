@@ -14,7 +14,19 @@ import { db } from '@/lib/db';
  */
 
 export const BACKUP_DIR = process.env.BACKUP_DIR || path.join(process.cwd(), 'backups');
-const DEFAULT_RETENTION = Number(process.env.BACKUP_RETENTION || 14);
+
+/**
+ * Number of snapshots kept before the oldest are pruned. A malformed or
+ * non-positive value must not silently disable retention (or prune the backup
+ * that was just taken), so anything invalid falls back to 14.
+ */
+function resolveRetention(raw: string | undefined): number {
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 14;
+}
+
+export const BACKUP_RETENTION = resolveRetention(process.env.BACKUP_RETENTION);
+const DEFAULT_RETENTION = BACKUP_RETENTION;
 
 /** Tables that must be present and are counted in every backup. */
 export const CRITICAL_TABLES = [
