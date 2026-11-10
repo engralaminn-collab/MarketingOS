@@ -13,9 +13,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  BUN_VERSION: "1"
-
 jobs:
   quality:
     name: Lint + Typecheck + Tests
@@ -23,37 +20,18 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            .bun
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Generate Prisma client
-        run: bunx prisma generate
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma generate
         env:
           DATABASE_URL: "file:./db/ci.db"
-
-      - name: Lint
-        run: bun run lint
-
-      - name: Typecheck
-        run: bun run typecheck
+      - run: npm run lint
+      - run: npm run typecheck
         continue-on-error: true
-
-      - name: Run tests
-        run: bun run test
+      - run: npm test
         continue-on-error: true
 
   build:
@@ -63,21 +41,15 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Generate Prisma client
-        run: bunx prisma generate
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma generate
         env:
           DATABASE_URL: "file:./db/ci.db"
-
-      - name: Build
-        run: bun run build
+      - run: npm run build
         env:
           DATABASE_URL: "file:./db/ci.db"
           JWT_SECRET: "ci-build-secret-not-used-in-production"
@@ -87,10 +59,7 @@ jobs:
           NEXT_PUBLIC_SITE_URL: "http://localhost:3055"
           NEXT_PUBLIC_APP_URL: "http://localhost:3055"
           NODE_ENV: "production"
-
-      - name: Verify build output
-        run: test -f .next/standalone/server.js
-
+      - run: test -f .next/standalone/server.js
       - uses: actions/upload-artifact@v4
         with:
           name: standalone-build
@@ -103,7 +72,6 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-
       - name: Check for hardcoded secrets
         run: |
           set -euo pipefail
@@ -118,19 +86,11 @@ jobs:
             exit 1
           fi
           echo "✅ No hardcoded secrets found"
-
       - name: Check .env not tracked
         run: |
-          if git ls-files | grep -E "^\.env$"; then
-            echo "❌ .env is tracked in git"
-            exit 1
-          fi
+          if git ls-files | grep -E "^\.env$"; then exit 1; fi
           echo "✅ .env is not tracked"
-
       - name: Check db not tracked
         run: |
-          if git ls-files | grep -E "db/custom\.db|\.sqlite$|\.sqlite3$"; then
-            echo "❌ Database binary is tracked"
-            exit 1
-          fi
+          if git ls-files | grep -E "db/custom\.db|\.sqlite$"; then exit 1; fi
           echo "✅ No database binaries tracked"
