@@ -90,6 +90,7 @@ model Company {
   skills       Skill[]
   prompts      Prompt[]
   agentProfiles AgentProfile[]
+  suppressionList SuppressionList[]
 }
 
 // ==================== USER & ROLES ====================
@@ -2589,4 +2590,21 @@ model AgentProfile {
 
   @@index([companyId, isActive])
   @@index([companyId, department])
+}
+
+// ==================== SUPPRESSION LIST (DNC) ====================
+model SuppressionList {
+  id              String   @id @default(cuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  phoneNumber     String
+  reason          String   @default("user_request")  // user_request | complaint | dnc_registry | admin_block
+  source          String   @default("web_form")  // web_form | sms_reply | ivr | admin | api
+  blockedAt       DateTime @default(now())
+  expiresAt      DateTime?
+  createdBy       String?
+  createdAt       DateTime @default(now())
+
+  @@unique([companyId, phoneNumber])
+  @@index([companyId, phoneNumber])
 }
