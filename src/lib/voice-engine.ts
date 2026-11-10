@@ -126,6 +126,28 @@ export async function synthesize(input: TtsInput): Promise<TtsResult> {
     }
   } catch { /* fall through */ }
 
+  // Fallback: Google Translate TTS (free, no API key, supports Bangla)
+  try {
+    const lang = language === 'bn-BD' ? 'bn' : 'en';
+    const text = encodeURIComponent(input.text.slice(0, 200)); // Google TTS limit ~200 chars
+    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${text}&tl=${lang}&client=tw-ob`;
+    const res = await fetch(ttsUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MarketingOS/1.0)' } });
+    if (res.ok) {
+      const buf = await res.arrayBuffer();
+      const audioBase64 = Buffer.from(buf).toString('base64');
+      await trackTtsUsage(input.companyId, 'google_translate', language, input.text.length, Math.round(buf.byteLength / 16000));
+      return {
+        audioBase64,
+        audioUrl: undefined,
+        durationSec: Math.round(buf.byteLength / 16000),
+        provider: 'google_translate' as any,
+        modelId: 'google-translate-tts',
+        simulated: false,
+        charactersProcessed: input.text.length,
+      };
+    }
+  } catch { /* fall through */ }
+
   // Fallback: Kokoro (Apache 2.0) — if configured
   if (process.env.KOKORO_BASE_URL) {
     try {
