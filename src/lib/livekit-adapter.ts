@@ -24,7 +24,7 @@
  * it does not replace it.
  */
 import { AccessToken, RoomServiceClient, WebhookReceiver } from 'livekit-server-sdk';
-import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant } from 'livekit-client';
+// livekit-client is imported browser-side only (in the frontend component)
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
