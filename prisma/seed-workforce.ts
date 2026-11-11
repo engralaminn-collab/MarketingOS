@@ -1,7 +1,31 @@
-// @ts-nocheck — temporary: see audit for fix plan
+/**
+ * MarketingOS — AI Workforce seed (idempotent, SQLite-safe).
+ *
+ * Datasource: SQLite. SQLite does NOT support `createMany({ skipDuplicates: true })`,
+ * so this script queries existing unique keys (Employee.employeeId, Department.code)
+ * and inserts ONLY missing records, wrapped in `$transaction` for atomicity.
+ *
+ * Multi-tenant safety: attaches all records to the canonical company
+ * (slug='demo-agency', created by prisma/seed.ts). If wrong-tenant employees or
+ * departments are detected (created by a prior buggy seed), they are reconciled
+ * to the canonical company via a non-destructive UPDATE (IDs preserved).
+ *
+ * Exit codes:
+ *   0  — all records inserted or skipped idempotently.
+ *   1  — a database error occurred (error + record identifier printed).
+ */
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+// ── Idempotency counters (printed in final summary) ─────────────────────────
+const counters = {
+  employeesInserted: 0, employeesSkipped: 0, employeesReconciled: 0,
+  departmentsInserted: 0, departmentsSkipped: 0, departmentsReconciled: 0,
+  sopsInserted: 0, sopsSkipped: 0,
+  knowledgeNodesInserted: 0, knowledgeNodesSkipped: 0,
+  modelConfigsInserted: 0, modelConfigsSkipped: 0,
+};
 
 // ==================== NAME DATA ====================
 const FIRST_NAMES = [
@@ -338,42 +362,70 @@ async function main() {
   console.log('🚀 Starting AI Workforce Seeding...');
   console.log('=' .repeat(60));
 
-  // 1. Get or create company
-  let company = await prisma.company.findFirst({ where: { slug: 'demo' } });
+  // 1. Resolve canonical company (slug='demo-agency', created by prisma/seed.ts).
+  //    Never create a phantom second company — that was the original bug.
+  const company = await prisma.company.findUnique({ where: { slug: 'demo-agency' } });
   if (!company) {
-    company = await prisma.company.create({
-      data: {
-        name: 'Demo Company',
-        slug: 'demo',
-        industry: 'Technology',
-        marketingGoals: 'Increase brand awareness, generate quality leads, improve customer retention',
-        targetAudience: 'B2B SaaS companies, marketing professionals, growth teams',
-      },
-    });
-    console.log('✅ Created demo company');
-  } else {
-    console.log('✅ Found existing demo company');
+    throw new Error(
+      "Canonical company with slug='demo-agency' not found. " +
+      "Run `npx tsx prisma/seed.ts` first to create the demo company, then re-run this script."
+    );
   }
   const companyId = company.id;
+  console.log(`✅ Canonical company resolved: ${company.slug} (${company.id})`);
 
-  // 2. Seed Model Configs
+  // 1b. Reconcile wrong-tenant departments/employees created by the prior buggy
+  //     seed (which used slug='demo'). This is a NON-DESTRUCTIVE UPDATE — IDs are
+  //     preserved, only companyId is corrected so records attach to the canonical
+  //     tenant. No deletes, no truncates.
+  const wrongDepts = await prisma.department.findMany({
+    where: { companyId: { not: companyId }, code: { in: DEPARTMENTS.map(d => d.code) } },
+    select: { id: true, code: true, companyId: true },
+  });
+  if (wrongDepts.length > 0) {
+    console.log(`⚠️  Found ${wrongDepts.length} departments attached to a non-canonical company. Reconciling companyId → ${companyId} (IDs preserved).`);
+    await prisma.department.updateMany({
+      where: { id: { in: wrongDepts.map(d => d.id) } },
+      data: { companyId },
+    });
+    counters.departmentsReconciled = wrongDepts.length;
+  }
+
+  const wrongEmps = await prisma.employee.findMany({
+    where: { companyId: { not: companyId }, employeeId: { startsWith: 'EMP-' } },
+    select: { id: true, employeeId: true, companyId: true },
+  });
+  if (wrongEmps.length > 0) {
+    console.log(`⚠️  Found ${wrongEmps.length} employees attached to a non-canonical company. Reconciling companyId → ${companyId} (IDs preserved).`);
+    await prisma.employee.updateMany({
+      where: { id: { in: wrongEmps.map(e => e.id) } },
+      data: { companyId },
+    });
+    counters.employeesReconciled = wrongEmps.length;
+  }
+
+  // 2. Seed Model Configs (idempotent via upsert on id).
   console.log('\n📦 Seeding Model Configs...');
   for (const mc of MODEL_CONFIGS) {
-    await prisma.modelConfig.upsert({
-      where: { id: `model-${mc.name}` },
-      update: {},
-      create: { id: `model-${mc.name}`, ...mc, isEnabled: true, isFallback: false, config: '{}' },
+    const existing = await prisma.modelConfig.findUnique({ where: { id: `model-${mc.name}` } });
+    if (existing) { counters.modelConfigsSkipped++; continue; }
+    await prisma.modelConfig.create({
+      data: { id: `model-${mc.name}`, ...mc, isEnabled: true, isFallback: false, config: '{}' },
     });
+    counters.modelConfigsInserted++;
   }
-  console.log(`✅ Seeded ${MODEL_CONFIGS.length} model configs`);
+  console.log(`  Inserted: ${counters.modelConfigsInserted}  |  Skipped: ${counters.modelConfigsSkipped}`);
 
-  // 3. Seed Departments
+  // 3. Seed Departments (idempotent via findUnique on globally-unique `code`).
+  //    Department.code is @unique globally — we look it up across all tenants
+  //    and use it if found, create only if missing.
   console.log('\n🏢 Seeding Departments...');
   const deptMap: Record<string, string> = {}; // code → id
   for (const d of DEPARTMENTS) {
-    const existing = await prisma.department.findFirst({ where: { code: d.code, companyId } });
+    const existing = await prisma.department.findUnique({ where: { code: d.code } });
     if (existing) {
       deptMap[d.code] = existing.id;
+      counters.departmentsSkipped++;
       continue;
     }
     const data: any = {
@@ -383,32 +435,46 @@ async function main() {
     if (d.parentId && deptMap[d.parentId]) {
       data.parentId = deptMap[d.parentId];
     }
-    const created = await prisma.department.create({ data });
-    deptMap[d.code] = created.id;
-  }
-  console.log(`✅ Seeded ${Object.keys(deptMap).length} departments`);
-
-  // 4. Seed 2,000 Employees
-  console.log('\n👥 Seeding 2,000 AI Employees...');
-
-  // Count existing
-  const existingCount = await prisma.employee.count({ where: { companyId } });
-  if (existingCount >= 2000) {
-    console.log(`✅ Already have ${existingCount} employees, skipping`);
-  } else {
-    // Clear existing employees for clean seed
-    if (existingCount > 0) {
-      await prisma.taskExecution.deleteMany({ where: { companyId } });
-      await prisma.employeeMemory.deleteMany({});
-      await prisma.workforceConversation.deleteMany({ where: { companyId } });
-      await prisma.employee.deleteMany({ where: { companyId } });
-      console.log('🗑️  Cleared existing workforce data');
+    try {
+      const created = await prisma.department.create({ data });
+      deptMap[d.code] = created.id;
+      counters.departmentsInserted++;
+    } catch (e: any) {
+      throw new Error(`Failed to create Department code='${d.code}' name='${d.name}': ${e?.message ?? e}`);
     }
+  }
+  console.log(`  Inserted: ${counters.departmentsInserted}  |  Skipped: ${counters.departmentsSkipped}  |  Total: ${Object.keys(deptMap).length}`);
 
-    // Get all departments for distribution
-    const allDepts = await prisma.department.findMany({ where: { companyId } });
-    const deptCodes = allDepts.map(d => d.code);
-    const levelDepts = allDepts.filter(d => d.level >= 2); // Departments at level 2+ for employee assignment
+  // 4. Seed 2,000 AI Employees — idempotent.
+  //    SQLite does not support createMany({ skipDuplicates: true }), so we:
+  //      (a) compute the full set of intended employeeIds (EMP-0001..EMP-2000),
+  //      (b) query existing employeeIds (globally unique),
+  //      (c) build batches of ONLY missing records,
+  //      (d) insert each batch inside $transaction for atomicity.
+  //    Existing employees are NEVER deleted, NEVER mutated. Re-runs are safe.
+  console.log('\n👥 Seeding 2,000 AI Employees (idempotent)...');
+
+  const TARGET_EMPLOYEE_COUNT = 2000;
+  const allIntendedIds = Array.from({ length: TARGET_EMPLOYEE_COUNT }, (_, i) => `EMP-${String(i + 1).padStart(4, '0')}`);
+  const existingEmpIds = new Set(
+    (await prisma.employee.findMany({
+      where: { employeeId: { in: allIntendedIds } },
+      select: { employeeId: true },
+    })).map(e => e.employeeId)
+  );
+  counters.employeesSkipped = existingEmpIds.size;
+  const missingCount = TARGET_EMPLOYEE_COUNT - existingEmpIds.size;
+  console.log(`  Existing employees (skipped): ${existingEmpIds.size}  |  To insert: ${missingCount}`);
+
+  if (missingCount === 0) {
+    console.log('  ✅ All 2,000 employees already present — nothing to insert.');
+  } else {
+    // Get all departments for distribution (use deptMap for parent lookups)
+    const allDepts = await prisma.department.findMany({
+      where: { code: { in: Object.keys(deptMap) } },
+      select: { id: true, code: true, level: true },
+    });
+    const levelDepts = allDepts.filter(d => d.level >= 2);
 
     // Employee distribution
     const levelDistribution = [
@@ -436,11 +502,22 @@ async function main() {
       }
     }
 
+    // Pre-populate levelEmployeeIds with EXISTING employees so the hierarchy
+    // builder can reference them even when we insert only a subset on re-runs.
+    const levelEmployeeIds: Record<string, string[]> = {
+      executive: [], director: [], manager: [], supervisor: [], specialist: [], worker: [],
+    };
+    const existingEmps = await prisma.employee.findMany({
+      where: { employeeId: { in: allIntendedIds } },
+      select: { id: true, employeeId: true, level: true },
+    });
+    for (const emp of existingEmps) {
+      if (levelEmployeeIds[emp.level]) levelEmployeeIds[emp.level].push(emp.id);
+    }
+
     let employeeIndex = 0;
     const BATCH_SIZE = 100;
     let batch: any[] = [];
-    const reportsToMap: Record<string, string> = {}; // level → employee id (for hierarchy)
-    const levelEmployeeIds: Record<string, string[]> = { executive: [], director: [], manager: [], supervisor: [], specialist: [], worker: [] };
 
     const usedNames = new Set<string>();
     function getUniqueName(): string {
@@ -455,11 +532,14 @@ async function main() {
     }
 
     for (const { level, count } of levelDistribution) {
-      console.log(`  📋 Creating ${count} ${level} employees...`);
+      console.log(`  📋 Level '${level}' — target ${count} employees...`);
 
       for (let i = 0; i < count; i++) {
         employeeIndex++;
         const empNum = String(employeeIndex).padStart(4, '0');
+        const employeeId = `EMP-${empNum}`;
+        // Idempotency: skip if this employeeId already exists.
+        if (existingEmpIds.has(employeeId)) continue;
         const name = getUniqueName();
         const status = getStatus();
         const modelTier = getModelTier(level);
@@ -492,7 +572,7 @@ async function main() {
         const kpiDefs = pickN(config.kpis, rand(2, Math.min(4, config.kpis.length)));
         const currentKpis: Record<string, number> = {};
         for (const kpi of kpiDefs) {
-          currentKpis[kpi] = Math.round((Math.random() * 40 + 60) * 100) / 100; // 60-100
+          currentKpis[kpi] = Math.round((Math.random() * 40 + 60) * 100) / 100;
         }
 
         // Performance stats based on level
@@ -551,14 +631,14 @@ async function main() {
           level === 'specialist' ? 'supervisor' :
           level === 'supervisor' ? 'manager' :
           level === 'manager' ? 'director' :
-          level === 'director' ? 'executive' : undefined]?.[rand(0, Math.max(0, (levelEmployeeIds[level === 'worker' ? 'supervisor' :
+          level === 'director' ? 'executive' : 'executive']?.[rand(0, Math.max(0, (levelEmployeeIds[level === 'worker' ? 'supervisor' :
           level === 'specialist' ? 'supervisor' :
           level === 'supervisor' ? 'manager' :
           level === 'manager' ? 'director' :
           level === 'director' ? 'executive' : 'executive'] || []).length - 1))] || null;
 
         batch.push({
-          employeeId: `EMP-${empNum}`,
+          employeeId,
           name,
           title,
           level,
@@ -595,19 +675,26 @@ async function main() {
           companyId,
         });
 
-        // Flush batch
+        // Flush batch — wrap in $transaction for atomicity.
         if (batch.length >= BATCH_SIZE) {
-          const created = await prisma.employee.createMany({ data: batch });
-          // Get the created employees for hierarchy
+          const batchIds = batch.map(b => b.employeeId);
+          try {
+            await prisma.$transaction(async (tx) => {
+              await tx.employee.createMany({ data: batch });
+            });
+          } catch (e: any) {
+            throw new Error(`Failed to insert employee batch [${batchIds[0]}..${batchIds[batchIds.length - 1]}] (size=${batch.length}): ${e?.message ?? e}`);
+          }
           const createdEmps = await prisma.employee.findMany({
-            where: { companyId, employeeId: { in: batch.map(b => b.employeeId) } },
+            where: { employeeId: { in: batchIds } },
             select: { id: true, employeeId: true, level: true },
           });
           for (const emp of createdEmps) {
             levelEmployeeIds[emp.level] = levelEmployeeIds[emp.level] || [];
             levelEmployeeIds[emp.level].push(emp.id);
           }
-          console.log(`    ✅ Batch: ${employeeIndex - batch.length + 1}-${employeeIndex} (${created.count} created)`);
+          counters.employeesInserted += batch.length;
+          console.log(`    ✅ Inserted batch [${batchIds[0]}..${batchIds[batchIds.length - 1]}] (${batch.length} records)`);
           batch = [];
         }
       }
@@ -615,16 +702,24 @@ async function main() {
 
     // Flush remaining
     if (batch.length > 0) {
-      const created = await prisma.employee.createMany({ data: batch });
+      const batchIds = batch.map(b => b.employeeId);
+      try {
+        await prisma.$transaction(async (tx) => {
+          await tx.employee.createMany({ data: batch });
+        });
+      } catch (e: any) {
+        throw new Error(`Failed to insert final employee batch [${batchIds[0]}..${batchIds[batchIds.length - 1]}] (size=${batch.length}): ${e?.message ?? e}`);
+      }
       const createdEmps = await prisma.employee.findMany({
-        where: { companyId, employeeId: { in: batch.map(b => b.employeeId) } },
+        where: { employeeId: { in: batchIds } },
         select: { id: true, employeeId: true, level: true },
       });
       for (const emp of createdEmps) {
         levelEmployeeIds[emp.level] = levelEmployeeIds[emp.level] || [];
         levelEmployeeIds[emp.level].push(emp.id);
       }
-      console.log(`    ✅ Final batch: ${employeeIndex - batch.length + 1}-${employeeIndex} (${created.count} created)`);
+      counters.employeesInserted += batch.length;
+      console.log(`    ✅ Inserted final batch [${batchIds[0]}..${batchIds[batchIds.length - 1]}] (${batch.length} records)`);
     }
 
     // Update reportsToId with actual created IDs
@@ -646,7 +741,6 @@ async function main() {
       else if (emp.level === 'director') targetLevel = 'executive';
 
       if (targetLevel && empByLevel[targetLevel] && empByLevel[targetLevel].length > 0) {
-        // Pick a random supervisor from the target level
         const supervisor = empByLevel[targetLevel][Math.floor(Math.random() * empByLevel[targetLevel].length)];
         if (supervisor.id !== emp.id) {
           hierarchyUpdates.push({ id: emp.id, reportsToId: supervisor.id });
@@ -654,7 +748,6 @@ async function main() {
       }
     }
 
-    // Apply hierarchy in batches
     for (let i = 0; i < hierarchyUpdates.length; i += 100) {
       const chunk = hierarchyUpdates.slice(i, i + 100);
       await Promise.all(chunk.map(u => prisma.employee.update({ where: { id: u.id }, data: { reportsToId: u.reportsToId } })));
@@ -665,8 +758,8 @@ async function main() {
     console.log(`✅ Total employees: ${totalCount}`);
   }
 
-  // 5. Seed SOPs
-  console.log('\n📋 Seeding SOPs...');
+  // 5. Seed SOPs (idempotent via findUnique on id='sop-${category}').
+  console.log('\n📋 Seeding SOPs (idempotent)...');
   const sops = [
     { name: 'Content Creation Workflow', description: 'Standard process for creating marketing content', category: 'content_creation', triggerConditions: JSON.stringify([{ taskType: 'content_creation' }]), steps: JSON.stringify([{ order: 1, title: 'Understand Brief', description: 'Analyze the content brief, target audience, and objectives' }, { order: 2, title: 'Research', description: 'Conduct topic research, keyword analysis, and competitor review' }, { order: 3, title: 'Outline', description: 'Create content outline with structure and key points' }, { order: 4, title: 'Draft', description: 'Write the content following brand guidelines and SEO best practices' }, { order: 5, title: 'Review', description: 'Self-review for quality, accuracy, and brand consistency', decisionPoints: [{ question: 'Does content meet quality standards?', yes: 'proceed', no: 'revise_draft' }] }, { order: 6, title: 'Optimize', description: 'Apply SEO optimization, internal links, and CTAs' }, { order: 7, title: 'Final Review', description: 'Supervisor/manager review and approval' }]), preconditions: JSON.stringify(['content_brief_exists', 'target_audience_defined']), applicableRoles: JSON.stringify(['specialist', 'supervisor', 'manager']), applicableTasks: JSON.stringify(['content_creation', 'blog_writing', 'social_post', 'email_copy']) },
     { name: 'Lead Qualification Process', description: 'Process for qualifying inbound and outbound leads', category: 'lead_qualification', triggerConditions: JSON.stringify([{ taskType: 'lead_qualification' }]), steps: JSON.stringify([{ order: 1, title: 'Lead Intake', description: 'Receive and log lead information' }, { order: 2, title: 'Initial Research', description: 'Research company, role, and potential fit' }, { order: 3, title: 'Score Lead', description: 'Apply lead scoring criteria (BANT or similar)' }, { order: 4, title: 'Outreach', description: 'Initiate contact via preferred channel', decisionPoints: [{ question: 'Lead responded?', yes: 'schedule_call', no: 'nurture_sequence' }] }, { order: 5, title: 'Discovery Call', description: 'Conduct discovery call to understand needs' }, { order: 6, title: 'Qualify/Disqualify', description: 'Make final qualification decision' }]), preconditions: JSON.stringify(['lead_data_available']), applicableRoles: JSON.stringify(['specialist', 'supervisor']), applicableTasks: JSON.stringify(['lead_qualification', 'prospect_outreach']) },
@@ -679,16 +772,17 @@ async function main() {
   ];
 
   for (const sop of sops) {
-    await prisma.sop.upsert({
-      where: { id: `sop-${sop.category}` },
-      update: {},
-      create: { id: `sop-${sop.category}`, ...sop, companyId, isActive: true, usageCount: 0, successRate: 0, version: 1 },
+    const existing = await prisma.sop.findUnique({ where: { id: `sop-${sop.category}` } });
+    if (existing) { counters.sopsSkipped++; continue; }
+    await prisma.sop.create({
+      data: { id: `sop-${sop.category}`, ...sop, companyId, isActive: true, usageCount: 0, successRate: 0, version: 1 },
     });
+    counters.sopsInserted++;
   }
-  console.log(`✅ Seeded ${sops.length} SOPs`);
+  console.log(`  Inserted: ${counters.sopsInserted}  |  Skipped: ${counters.sopsSkipped}  |  Total: ${sops.length}`);
 
-  // 6. Seed Knowledge Nodes
-  console.log('\n📚 Seeding Knowledge Nodes...');
+  // 6. Seed Knowledge Nodes (idempotent via findUnique on id='kn-${i+1}').
+  console.log('\n📚 Seeding Knowledge Nodes (idempotent)...');
   const knowledgeNodes = [
     { title: 'Marketing Funnel Stages', content: 'The marketing funnel consists of: Awareness (top), Interest, Consideration, Intent, Evaluation, Purchase (bottom). Each stage requires different content types and messaging strategies.', summary: 'Overview of marketing funnel stages', nodeType: 'best_practice', tags: JSON.stringify(['marketing', 'funnel', 'strategy', 'stages']), category: 'Marketing Fundamentals', accessLevel: 'company' },
     { title: 'SEO Best Practices 2025', content: 'Key SEO practices: Core Web Vitals optimization, E-E-A-T content quality, mobile-first indexing, structured data markup, internal linking strategy, and topical authority building. Focus on user intent matching rather than keyword density.', summary: 'Current SEO best practices', nodeType: 'best_practice', tags: JSON.stringify(['seo', 'optimization', 'search', 'ranking']), category: 'SEO', accessLevel: 'company' },
@@ -712,7 +806,10 @@ async function main() {
 
   for (let i = 0; i < knowledgeNodes.length; i++) {
     const kn = knowledgeNodes[i];
-    const deptMap: Record<string, string | undefined> = {
+    const knId = `kn-${i + 1}`;
+    const existing = await prisma.knowledgeNode.findUnique({ where: { id: knId } });
+    if (existing) { counters.knowledgeNodesSkipped++; continue; }
+    const deptMapKn: Record<string, string | undefined> = {
       'Marketing Fundamentals': mktDept?.id,
       'Marketing': mktDept?.id,
       'SEO': mktDept?.id,
@@ -725,38 +822,46 @@ async function main() {
       'Finance': finDept?.id,
       'Engineering': engDept?.id,
     };
-    await prisma.knowledgeNode.upsert({
-      where: { id: `kn-${i + 1}` },
-      update: {},
-      create: {
-        id: `kn-${i + 1}`,
+    await prisma.knowledgeNode.create({
+      data: {
+        id: knId,
         ...kn,
-        departmentId: deptMap[kn.category] || null,
+        departmentId: deptMapKn[kn.category] || null,
         accessRoles: JSON.stringify(['executive', 'director', 'manager', 'supervisor', 'specialist', 'worker']),
         companyId,
       },
     });
+    counters.knowledgeNodesInserted++;
   }
-  console.log(`✅ Seeded ${knowledgeNodes.length} knowledge nodes`);
+  console.log(`  Inserted: ${counters.knowledgeNodesInserted}  |  Skipped: ${counters.knowledgeNodesSkipped}  |  Total: ${knowledgeNodes.length}`);
 
-  // Final count
-  const finalCount = await prisma.employee.count({ where: { companyId } });
-  const deptCount = await prisma.department.count({ where: { companyId } });
-  const sopCount = await prisma.sop.count({ where: { companyId } });
-  const knCount = await prisma.knowledgeNode.count({ where: { companyId } });
-  const modelCount = await prisma.modelConfig.count();
+  // ── Verified final summary ──────────────────────────────────────────────
+  const [finalCount, deptCount, sopCount, knCount, modelCount] = await Promise.all([
+    prisma.employee.count({ where: { companyId } }),
+    prisma.department.count({ where: { companyId } }),
+    prisma.sop.count({ where: { companyId } }),
+    prisma.knowledgeNode.count({ where: { companyId } }),
+    prisma.modelConfig.count(),
+  ]);
 
   console.log('\n' + '='.repeat(60));
-  console.log('🎉 AI WORKFORCE SEEDING COMPLETE');
+  console.log('✅ AI Workforce seed complete (idempotent, verified).');
   console.log('='.repeat(60));
-  console.log(`  👥 Employees:      ${finalCount}`);
-  console.log(`  🏢 Departments:   ${deptCount}`);
-  console.log(`  📋 SOPs:          ${sopCount}`);
-  console.log(`  📚 Knowledge:     ${knCount}`);
-  console.log(`  🤖 Models:        ${modelCount}`);
+  console.log('  Inserted / Skipped / Reconciled');
+  console.log(`  👥 Employees:   inserted=${counters.employeesInserted}  skipped=${counters.employeesSkipped}  reconciled=${counters.employeesReconciled}  | total=${finalCount}`);
+  console.log(`  🏢 Departments: inserted=${counters.departmentsInserted}  skipped=${counters.departmentsSkipped}  reconciled=${counters.departmentsReconciled}  | total=${deptCount}`);
+  console.log(`  📋 SOPs:        inserted=${counters.sopsInserted}  skipped=${counters.sopsSkipped}  | total=${sopCount}`);
+  console.log(`  📚 Knowledge:   inserted=${counters.knowledgeNodesInserted}  skipped=${counters.knowledgeNodesSkipped}  | total=${knCount}`);
+  console.log(`  🤖 ModelConfigs: inserted=${counters.modelConfigsInserted}  skipped=${counters.modelConfigsSkipped}  | total=${modelCount}`);
   console.log('='.repeat(60));
 }
 
 main()
-  .catch((e) => { console.error('Seed error:', e); process.exit(1); })
+  .catch((e) => {
+    console.error('\n❌ AI Workforce seed FAILED.');
+    console.error('  Error:', e?.message ?? e);
+    if (e?.code) console.error('  Prisma error code:', e.code);
+    if (e?.meta) console.error('  Meta:', JSON.stringify(e.meta));
+    prisma.$disconnect().finally(() => process.exit(1));
+  })
   .finally(async () => { await prisma.$disconnect(); });

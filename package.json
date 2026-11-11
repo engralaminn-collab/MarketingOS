@@ -16,7 +16,12 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "verify": "tsc --noEmit && eslint . && tsx tests/smoke.ts",
     "postinstall": "prisma generate",
-    "start:node": "NODE_ENV=production node .next/standalone/server.js"
+    "start:node": "NODE_ENV=production node .next/standalone/server.js",
+    "seed": "tsx prisma/seed-remaining.ts",
+    "seed:verify": "tsx prisma/seed-remaining.ts --verify"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed-remaining.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
