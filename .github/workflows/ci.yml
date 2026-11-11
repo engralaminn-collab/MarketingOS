@@ -20,18 +20,29 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      - run: npm ci
-      - run: npx prisma generate
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
         env:
           DATABASE_URL: "file:./db/ci.db"
-      - run: npm run lint
-      - run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
         continue-on-error: true
-      - run: npm test
+
+      - name: Run tests
+        run: npm run test
         continue-on-error: true
 
   build:
@@ -41,25 +52,35 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      - run: npm ci
-      - run: npx prisma generate
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
         env:
           DATABASE_URL: "file:./db/ci.db"
-      - run: npm run build
+
+      - name: Build
+        run: npm run build
         env:
           DATABASE_URL: "file:./db/ci.db"
-          JWT_SECRET: "ci-build-secret-not-used-in-production"
-          VAULT_MASTER_KEY: "ci-build-vault-key-not-used-in-production"
+          JWT_SECRET: "ci-build-secret"
+          VAULT_MASTER_KEY: "ci-build-vault-key"
           ADMIN_SEED_EMAIL: "admin@test.com"
-          ADMIN_SEED_PASSWORD: "ci-test-password-not-real"
+          ADMIN_SEED_PASSWORD: "ci-test-password"
           NEXT_PUBLIC_SITE_URL: "http://localhost:3055"
           NEXT_PUBLIC_APP_URL: "http://localhost:3055"
           NODE_ENV: "production"
-      - run: test -f .next/standalone/server.js
+
+      - name: Verify build output
+        run: test -f .next/standalone/server.js
+
       - uses: actions/upload-artifact@v4
         with:
           name: standalone-build
@@ -72,6 +93,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+
       - name: Check for hardcoded secrets
         run: |
           set -euo pipefail
@@ -86,11 +108,19 @@ jobs:
             exit 1
           fi
           echo "✅ No hardcoded secrets found"
+
       - name: Check .env not tracked
         run: |
-          if git ls-files | grep -E "^\.env$"; then exit 1; fi
+          if git ls-files | grep -E "^\.env$"; then
+            echo "❌ .env is tracked in git"
+            exit 1
+          fi
           echo "✅ .env is not tracked"
+
       - name: Check db not tracked
         run: |
-          if git ls-files | grep -E "db/custom\.db|\.sqlite$"; then exit 1; fi
+          if git ls-files | grep -E "db/custom\.db|\.sqlite$|\.sqlite3$"; then
+            echo "❌ Database binary is tracked"
+            exit 1
+          fi
           echo "✅ No database binaries tracked"
