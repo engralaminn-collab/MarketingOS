@@ -1144,6 +1144,8 @@ model Integration {
   secrets         IntegrationSecret[]
   resources       IntegrationResource[]
   logs            IntegrationLog[]
+  scopes          IntegrationScope[]
+  healthChecks    IntegrationHealthCheck[]
 
   @@index([companyId, provider])
   @@unique([companyId, provider])  // one connection per provider per company
@@ -2607,4 +2609,35 @@ model SuppressionList {
 
   @@unique([companyId, phoneNumber])
   @@index([companyId, phoneNumber])
+}
+
+// ==================== INTEGRATION SCOPES + HEALTH CHECKS ====================
+model IntegrationScope {
+  id              String   @id @default(cuid())
+  integrationId   String
+  integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  scope           String
+  isGranted       Boolean  @default(false)
+  grantedAt       DateTime?
+  createdAt       DateTime @default(now())
+
+  @@unique([integrationId, scope])
+  @@index([integrationId])
+}
+
+model IntegrationHealthCheck {
+  id              String   @id @default(cuid())
+  integrationId   String
+  integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  checkedAt       DateTime @default(now())
+  status          String   // connected | expired | revoked | unavailable | error
+  tokenValid      Boolean  @default(false)
+  refreshTokenValid Boolean @default(false)
+  scopesValid     Boolean  @default(false)
+  resourcesAccessible Boolean @default(false)
+  errorMessage     String?
+  latencyMs       Int?
+  createdAt       DateTime @default(now())
+
+  @@index([integrationId, checkedAt])
 }
