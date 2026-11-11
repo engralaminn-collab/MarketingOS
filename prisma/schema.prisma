@@ -128,6 +128,7 @@ model User {
   createdAgentAssignments  AgentModelAssignment[] @relation("AgentAssignmentCreator")
   updatedAgentAssignments  AgentModelAssignment[] @relation("AgentAssignmentUpdater")
   agentExecutionLogs  AgentExecutionLog[] @relation("AgentExecutionActor")
+  passwordResets  PasswordReset[] @relation("PasswordResetUser")
   // Phase 1-6 voice/contact-center relations
   mfaSecret       MfaSecret?   @relation("MfaSecretUser")
   refreshTokens   RefreshToken[] @relation("RefreshTokenUser")
@@ -2640,4 +2641,17 @@ model IntegrationHealthCheck {
   createdAt       DateTime @default(now())
 
   @@index([integrationId, checkedAt])
+}
+
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation("PasswordResetUser", fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token, expiresAt])
 }
