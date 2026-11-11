@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
-const PLATFORMS = ['Facebook', 'Instagram', 'LinkedIn', 'X', 'YouTube', 'TikTok', 'Pinterest', 'Telegram'];
+const PLATFORMS = ['Facebook', 'Instagram', 'LinkedIn', 'X', 'YouTube', 'TikTok', 'Pinterest', 'Telegram', 'Discord', 'Reddit', 'Threads', 'Slack', 'WhatsApp', 'Signal', 'Viber', 'LINE', 'Medium', 'Snapchat'];
 
 const PLATFORM_REQUIREMENTS: Record<string, { oauthUrl?: string; scopes: string[]; needsBusinessVerification: boolean; setupGuide: string[] }> = {
   Facebook: { oauthUrl: 'https://developers.facebook.com', scopes: ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts', 'instagram_basic', 'instagram_content_publish'], needsBusinessVerification: true, setupGuide: ['Create a Facebook App in Meta Developer Portal', 'Add Facebook Login product', 'Configure OAuth redirect URI', 'Request required permissions', 'Submit for app review'] },
