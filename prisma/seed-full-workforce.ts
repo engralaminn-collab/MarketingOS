@@ -105,7 +105,7 @@ const SOP_TEMPLATES = [
 
 async function main() {
   console.log('🚀 Comprehensive AI Workforce Seed...');
-  const company = await prisma.company.findFirst();
+  const company = await prisma.company.findFirst({ where: { slug: 'demo-agency' } }) || await prisma.company.findFirst();
   if (!company) { console.error('No company found'); return; }
   const companyId = company.id;
 
