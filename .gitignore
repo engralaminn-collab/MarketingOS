@@ -64,3 +64,4 @@ upload/
 *.tar.gz
 tool-results/
 db/*.backup
+db/*.db
