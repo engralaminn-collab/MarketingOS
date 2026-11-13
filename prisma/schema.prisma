@@ -106,6 +106,7 @@ model Company {
   contentCalendarItems ContentCalendarItem[]
   retentionPolicies    DataRetentionPolicy[]
   marketOpportunities  MarketOpportunity[]
+  externalServiceConnections ExternalServiceConnection[]
 }
 
 // ==================== USER & ROLES ====================
@@ -3039,4 +3040,33 @@ model MarketOpportunity {
 
   @@index([companyId, opportunityType])
   @@index([campaignId])
+}
+
+// ── MerlinStacks integration: external self-hosted service connections ─────
+// Tracks connections to the 4 MerlinStacks services (socaliseit, overseek,
+// personaliseit, true-video-product-gallery) and any future external services.
+// Each connection stores baseUrl, apiKey, status, and sync metadata.
+model ExternalServiceConnection {
+  id              String   @id @default(cuid())
+  serviceSlug     String   // socaliseit|overseek|personaliseit|true_video_product_gallery|<custom>
+  serviceName     String   // Human-readable name
+  baseUrl         String   // Base URL of the self-hosted instance
+  apiKey          String?  // API key or token (stored encrypted in production)
+  apiSecret       String?  // Optional secret
+  status          String   @default("disconnected") // disconnected|connected|error|syncing
+  lastSyncAt      DateTime?
+  lastSyncStatus  String?  // success|partial|failed
+  lastSyncError   String?
+  syncCount       Int      @default(0)
+  capabilities    String?  // JSON array of enabled capabilities
+  metadata        String?  // JSON — service-specific config (workspace IDs, store URLs, etc.)
+  isActive        Boolean  @default(true)
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([companyId, serviceSlug])
+  @@index([companyId, status])
+  @@index([serviceSlug])
 }

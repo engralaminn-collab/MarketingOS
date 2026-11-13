@@ -55,7 +55,7 @@ export function GrowthEngineView() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 h-auto">
+        <TabsList className="grid w-full grid-cols-6 lg:grid-cols-11 h-auto">
           <TabsTrigger value="discovery" className="text-xs">Discovery</TabsTrigger>
           <TabsTrigger value="leads" className="text-xs">Leads</TabsTrigger>
           <TabsTrigger value="intent" className="text-xs">Intent</TabsTrigger>
@@ -66,6 +66,7 @@ export function GrowthEngineView() {
           <TabsTrigger value="website" className="text-xs">Website</TabsTrigger>
           <TabsTrigger value="social" className="text-xs">Social</TabsTrigger>
           <TabsTrigger value="providers" className="text-xs">Providers</TabsTrigger>
+          <TabsTrigger value="integrations" className="text-xs">Integrations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="discovery"><DiscoveryTab /></TabsContent>
@@ -78,6 +79,7 @@ export function GrowthEngineView() {
         <TabsContent value="website"><WebsiteTab /></TabsContent>
         <TabsContent value="social"><SocialTab /></TabsContent>
         <TabsContent value="providers"><ProvidersTab /></TabsContent>
+        <TabsContent value="integrations"><IntegrationsTab /></TabsContent>
       </Tabs>
     </div>
   );
@@ -819,6 +821,137 @@ function ProvidersTab() {
               </div>
             </ScrollArea>
            )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ── Integrations Tab (MerlinStacks self-hosted services) ───────────────────
+function IntegrationsTab() {
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [configSlug, setConfigSlug] = useState('');
+  const [baseUrl, setBaseUrl] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [testing, setTesting] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await apiFetch('/integrations/merlinstacks');
+      setServices(data.services || []);
+      setError('');
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const saveConnection = async () => {
+    if (!configSlug || !baseUrl) return;
+    try {
+      await apiFetch('/integrations/merlinstacks', {
+        method: 'POST',
+        body: JSON.stringify({ serviceSlug: configSlug, baseUrl, apiKey }),
+      });
+      setConfigSlug(''); setBaseUrl(''); setApiKey('');
+      load();
+    } catch (e: any) { setError(e.message); }
+  };
+
+  const testConnection = async (slug: string) => {
+    setTesting(slug);
+    try {
+      await apiFetch(`/integrations/merlinstacks/${slug}/test`, { method: 'POST', body: '{}' });
+      load();
+    } catch (e: any) { setError(e.message); }
+    setTesting('');
+  };
+
+  const removeConn = async (slug: string) => {
+    try {
+      await apiFetch(`/integrations/merlinstacks/${slug}`, { method: 'DELETE' });
+      load();
+    } catch (e: any) { setError(e.message); }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">MerlinStacks Integrations — Self-Hosted Open-Source Services</CardTitle>
+          <CardDescription>Connect to self-hosted instances of 4 open-source services for social media, e-commerce ops, product personalization, and video galleries.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? <p className="text-sm text-muted-foreground">Loading...</p> :
+           error ? <p className="text-sm text-red-500">{error}</p> : (
+            <div className="space-y-3">
+              {services.map((svc) => (
+                <div key={svc.slug} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium text-sm">{svc.name}</h4>
+                      <p className="text-xs text-muted-foreground">{svc.techStack}</p>
+                    </div>
+                    <Badge variant={svc.connected ? 'default' : 'secondary'} className="text-xs">
+                      {svc.connected ? svc.status : 'not connected'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{svc.description}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {svc.capabilities?.slice(0, 5).map((cap: string) => (
+                      <Badge key={cap} variant="outline" className="text-xs">{cap.replace(/_/g, ' ')}</Badge>
+                    ))}
+                    {svc.capabilities?.length > 5 && <Badge variant="outline" className="text-xs">+{svc.capabilities.length - 5}</Badge>}
+                  </div>
+                  {svc.connected && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">URL: {svc.baseUrl}</span>
+                      {svc.lastSyncAt && <span className="text-muted-foreground">Last sync: {new Date(svc.lastSyncAt).toLocaleDateString()}</span>}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    {svc.connected ? (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => testConnection(svc.slug)} disabled={testing === svc.slug}>
+                          {testing === svc.slug ? 'Testing...' : 'Test'}
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => removeConn(svc.slug)}>Disconnect</Button>
+                      </>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={() => { setConfigSlug(svc.slug); setBaseUrl(''); }}>
+                        Connect
+                      </Button>
+                    )}
+                    <a href={svc.repoUrl} target="_blank" rel="noopener noreferrer" className="ml-auto">
+                      <Button size="sm" variant="ghost">Repo ↗</Button>
+                    </a>
+                  </div>
+                  {configSlug === svc.slug && (
+                    <div className="border-t pt-2 space-y-2">
+                      <div>
+                        <Label className="text-xs">Base URL</Label>
+                        <Input placeholder="https://my-socaliseit.example.com" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label className="text-xs">API Key (optional)</Label>
+                        <Input type="password" placeholder="API key" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={saveConnection}>Save Connection</Button>
+                        <Button size="sm" variant="ghost" onClick={() => setConfigSlug('')}>Cancel</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
