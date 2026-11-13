@@ -282,3 +282,96 @@ export async function generateSpeech(
     return null;
   }
 }
+
+
+// Restored from arena branch (PR #14/#15)
+
+export async function transcribeFreeSpeech(params: {
+  audioBase64: string;
+  mimeType?: string;
+  language?: string;
+}): Promise<{ text: string; provider: string; segments?: Array<{ start: number; end: number; text: string }> } | null> {
+  const cleanB64 = params.audioBase64.replace(/^data:[^;]+;base64,/, '');
+  const bytes = Buffer.from(cleanB64, 'base64');
+  if (!bytes.byteLength || bytes.byteLength > 25 * 1024 * 1024) return null;
+
+  const endpoints: Array<{ name: string; url: string; key: string; model: string }> = [];
+  if (process.env.LOCAL_STT_BASE_URL) {
+    endpoints.push({
+      name: 'local-whisper',
+      url: `${process.env.LOCAL_STT_BASE_URL.replace(/\/+$/, '')}/v1/audio/transcriptions`,
+      key: process.env.LOCAL_STT_API_KEY || '',
+      model: process.env.LOCAL_STT_MODEL || 'whisper-1',
+    });
+  }
+  // No hosted fallback: uploading audio off-premises may incur charges and
+  // requires an explicit privacy/cost approval flow, which is not implemented.
+
+
+  for (const ep of endpoints) {
+    try {
+      const form = new FormData();
+      const blob = new Blob([bytes], { type: params.mimeType || 'audio/webm' });
+      form.append('file', blob, 'recording.webm');
+      form.append('model', ep.model);
+      form.append('response_format', 'verbose_json');
+      if (params.language) form.append('language', params.language);
+
+      const headers: Record<string, string> = {};
+      if (ep.key) headers.Authorization = `Bearer ${ep.key}`;
+
+      const resp = await fetch(ep.url, {
+        method: 'POST',
+        headers,
+        body: form,
+        signal: AbortSignal.timeout(45_000),
+      });
+      if (resp.ok) {
+        const json = (await resp.json()) as {
+          text?: string;
+          segments?: Array<{ start: number; end: number; text: string }>;
+        };
+        if (json.text) {
+          return { text: json.text.trim(), provider: ep.name, segments: json.segments };
+        }
+      }
+    } catch {
+      // local STT failed; no hosted fallback
+    }
+  }
+  return null;
+}
+
+export function analyzeAiWritingTells(text: string): {
+  aiSlopScore: number;
+  hits: HumanizerPatternHit[];
+  rewrittenDeterministic: string;
+} {
+  const hits: HumanizerPatternHit[] = [];
+  let rewritten = text;
+  let penalty = 0;
+
+  for (const rule of HUMANIZER_RULES) {
+    const found = text.match(rule.regex) || [];
+    if (rule.id === 'em-dash-overuse' && found.length < 3) continue;
+    if (found.length > 0) {
+      const unique = Array.from(new Set(found.map((m) => m.trim()))).slice(0, 5);
+      hits.push({
+        id: rule.id,
+        category: rule.category,
+        rule: rule.rule,
+        matches: unique,
+        severity: rule.severity,
+      });
+      const weight = rule.severity === 'high' ? 16 : rule.severity === 'medium' ? 10 : 5;
+      penalty += Math.min(weight * found.length, weight * 2.5);
+      if (rule.replace) {
+        rewritten = rule.replace(rewritten);
+      }
+    }
+  }
+
+  rewritten = rewritten.replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  const aiSlopScore = Math.max(0, Math.min(100, Math.round(penalty)));
+  return { aiSlopScore, hits, rewrittenDeterministic: rewritten };
+}

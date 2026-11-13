@@ -1,0 +1,1142 @@
+[
+  {
+    "url": "https://github.com/cometchat/cometchat-skills",
+    "category": "Conversational AI & Chat",
+    "module": "AI Command",
+    "note": "Agent skills for building chat and messaging experiences."
+  },
+  {
+    "url": "https://github.com/cometchat/cometchat-uikit-react",
+    "category": "Conversational AI & Chat",
+    "module": "Messages",
+    "note": "React chat UI kit \u2014 conversations, threads, presence, receipts."
+  },
+  {
+    "url": "https://github.com/cometchat/cometchat-uikit-android",
+    "category": "Conversational AI & Chat",
+    "module": "Messages",
+    "note": "Native Android chat UI kit for a future companion app."
+  },
+  {
+    "url": "https://github.com/cometchat/cometchat-uikit-ios",
+    "category": "Conversational AI & Chat",
+    "module": "Messages",
+    "note": "Native iOS chat UI kit for a future companion app."
+  },
+  {
+    "url": "https://github.com/cometchat/cometchat-uikit-react-native",
+    "category": "Conversational AI & Chat",
+    "module": "Messages",
+    "note": "Cross-platform chat UI kit for React Native clients."
+  },
+  {
+    "url": "https://github.com/cometchat/docs-mcp",
+    "category": "Conversational AI & Chat",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Docs MCP server \u2014 pattern for serving product docs to agents."
+  },
+  {
+    "url": "https://github.com/cometchat",
+    "category": "Conversational AI & Chat",
+    "module": "Messages",
+    "note": "Vendor organisation \u2014 reference for chat SDK architecture."
+  },
+  {
+    "url": "https://github.com/ketanyekale/android-java-chat-app",
+    "category": "Conversational AI & Chat",
+    "module": "Messages",
+    "note": "Minimal Android chat client reference (Java)."
+  },
+  {
+    "url": "https://github.com/chatwoot/chatwoot",
+    "category": "Conversational AI & Chat",
+    "module": "CRM",
+    "note": "Open-source shared inbox \u2014 support conversations and agent assignment."
+  },
+  {
+    "url": "https://github.com/sibnerian/electron-promise-ipc",
+    "category": "Conversational AI & Chat",
+    "module": "Integrations",
+    "note": "Promise-based IPC helper for desktop clients."
+  },
+  {
+    "url": "https://github.com/developerspace-samples/VoIP-Call-Sample",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "SMS, VoIP & Scraper",
+    "note": "Reference VoIP call flow: dial, answer, status callbacks."
+  },
+  {
+    "url": "https://github.com/developerspace-samples/WebRTC-Kotlin-Sample",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "SMS, VoIP & Scraper",
+    "note": "WebRTC client sample for browser/mobile calling."
+  },
+  {
+    "url": "https://github.com/domovinatv/sms.domovina.ai",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "SMS, VoIP & Scraper",
+    "note": "Self-hosted SMS gateway reference (Android handset bridge)."
+  },
+  {
+    "url": "https://github.com/NdoleStudio/httpsms",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "SMS, VoIP & Scraper",
+    "note": "HTTP SMS gateway over an Android phone, AGPL-3.0."
+  },
+  {
+    "url": "https://github.com/NdoleStudio/httpsms-node",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "SMS, VoIP & Scraper",
+    "note": "Node SDK for the HTTP SMS gateway."
+  },
+  {
+    "url": "https://github.com/CALLE-AI/awesome-phone-call-agents",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "SMS, VoIP & Scraper",
+    "note": "Curated index of voice call-agent projects and patterns."
+  },
+  {
+    "url": "https://github.com/amulchapla/AI-Powered-Call-Center-Intelligence",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "Market Intelligence",
+    "note": "Call transcription + sentiment + summary pipeline pattern."
+  },
+  {
+    "url": "https://github.com/rasonyang/ai-native-callcenter",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "SMS, VoIP & Scraper",
+    "note": "AI-native call-centre architecture reference."
+  },
+  {
+    "url": "https://github.com/video-db/call.md",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Turn call recordings into meetings notes and searchable memory."
+  },
+  {
+    "url": "https://github.com/microsoft/call-center-ai",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "SMS, VoIP & Scraper",
+    "note": "Microsoft pattern for AI phone agents with live hand-off."
+  },
+  {
+    "url": "https://github.com/0perationPrivacy/VoIP",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "SMS, VoIP & Scraper",
+    "note": "Telnyx/Twilio web console for SMS, MMS and voice, GPL-3.0."
+  },
+  {
+    "url": "https://github.com/BelledonneCommunications/linphone-iphone",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "SMS, VoIP & Scraper",
+    "note": "SIP softphone reference \u2014 SIP account model and call states."
+  },
+  {
+    "url": "https://github.com/jitsi/jitsi-videobridge",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "Messages",
+    "note": "WebRTC SFU for group audio/video conferencing."
+  },
+  {
+    "url": "https://github.com/debpalash/VoiceStudio",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "Media Studio",
+    "note": "Voice studio UI/UX reference for TTS and voice presets."
+  },
+  {
+    "url": "https://github.com/PennyroyalTea/gibberlink",
+    "category": "Voice, Telephony & Contact Center",
+    "module": "AI Command",
+    "note": "Agent-to-agent audio handshake using sound tones."
+  },
+  {
+    "url": "https://github.com/melgarafael/DeskcommCRM",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Self-hosted AI sales OS with WhatsApp and shared inbox."
+  },
+  {
+    "url": "https://github.com/Django-CRM/Django-CRM",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Classic Django CRM \u2014 leads, accounts, contacts, deals."
+  },
+  {
+    "url": "https://github.com/Odoo-mobile/crm",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Odoo mobile CRM client patterns."
+  },
+  {
+    "url": "https://github.com/thu-ml/CRM",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Research codebase unrelated to sales CRM \u2014 kept for name disambiguation."
+  },
+  {
+    "url": "https://github.com/dennisivy/crash-course-CRM",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Teaching CRM \u2014 simple lead/deal modelling."
+  },
+  {
+    "url": "https://github.com/oroinc/crm-application",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "OroCRM application bundle \u2014 enterprise entity model."
+  },
+  {
+    "url": "https://github.com/trycompai/crm",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Modern open CRM with automation-first UX."
+  },
+  {
+    "url": "https://github.com/frappe/crm",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Frappe CRM \u2014 Kanban pipeline, telephony, WhatsApp."
+  },
+  {
+    "url": "https://github.com/ChurchCRM/CRM",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Constituent CRM \u2014 person/family/group model."
+  },
+  {
+    "url": "https://github.com/crmeb/CRMEB",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Commerce + member CRM suite (PHP)."
+  },
+  {
+    "url": "https://github.com/idurar/idurar-erp-crm",
+    "category": "CRM & Sales",
+    "module": "Finance",
+    "note": "Invoice/quote/ERP-CRM with React + Node."
+  },
+  {
+    "url": "https://github.com/oroinc/crm",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "OroCRM meta-repository."
+  },
+  {
+    "url": "https://github.com/fatfreecrm/fat_free_crm",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Rails CRM with accounts, opportunities, campaigns."
+  },
+  {
+    "url": "https://github.com/ArnasDon/wacrm",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "WhatsApp CRM template: inbox, pipelines, broadcasts."
+  },
+  {
+    "url": "https://github.com/twentyhq/twenty",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Twenty \u2014 modern object-based CRM, strong UI reference."
+  },
+  {
+    "url": "https://github.com/VonHoltenCodes/SlowBooks-Pro-2026",
+    "category": "CRM & Sales",
+    "module": "Finance",
+    "note": "Small-business accounting concepts and ledgers."
+  },
+  {
+    "url": "https://github.com/engralaminn-collab/Ai-Markting-crm",
+    "category": "CRM & Sales",
+    "module": "CRM",
+    "note": "Project-owned AI marketing CRM."
+  },
+  {
+    "url": "https://github.com/engralaminn-collab/alo-education-uk-final",
+    "category": "Education & Study Abroad",
+    "module": "Study Abroad & UKVI",
+    "note": "Project-owned ALO Education UK site."
+  },
+  {
+    "url": "https://github.com/engralaminn-collab/ukvi-ai-markting_n8n",
+    "category": "Education & Study Abroad",
+    "module": "Study Abroad & UKVI",
+    "note": "Project-owned UKVI marketing automation flows."
+  },
+  {
+    "url": "https://github.com/every-app/open-seo",
+    "category": "Marketing, SEO & Growth",
+    "module": "SEO & Live Crawler",
+    "note": "OpenSEO \u2014 self-hosted rank tracking and site audit."
+  },
+  {
+    "url": "https://github.com/coreyhaines31/marketingskills",
+    "category": "Marketing, SEO & Growth",
+    "module": "Marketing Studio",
+    "note": "Marketing skill library for AI agents (copy, ICP, positioning)."
+  },
+  {
+    "url": "https://github.com/guifav/market-intelligence-radar",
+    "category": "Marketing, SEO & Growth",
+    "module": "Market Intelligence",
+    "note": "Radar for competitor and market signal monitoring."
+  },
+  {
+    "url": "https://github.com/parthasarathy123/n8n-gtm-lead-enrichment",
+    "category": "Marketing, SEO & Growth",
+    "module": "CRM",
+    "note": "n8n GTM lead-enrichment workflow pattern."
+  },
+  {
+    "url": "https://github.com/brightdata/open-enrich",
+    "category": "Marketing, SEO & Growth",
+    "module": "CRM",
+    "note": "Open lead-enrichment service design."
+  },
+  {
+    "url": "https://github.com/clawnify/OpenProspector",
+    "category": "Marketing, SEO & Growth",
+    "module": "CRM",
+    "note": "Prospecting agent \u2014 find, score, enrich accounts."
+  },
+  {
+    "url": "https://github.com/workwithlos-ui/dave",
+    "category": "Marketing, SEO & Growth",
+    "module": "Marketing Studio",
+    "note": "AI marketing copilot UI reference."
+  },
+  {
+    "url": "https://github.com/BraaMohammed/bricks",
+    "category": "Marketing, SEO & Growth",
+    "module": "Marketing Studio",
+    "note": "Composable landing-page blocks."
+  },
+  {
+    "url": "https://github.com/firecrawl/firecrawl",
+    "category": "Marketing, SEO & Growth",
+    "module": "SMS, VoIP & Scraper",
+    "note": "Crawl/extract API server \u2014 scrape-to-markdown reference."
+  },
+  {
+    "url": "https://github.com/firecrawl/web-agent",
+    "category": "Marketing, SEO & Growth",
+    "module": "SMS, VoIP & Scraper",
+    "note": "Agentic web browsing/extraction reference."
+  },
+  {
+    "url": "https://github.com/ioi-labs/molx",
+    "category": "Marketing, SEO & Growth",
+    "module": "SMS, VoIP & Scraper",
+    "note": "Self-hosted Firecrawl alternative with batch + LLM enrichment."
+  },
+  {
+    "url": "https://github.com/blader/humanizer",
+    "category": "Marketing, SEO & Growth",
+    "module": "Marketing Studio",
+    "note": "Prompt pattern for making AI copy sound human."
+  },
+  {
+    "url": "https://github.com/languagetool-org/languagetool",
+    "category": "Marketing, SEO & Growth",
+    "module": "Marketing Studio",
+    "note": "Grammar/style checking for 25+ languages (LGPL)."
+  },
+  {
+    "url": "https://github.com/songguoxs/gpt4o-image-prompts",
+    "category": "Marketing, SEO & Growth",
+    "module": "Media Studio",
+    "note": "Prompt catalogue for image generation."
+  },
+  {
+    "url": "https://github.com/mohamed11sk/Email-markting",
+    "category": "Marketing, SEO & Growth",
+    "module": "Marketing Studio",
+    "note": "Email-marketing reference project."
+  },
+  {
+    "url": "https://github.com/knsoftic/Email_Markting",
+    "category": "Marketing, SEO & Growth",
+    "module": "Marketing Studio",
+    "note": "Email campaign reference project."
+  },
+  {
+    "url": "https://github.com/DIYgod/RSSHub",
+    "category": "Marketing, SEO & Growth",
+    "module": "News Feeds",
+    "note": "Universal RSS generator \u2014 turns any site into a feed."
+  },
+  {
+    "url": "https://github.com/umami-software/umami",
+    "category": "Marketing, SEO & Growth",
+    "module": "Analytics & UTM",
+    "note": "Privacy-friendly web analytics."
+  },
+  {
+    "url": "https://github.com/TryGhost/Ghost",
+    "category": "Marketing, SEO & Growth",
+    "module": "Content & Queue",
+    "note": "Publishing platform with memberships and newsletters."
+  },
+  {
+    "url": "https://buffer.com",
+    "category": "Websites & Platforms",
+    "module": "Content & Queue",
+    "note": "Social scheduling product reference \u2014 queue and channel UX."
+  },
+  {
+    "url": "https://hetrixtools.com",
+    "category": "Websites & Platforms",
+    "module": "SEO & Live Crawler",
+    "note": "Uptime and blacklist monitoring service."
+  },
+  {
+    "url": "https://hatchable.com",
+    "category": "Websites & Platforms",
+    "module": "Marketing Studio",
+    "note": "AI website builder product reference."
+  },
+  {
+    "url": "https://www.larksuite.com",
+    "category": "Websites & Platforms",
+    "module": "Workflow Studio",
+    "note": "All-in-one workspace \u2014 docs, base, automation UX."
+  },
+  {
+    "url": "https://www.enerpize.com",
+    "category": "Websites & Platforms",
+    "module": "Finance",
+    "note": "AI ERP product reference."
+  },
+  {
+    "url": "https://www.aipraktor.com",
+    "category": "Websites & Platforms",
+    "module": "Workflow Studio",
+    "note": "Vertical AI practice-management product."
+  },
+  {
+    "url": "https://supercool.com",
+    "category": "Websites & Platforms",
+    "module": "Marketing Studio",
+    "note": "AI website product reference."
+  },
+  {
+    "url": "https://join.supercool.com",
+    "category": "Websites & Platforms",
+    "module": "Marketing Studio",
+    "note": "Onboarding/join flow reference."
+  },
+  {
+    "url": "https://www.refine.ink",
+    "category": "Websites & Platforms",
+    "module": "Marketing Studio",
+    "note": "Content refinement tool reference."
+  },
+  {
+    "url": "https://mat3ra.com",
+    "category": "Websites & Platforms",
+    "module": "AI Command",
+    "note": "Materials-science simulation platform (domain AI)."
+  },
+  {
+    "url": "https://platform.mat3ra.com",
+    "category": "Websites & Platforms",
+    "module": "AI Command",
+    "note": "Materials-science platform console."
+  },
+  {
+    "url": "https://stackoverflow.com",
+    "category": "Websites & Platforms",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Q&A knowledge source for developer support."
+  },
+  {
+    "url": "https://openrouter.ai",
+    "category": "Websites & Platforms",
+    "module": "Free AI Agent Hub",
+    "note": "Multi-model gateway \u2014 BYO-key routing option."
+  },
+  {
+    "url": "https://openrouter.ai/blog/tutorials/build-tool-calling-agent-loop",
+    "category": "Websites & Platforms",
+    "module": "AI Command",
+    "note": "Tutorial for a tool-calling agent loop."
+  },
+  {
+    "url": "https://developer.meta.com/ai",
+    "category": "Websites & Platforms",
+    "module": "Free AI Agent Hub",
+    "note": "Meta AI developer platform."
+  },
+  {
+    "url": "https://coder.qwen.ai",
+    "category": "Websites & Platforms",
+    "module": "AI Command",
+    "note": "Qwen coding assistant product reference."
+  },
+  {
+    "url": "https://cline.bot",
+    "category": "Websites & Platforms",
+    "module": "AI Command",
+    "note": "Autonomous coding agent product."
+  },
+  {
+    "url": "https://www.mureka.ai",
+    "category": "Websites & Platforms",
+    "module": "Media Studio",
+    "note": "AI music generation product."
+  },
+  {
+    "url": "https://astryx.atmeta.com",
+    "category": "Websites & Platforms",
+    "module": "Media Studio",
+    "note": "Meta AI experience reference."
+  },
+  {
+    "url": "https://github.com/WEIFENG2333/VideoCaptioner",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Subtitle/caption pipeline with translation and burn-in."
+  },
+  {
+    "url": "https://github.com/ATH-MaaS/Pixelle-Video",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Automated short-video engine."
+  },
+  {
+    "url": "https://github.com/remotion-dev/remotion",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Programmatic video in React \u2014 template-driven clips."
+  },
+  {
+    "url": "https://github.com/MarkTechStation/VideoCode",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Video code/sample reference."
+  },
+  {
+    "url": "https://github.com/3b1b/videos",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Manim scene source \u2014 explanatory animation craft."
+  },
+  {
+    "url": "https://github.com/ytdl-org/youtube-dl",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Media downloader reference (respect platform terms)."
+  },
+  {
+    "url": "https://github.com/bradautomates/claude-video",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Agent-driven video editing workflow."
+  },
+  {
+    "url": "https://github.com/qdrzwd/VideoRecorder",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "In-browser video recording sample."
+  },
+  {
+    "url": "https://github.com/zai-org/CogVideo",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Text/image-to-video model code (weights separate)."
+  },
+  {
+    "url": "https://github.com/Tencent-Hunyuan/HunyuanVideo",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Open video generation model code."
+  },
+  {
+    "url": "https://github.com/elebumm/RedditVideoMakerBot",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Faceless short-video assembly pipeline."
+  },
+  {
+    "url": "https://github.com/Lightricks/LTX-Video",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "LTX video model \u2014 fast latent video generation."
+  },
+  {
+    "url": "https://github.com/YaoFANGUK/video-subtitle-remover",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Subtitle removal / inpainting reference."
+  },
+  {
+    "url": "https://github.com/leandromoreira/digital_video_introduction",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Hands-on guide to codecs and streaming."
+  },
+  {
+    "url": "https://github.com/OpenTalker/video-retalking",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Lip-sync retalking model reference."
+  },
+  {
+    "url": "https://github.com/meituan-longcat/LongCat-Video",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Long-form video generation."
+  },
+  {
+    "url": "https://github.com/0voice/audio_video_streaming",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Streaming protocol and architecture reading list."
+  },
+  {
+    "url": "https://github.com/HITsz-TMG/VideoClaw",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Video agent/analysis research."
+  },
+  {
+    "url": "https://github.com/HKUDS/VideoAgent",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Video understanding agent."
+  },
+  {
+    "url": "https://github.com/LoSealL/VideoSuperResolution",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Super-resolution architectures."
+  },
+  {
+    "url": "https://github.com/Augani/openreel-video",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Browser-based video editor UX."
+  },
+  {
+    "url": "https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "ComfyUI video I/O nodes (GPL-3.0)."
+  },
+  {
+    "url": "https://github.com/dunossauro/videomaker-helper",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Slideshow video helper."
+  },
+  {
+    "url": "https://github.com/burhankocabiyik/videomaker",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Video assembly reference."
+  },
+  {
+    "url": "https://github.com/wtz2017/VideoMaker",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Video generation reference."
+  },
+  {
+    "url": "https://github.com/viniciusenari/slideshow-videomaker",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Slideshow-to-video pipeline."
+  },
+  {
+    "url": "https://github.com/WuTao-CS/VideoMaker",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Video composition reference."
+  },
+  {
+    "url": "https://github.com/shubhamdevhouse/Animated-VideoMaker",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Animated explainer generation."
+  },
+  {
+    "url": "https://github.com/seed0001/videoMaker",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Video maker reference."
+  },
+  {
+    "url": "https://github.com/Bilal-Belli/videoMakerBOT",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Script + slides to narrated video."
+  },
+  {
+    "url": "https://github.com/Nncstudio/VideoMakerPro",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Video production UI reference."
+  },
+  {
+    "url": "https://github.com/heygen-com/hyperframes",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Avatar video framework."
+  },
+  {
+    "url": "https://github.com/harry0703/MoneyPrinterTurbo",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "One-prompt short video generator."
+  },
+  {
+    "url": "https://github.com/CapSoftware/Cap",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Open screen recorder with share links."
+  },
+  {
+    "url": "https://github.com/Onyx-Dev-Labs/doodle-note",
+    "category": "Content, Video & Media",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Doodle/sketch note experience."
+  },
+  {
+    "url": "https://github.com/cathrynlavery/diagram-design",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Diagram design system and layout rules."
+  },
+  {
+    "url": "https://github.com/GAIR-NLP/LiveTalk",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Real-time talking-face generation."
+  },
+  {
+    "url": "https://github.com/MeiGen-AI/InfiniteTalk",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "Unlimited-length talking video."
+  },
+  {
+    "url": "https://github.com/HM-RunningHub/ComfyUI_RH_APICall",
+    "category": "Content, Video & Media",
+    "module": "Media Studio",
+    "note": "ComfyUI API-call node for hosted workflows."
+  },
+  {
+    "url": "https://github.com/tt-a1i/archify",
+    "category": "AI Models, Agents & Skills",
+    "module": "Workflow Studio",
+    "note": "Architecture diagram generation."
+  },
+  {
+    "url": "https://github.com/bilawalsidhu/gods-eye-view",
+    "category": "AI Models, Agents & Skills",
+    "module": "Market Intelligence",
+    "note": "Multi-perspective analysis agent."
+  },
+  {
+    "url": "https://github.com/THU-MAIC/OpenMAIC",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "Multi-agent interactive classroom generation."
+  },
+  {
+    "url": "https://github.com/JetBrains/go-modern-guidelines",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "Style guidelines packaged for coding agents."
+  },
+  {
+    "url": "https://github.com/Gitlawb/openclaude",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "Open agent CLI harness."
+  },
+  {
+    "url": "https://github.com/K-Dense-AI/scientific-agent-skills",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "Validated scientific skill library for agents."
+  },
+  {
+    "url": "https://github.com/jingyaogong/minimind",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "Train a tiny LLM from scratch \u2014 teaching reference."
+  },
+  {
+    "url": "https://github.com/google-research/timesfm",
+    "category": "AI Models, Agents & Skills",
+    "module": "Analytics & UTM",
+    "note": "Time-series foundation model \u2014 forecast leads and revenue."
+  },
+  {
+    "url": "https://github.com/EfficientStreet/hindsight",
+    "category": "AI Models, Agents & Skills",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Retrospective/memory tooling."
+  },
+  {
+    "url": "https://github.com/timharris707/modeldeck",
+    "category": "AI Models, Agents & Skills",
+    "module": "Free AI Agent Hub",
+    "note": "Model comparison deck."
+  },
+  {
+    "url": "https://github.com/Artistsyn/cortex_suite",
+    "category": "AI Models, Agents & Skills",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Local MCP project memory servers."
+  },
+  {
+    "url": "https://github.com/sulabhdubey/rta-smriti-brain",
+    "category": "AI Models, Agents & Skills",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Persistent agent memory experiment."
+  },
+  {
+    "url": "https://github.com/EfficientStreet/youtube-subscriptions-ingest",
+    "category": "AI Models, Agents & Skills",
+    "module": "News Feeds",
+    "note": "YouTube subscription ingestion pipeline."
+  },
+  {
+    "url": "https://github.com/Kayforkind/reimagine-it",
+    "category": "AI Models, Agents & Skills",
+    "module": "Media Studio",
+    "note": "HTML-in/HTML-out design restyler."
+  },
+  {
+    "url": "https://github.com/templetongroup/radiant",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "AI research/agent toolkit."
+  },
+  {
+    "url": "https://github.com/FoundationAgents/MetaGPT",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "Multi-agent software company pattern."
+  },
+  {
+    "url": "https://github.com/ramon-victor/freegpt-webui",
+    "category": "AI Models, Agents & Skills",
+    "module": "Free AI Agent Hub",
+    "note": "Self-hosted chat UI over multiple providers."
+  },
+  {
+    "url": "https://github.com/Lin-jun-xiang/docGPT-langchain",
+    "category": "AI Models, Agents & Skills",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Chat with PDF/Word/CSV documents."
+  },
+  {
+    "url": "https://github.com/teremterem/claude-code-gpt-5-codex",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "Provider-swap layer for coding agents."
+  },
+  {
+    "url": "https://github.com/GetGoAPI/Free-GPT-Grok-Gemini-Claude-API",
+    "category": "AI Models, Agents & Skills",
+    "module": "Free AI Agent Hub",
+    "note": "Multi-provider free API aggregator (terms apply)."
+  },
+  {
+    "url": "https://github.com/zai-org/GLM-5",
+    "category": "AI Models, Agents & Skills",
+    "module": "Free AI Agent Hub",
+    "note": "GLM model family reference."
+  },
+  {
+    "url": "https://github.com/unorouter/unorouter",
+    "category": "AI Models, Agents & Skills",
+    "module": "Free AI Agent Hub",
+    "note": "LLM router pattern."
+  },
+  {
+    "url": "https://github.com/ruvnet/ruflo",
+    "category": "AI Models, Agents & Skills",
+    "module": "Workflow Studio",
+    "note": "Agent orchestration and flow runtime."
+  },
+  {
+    "url": "https://github.com/mksglu/context-mode",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "Context-window optimisation via sandboxing."
+  },
+  {
+    "url": "https://github.com/affaan-m/ECC",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "Agent harness: skills, instincts, memory, security."
+  },
+  {
+    "url": "https://github.com/alsk1992/CloddsBot",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "Autonomous trading agent (reference only)."
+  },
+  {
+    "url": "https://github.com/akitaonrails/ai-memory",
+    "category": "AI Models, Agents & Skills",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Long-term memory for coding agents."
+  },
+  {
+    "url": "https://github.com/anthropics/claude-plugins-community",
+    "category": "AI Models, Agents & Skills",
+    "module": "Integrations",
+    "note": "Community plugin marketplace structure."
+  },
+  {
+    "url": "https://github.com/cursor/plugins",
+    "category": "AI Models, Agents & Skills",
+    "module": "Integrations",
+    "note": "Plugin packaging conventions."
+  },
+  {
+    "url": "https://github.com/cline/cline",
+    "category": "AI Models, Agents & Skills",
+    "module": "AI Command",
+    "note": "Autonomous coding agent architecture."
+  },
+  {
+    "url": "https://github.com/nikmcfly/MiroFish-Offline",
+    "category": "AI Models, Agents & Skills",
+    "module": "Market Intelligence",
+    "note": "Offline multi-agent simulation."
+  },
+  {
+    "url": "https://github.com/mattpocock/dictionary-of-ai-coding",
+    "category": "AI Models, Agents & Skills",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Glossary of AI-coding concepts."
+  },
+  {
+    "url": "https://github.com/nashsu/llm_wiki",
+    "category": "Knowledge, Docs & Data",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Incrementally built wiki from documents."
+  },
+  {
+    "url": "https://github.com/siyuan-note/siyuan",
+    "category": "Knowledge, Docs & Data",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Local-first block-based knowledge base."
+  },
+  {
+    "url": "https://github.com/public-apis/public-apis",
+    "category": "Knowledge, Docs & Data",
+    "module": "Integrations",
+    "note": "Catalogue of free public APIs."
+  },
+  {
+    "url": "https://github.com/huggingface/education-toolkit",
+    "category": "Education & Study Abroad",
+    "module": "Study Abroad & UKVI",
+    "note": "Open education toolkit for courses and datasets."
+  },
+  {
+    "url": "https://github.com/nabaleducation/EducationConsultancyWebsite",
+    "category": "Education & Study Abroad",
+    "module": "Study Abroad & UKVI",
+    "note": "Education consultancy website reference."
+  },
+  {
+    "url": "https://github.com/arupdas0825/studytra",
+    "category": "Education & Study Abroad",
+    "module": "Study Abroad & UKVI",
+    "note": "Study-abroad execution platform: roadmaps, costs, timelines."
+  },
+  {
+    "url": "https://github.com/Bhawana0218/NextStep-Abroad",
+    "category": "Education & Study Abroad",
+    "module": "Study Abroad & UKVI",
+    "note": "Study-abroad admin dashboard."
+  },
+  {
+    "url": "https://github.com/nwuzmedoutlook/university",
+    "category": "Education & Study Abroad",
+    "module": "Students",
+    "note": "University management system reference."
+  },
+  {
+    "url": "https://github.com/bugcrowd/bugcrowd_university",
+    "category": "Education & Study Abroad",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Security education curriculum content."
+  },
+  {
+    "url": "https://github.com/TheExplainthis/ChatGPT-AI-English-Tutor",
+    "category": "Education & Study Abroad",
+    "module": "AI Command",
+    "note": "AI English tutor conversation design."
+  },
+  {
+    "url": "https://github.com/xckevin/magic-english-buddy",
+    "category": "Education & Study Abroad",
+    "module": "Media Studio",
+    "note": "Voice-based English practice buddy."
+  },
+  {
+    "url": "https://github.com/xiaochong/hi-kid",
+    "category": "Education & Study Abroad",
+    "module": "Students",
+    "note": "Child-oriented learning assistant."
+  },
+  {
+    "url": "https://github.com/graykode/toeicbert",
+    "category": "Education & Study Abroad",
+    "module": "Exams & Results",
+    "note": "TOEIC scoring/assessment model approach."
+  },
+  {
+    "url": "https://github.com/ToolJet/ToolJet",
+    "category": "Automation, ERP & Business Ops",
+    "module": "Workflow Studio",
+    "note": "Low-code internal tool builder."
+  },
+  {
+    "url": "https://github.com/nextcloud/server",
+    "category": "Automation, ERP & Business Ops",
+    "module": "Settings",
+    "note": "Self-hosted file/collaboration platform."
+  },
+  {
+    "url": "https://github.com/dani-garcia/vaultwarden",
+    "category": "Automation, ERP & Business Ops",
+    "module": "Settings",
+    "note": "Self-hosted secret vault \u2014 credential storage reference."
+  },
+  {
+    "url": "https://github.com/monkscode/Natural-Language-to-Robot-Framework",
+    "category": "Automation, ERP & Business Ops",
+    "module": "Workflow Studio",
+    "note": "Natural language to test automation."
+  },
+  {
+    "url": "https://github.com/iamakshayshar/AITestCaseGenerator",
+    "category": "Automation, ERP & Business Ops",
+    "module": "Workflow Studio",
+    "note": "AI test-case generation."
+  },
+  {
+    "url": "https://github.com/vastsa/PI-Desktop",
+    "category": "Automation, ERP & Business Ops",
+    "module": "AI Command",
+    "note": "Desktop AI assistant shell."
+  },
+  {
+    "url": "https://github.com/volcengine/OpenViking",
+    "category": "Automation, ERP & Business Ops",
+    "module": "Knowledge Wiki & RAG",
+    "note": "Context/knowledge service for agents."
+  },
+  {
+    "url": "https://github.com/Lakr233/vphone-cli",
+    "category": "Developer Tooling & Infrastructure",
+    "module": "Settings",
+    "note": "Virtual iPhone automation (macOS only)."
+  },
+  {
+    "url": "https://github.com/AprilNEA/OpenLogi",
+    "category": "Developer Tooling & Infrastructure",
+    "module": "Settings",
+    "note": "Local-first device config tool."
+  },
+  {
+    "url": "https://github.com/omacom/omarchy",
+    "category": "Developer Tooling & Infrastructure",
+    "module": "Settings",
+    "note": "Opinionated Linux desktop setup."
+  },
+  {
+    "url": "https://github.com/armory3d/armorpaint",
+    "category": "Developer Tooling & Infrastructure",
+    "module": "Media Studio",
+    "note": "3D texture painting tool."
+  },
+  {
+    "url": "https://github.com/fmtlib/fmt",
+    "category": "Developer Tooling & Infrastructure",
+    "module": "Integrations",
+    "note": "Modern C++ formatting library."
+  },
+  {
+    "url": "https://github.com/YutaroHayakawa/ipftrace2",
+    "category": "Developer Tooling & Infrastructure",
+    "module": "SMS, VoIP & Scraper",
+    "note": "eBPF packet tracing for voice/network debugging."
+  },
+  {
+    "url": "https://github.com/tinystruct/smalltalk",
+    "category": "Developer Tooling & Infrastructure",
+    "module": "AI Command",
+    "note": "Lightweight Java server framework."
+  },
+  {
+    "url": "https://github.com/elebumm",
+    "category": "Community & Credits",
+    "module": "Ecosystem",
+    "note": "Founder \u2014 RedditVideoMakerBot"
+  },
+  {
+    "url": "https://github.com/JasonLovesDoggo",
+    "category": "Community & Credits",
+    "module": "Ecosystem",
+    "note": "Maintainer \u2014 RedditVideoMakerBot"
+  },
+  {
+    "url": "https://github.com/OpenSourceSimon",
+    "category": "Community & Credits",
+    "module": "Ecosystem",
+    "note": "Contributor \u2014 RedditVideoMakerBot"
+  },
+  {
+    "url": "https://github.com/CallumIO",
+    "category": "Community & Credits",
+    "module": "Ecosystem",
+    "note": "Contributor \u2014 RedditVideoMakerBot"
+  },
+  {
+    "url": "https://github.com/CordlessCoder",
+    "category": "Community & Credits",
+    "module": "Ecosystem",
+    "note": "Contributor \u2014 RedditVideoMakerBot"
+  },
+  {
+    "url": "https://github.com/LukaHietala",
+    "category": "Community & Credits",
+    "module": "Ecosystem",
+    "note": "Contributor \u2014 RedditVideoMakerBot"
+  },
+  {
+    "url": "https://github.com/FreebieII",
+    "category": "Community & Credits",
+    "module": "Ecosystem",
+    "note": "Contributor \u2014 RedditVideoMakerBot"
+  },
+  {
+    "url": "https://github.com/electro199",
+    "category": "Community & Credits",
+    "module": "Ecosystem",
+    "note": "Contributor \u2014 RedditVideoMakerBot"
+  },
+  {
+    "url": "https://github.com/cyteon",
+    "category": "Community & Credits",
+    "module": "Ecosystem",
+    "note": "Contributor \u2014 RedditVideoMakerBot"
+  },
+  {
+    "url": "https://github.com/meta-models/meta-model-cookbook",
+    "category": "AI Models, Agents & Skills",
+    "module": "Free AI Agent Hub",
+    "note": "Developer recipes for Meta Model API \u2014 agentic workflows, multi-agent orchestration, cost comparisons."
+  }
+]

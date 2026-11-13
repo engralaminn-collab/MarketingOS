@@ -336,3 +336,189 @@ export const AGENT_TOOL_ALLOWLIST: Record<string, string[]> = {
   // Default = read-only tools only
   default: ['crm_lookup_lead', 'seo_keyword_research'],
 };
+
+
+// Restored from arena branch (PR #15)
+
+export const AGENT_TOOL_DEFINITIONS: ToolFunctionDefinition[] = [
+  {
+    type: 'function',
+    function: {
+      name: 'get_workspace_metrics',
+      description: 'Fetch live CRM, campaign, content, deal pipeline, ticket, and AI workforce metrics for the workspace.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+];
+
+export async function runMultiStepFreeAgent(params: {
+  goal: string;
+  provider?: AiProviderName;
+  model?: string;
+  fallbackChain?: AiProviderName[];
+  maxSteps?: number;
+  companyId: string;
+  userId: string;
+}): Promise<{
+  answer: string;
+  provider: string;
+  model: string;
+  steps: AgentTraceStep[];
+  degradedToDeterministicPlanner: boolean;
+}> {
+  const maxSteps = Math.min(Math.max(1, params.maxSteps ?? 5), 6);
+  const steps: AgentTraceStep[] = [];
+  const messages: ChatMessage[] = [
+    {
+      role: 'system',
+      content:
+        'You are the MarketingOS Autonomous Tool-Calling Agent. Use the provided workspace tools whenever real CRM metrics, leads, Knowledge Wiki citations, UKVI calculations, UTM links, memory recall, or AI-writing checks are helpful. Cite exact numbers returned by tools and never fabricate metrics.',
+    },
+    { role: 'user', content: params.goal },
+  ];
+
+  try {
+    let finalAnswer = '';
+    let usedProvider = params.provider || 'ollama';
+    let usedModel = params.model || 'qwen2.5:7b';
+
+    for (let stepNum = 1; stepNum <= maxSteps; stepNum++) {
+      const llmStart = Date.now();
+      const res = await generateChatCompletion(messages, {
+        provider: params.provider,
+        model: params.model,
+        fallbackChain: params.fallbackChain,
+        tools: AGENT_TOOL_DEFINITIONS,
+        temperature: 0.2,
+      });
+      usedProvider = res.provider;
+      usedModel = res.model;
+
+      if (!res.toolCalls || res.toolCalls.length === 0) {
+        steps.push({
+          step: stepNum,
+          type: 'llm_synthesis',
+          durationMs: Date.now() - llmStart,
+          provider: res.provider,
+          model: res.model,
+        });
+        finalAnswer = res.content;
+        break;
+      }
+
+      messages.push({
+        role: 'assistant',
+        content: res.content || '',
+        tool_calls: res.toolCalls,
+      });
+
+      for (const tc of res.toolCalls) {
+        const toolStart = Date.now();
+        let parsedArgs: Record<string, unknown> = {};
+        try {
+          parsedArgs = JSON.parse(tc.function.arguments || '{}');
+        } catch {
+          parsedArgs = {};
+        }
+        const output = await executeAgentTool(tc.function.name, parsedArgs, {
+          companyId: params.companyId,
+          userId: params.userId,
+        });
+        steps.push({
+          step: stepNum,
+          type: 'tool_call',
+          toolName: tc.function.name,
+          toolArgs: parsedArgs,
+          toolOutput: output,
+          durationMs: Date.now() - toolStart,
+          provider: res.provider,
+          model: res.model,
+        });
+        messages.push({
+          role: 'tool',
+          tool_call_id: tc.id,
+          content: output,
+        });
+      }
+    }
+
+    if (!finalAnswer) {
+      const wrap = await generateChatCompletion(messages, {
+        provider: params.provider,
+        model: params.model,
+        fallbackChain: params.fallbackChain,
+        temperature: 0.2,
+      });
+      finalAnswer = wrap.content;
+    }
+
+    return {
+      answer: finalAnswer,
+      provider: usedProvider,
+      model: usedModel,
+      steps,
+      degradedToDeterministicPlanner: false,
+    };
+  } catch {
+    // Deterministic local ReAct fallback: run relevant real tools directly against SQLite so the agent works even before an LLM key/Ollama is started!
+    const lower = params.goal.toLowerCase();
+    const plannedCalls: Array<{ name: string; args: Record<string, unknown> }> = [
+      { name: 'get_workspace_metrics', args: {} },
+    ];
+
+    if (/lead|crm|prospect|pipeline|qualif/.test(lower)) {
+      plannedCalls.push({ name: 'search_crm_leads', args: { minScore: 60 } });
+    }
+    if (/ukvi|cas|visa|london|tuition|ielts|student/.test(lower)) {
+      const outside = lower.includes('outside');
+      plannedCalls.push({
+        name: 'ukvi_eligibility_calculator',
+        args: { location: outside ? 'outside_london' : 'london', tuitionFirstYearGbp: 16500, depositPaidGbp: 3000, ieltsOverall: 6.5 },
+      });
+    }
+    if (/wiki|sop|knowledge|policy|brand|playbook/.test(lower)) {
+      plannedCalls.push({ name: 'search_knowledge_wiki', args: { query: params.goal.slice(0, 80) } });
+    }
+    if (/utm|link|attribut|track/.test(lower)) {
+      plannedCalls.push({
+        name: 'generate_utm_link',
+        args: { url: 'https://demo-agency.com/offer', source: 'linkedin', medium: 'paid_social', campaign: 'q4_pipeline' },
+      });
+    }
+    if (/humaniz|slop|rewrite|copy/.test(lower)) {
+      plannedCalls.push({ name: 'audit_copy_humanizer', args: { text: params.goal } });
+    }
+    if (/memory|remember|lesson/.test(lower)) {
+      plannedCalls.push({ name: 'recall_agent_memory', args: {} });
+    }
+
+    const outputs: string[] = [];
+    let stepCounter = 1;
+    for (const call of plannedCalls) {
+      const t0 = Date.now();
+      const out = await executeAgentTool(call.name, call.args, {
+        companyId: params.companyId,
+        userId: params.userId,
+      });
+      steps.push({
+        step: stepCounter++,
+        type: 'fallback_planner',
+        toolName: call.name,
+        toolArgs: call.args,
+        toolOutput: out,
+        durationMs: Date.now() - t0,
+        provider: 'local-deterministic-planner',
+        model: 'workspace-tool-engine',
+      });
+      outputs.push(`- **${call.name}**: \`${out}\``);
+    }
+
+    return {
+      answer: `### Grounded Workspace Tool Execution\n*(Executed via built-in Deterministic Tool Planner — connect Ollama locally or add a free Groq/Cerebras/OpenRouter/Gemini key in Free AI Hub for full LLM synthesis.)*\n\n${outputs.join('\n')}`,
+      provider: 'local-deterministic-planner',
+      model: 'workspace-tool-engine',
+      steps,
+      degradedToDeterministicPlanner: true,
+    };
+  }
+}

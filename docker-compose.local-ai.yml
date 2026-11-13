@@ -1,0 +1,28 @@
+# Optional self-hosted AI overlay for docker-compose.prod.yml.
+# Start with:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.local-ai.yml up -d
+# Then pull a model once:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.local-ai.yml exec ollama ollama pull llama3.2:3b
+#
+# Ollama is intentionally not published on a host port: only the app container
+# can reach it on the private Compose network. Model files persist in the named
+# volume and are not written into the repository.
+services:
+  app:
+    environment:
+      AI_PROVIDER: ollama
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY:-}
+    depends_on:
+      ollama:
+        condition: service_started
+
+  ollama:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    restart: unless-stopped
+    volumes:
+      - ollama_models:/root/.ollama
+
+volumes:
+  ollama_models:
