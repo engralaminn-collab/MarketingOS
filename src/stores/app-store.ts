@@ -24,7 +24,8 @@ export type ViewId =
   | 'calls'
   | 'voice-studio'
   | 'contact-center'
-  | 'billing-voice';
+  | 'billing-voice'
+  | 'growth-engine';
 
 export interface AuthUser {
   id: string;

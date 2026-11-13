@@ -91,6 +91,22 @@ model Company {
   prompts      Prompt[]
   agentProfiles AgentProfile[]
   suppressionList SuppressionList[]
+  // ── Universal Lead Discovery Engine relations (Requirements 3-15) ──
+  industryId           String?
+  countryId            String?
+  defaultAutonomyLevel String  @default("approval_required") // suggest_only|approval_required|approved_automation
+  defaultBudgetPreference String @default("free_first") // free_only|free_first|paid_with_approval
+  discoveryCampaigns   DiscoveryCampaign[]
+  discoveredLeads      DiscoveredLead[]
+  dataProviders        DataProvider[]
+  approvalRequests     ApprovalRequest[]
+  costEvents           CostEvent[]
+  websiteAudits        WebsiteAudit[]
+  socialMetrics        SocialAudienceMetric[]
+  contentCalendarItems ContentCalendarItem[]
+  retentionPolicies    DataRetentionPolicy[]
+  marketOpportunities  MarketOpportunity[]
+  externalServiceConnections ExternalServiceConnection[]
 }
 
 // ==================== USER & ROLES ====================
@@ -245,7 +261,7 @@ model Lead {
   phone         String?
   companyName   String?
   source        String?
-  status        String   @default("new")
+  status        String   @default("discovered") // Universal lifecycle: discovered→data_validation→qualification_review→qualified→assigned→contact_permitted→contacted→follow_up→opportunity→customer→closed | rejected|duplicate|unverified|do_not_contact|opted_out|data_expired
   score         Int      @default(0)
   notes         String?
   assignedToId  String?
@@ -257,8 +273,27 @@ model Lead {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // ── Public lead discovery provenance (Requirement 6) ──────────────
+  sourceUrl          String?   // Source URL where the lead was discovered
+  discoveryTimestamp DateTime? // When the lead was discovered
+  confidenceLevel    String?   @default("medium") // low|medium|high
+  dataFreshness      String?   @default("fresh")  // fresh|recent|stale|expired
+  reviewStatus       String?   @default("pending") // pending|reviewed|approved|rejected
+  applicableUsageRestrictions String? // Licensing/reuse restrictions from the source
+  dedupHash          String?   @unique // Normalized hash for automatic deduplication
+  contactPermitted   Boolean   @default(false) // Legal basis + consent verified before contact
+  optedOut           Boolean   @default(false)
+  dataExpiresAt      DateTime? // Retention expiry — auto-delete after this date
+  industryId         String?
+  countryId          String?
+  campaignId         String?
+  discoveredLeadId   String?   // Links to DiscoveredLead record if discovered via the engine
+
   activities  LeadActivity[]
   tags        LeadTag[]
+  scoreBreakdowns    LeadScoreBreakdown[]
+  intentSignals      BuyerIntentSignal[]
+  approvalRequests   ApprovalRequest[]
 }
 
 model Contact {
@@ -2654,4 +2689,384 @@ model PasswordReset {
   createdAt DateTime @default(now())
 
   @@index([token, expiresAt])
+}
+
+// ==========================================================================
+// UNIVERSAL AI LEAD DISCOVERY, CUSTOMER ACQUISITION & ORGANIC GROWTH ENGINE
+// Schema extensions — Requirements 1-16 (industry-agnostic, country-agnostic,
+// multi-tenant, free-first, AI-powered). All models are tenant-isolated via
+// companyId unless explicitly global (catalog/reference data).
+// ==========================================================================
+
+// ── Requirement 2: Dynamic industry taxonomy (not hardcoded) ──────────────
+model Industry {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  parentId    String?  // Self-reference for sub-industries
+  parent      Industry? @relation("IndustryHierarchy", fields: [parentId], references: [id])
+  children    Industry[] @relation("IndustryHierarchy")
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  isCustom    Boolean  @default(false) // true when added by an admin (not from the default catalog)
+  companyId   String?  // null = global catalog; non-null = tenant-custom industry
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([parentId])
+  @@index([companyId])
+}
+
+// ── Requirement 2: Geographic / country reference data ────────────────────
+model Country {
+  id          String   @id @default(cuid())
+  isoCode     String   @unique // ISO 3166-1 alpha-2 (e.g. "US", "BD", "GB")
+  name        String
+  slug        String   @unique
+  region      String?  // e.g. "North America", "South Asia"
+  subRegion   String?  // e.g. "Northern America", "Central Asia"
+  flagEmoji   String?
+  currencyCode String? // ISO 4217 (e.g. "USD", "BDT")
+  currencySymbol String?
+  defaultLanguage String?
+  privacyLawNote String? // e.g. "GDPR applies", "CCPA applies" — guidance only, not legal advice
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  regions     Region[]
+}
+
+model Region {
+  id          String   @id @default(cuid())
+  countryId   String
+  country     Country  @relation(fields: [countryId], references: [id])
+  code        String?  // ISO 3166-2 (e.g. "US-CA", "BD-DH")
+  name        String   // e.g. "California", "Dhaka Division"
+  type        String?  // state|province|division|prefecture|county
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@unique([countryId, code])
+  @@index([countryId])
+}
+
+// ── Requirement 4: Free-first data discovery provider registry ────────────
+model DataProvider {
+  id                   String   @id @default(cuid())
+  slug                 String   @unique // e.g. "google_trends", "openstreetmap", "product_hunt"
+  name                 String
+  category             String   // google|public_market|social_community|government|trade_association|open_data
+  officialUrl          String
+  accessMethod         String   // official_api|open_data|permitted_scrape|oauth|manual
+  availableDataFields  String   // JSON array of field names this provider can return
+  authRequirements     String?  // none|api_key|oauth|registration
+  freeTierLimit        String?  // e.g. "1000 req/day", "unlimited"
+  paidTierRequirements String?
+  rateLimit            String?  // e.g. "10 req/sec"
+  licensingAndReuse    String?  // License terms (e.g. "CC BY 4.0", "ODbL", "ToS section 3.2")
+  geographicCoverage   String?  // global|regional list
+  lastVerifiedAt       DateTime?
+  verificationStatus   String   @default("unverified") // unverified|verified|degraded|broken
+  sourceReliability    Int      @default(50) // 0-100 — assessed reliability score
+  integrationStatus    String   @default("not_integrated") // not_integrated|in_progress|integrated|paused
+  isActive             Boolean  @default(true)
+  companyId            String?  // null = global catalog; non-null = tenant-registered provider
+  company              Company? @relation(fields: [companyId], references: [id])
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  discoveredLeads      DiscoveredLead[]
+  costEvents           CostEvent[]
+}
+
+// ── Requirement 3: Two operating modes (Universal Discovery + Targeted) ───
+model DiscoveryCampaign {
+  id                String   @id @default(cuid())
+  name              String
+  mode              String   @default("targeted") // universal|targeted
+  // Targeting profile (Mode B)
+  industryId        String?
+  subIndustryIds    String?  // JSON array of Industry ids
+  countryIds        String?  // JSON array of Country ids
+  regionIds         String?  // JSON array of Region ids
+  businessType      String?  // b2b|b2c|b2b2c|non_profit|government
+  audienceProfile   String?  // Free-text target audience description
+  productOrService  String?
+  buyerIntentSignals String? // JSON array of signal types to look for
+  keywords          String?  // JSON array of keywords/topics
+  competitorRefs    String?  // JSON array of competitor names/URLs
+  campaignObjective String?  // lead_generation|market_research|brand_awareness|audience_growth
+  sourceSelection   String?  // JSON array of DataProvider slugs to use
+  budgetPreference  String   @default("free_first") // free_only|free_first|paid_with_approval
+  qualificationCriteria String? // JSON — min score, required signals
+  exclusionCriteria String?  // JSON — industries/regions/keywords to exclude
+  autonomyLevel     String   @default("approval_required") // suggest_only|approval_required|approved_automation
+  status            String   @default("draft") // draft|active|paused|completed|archived
+  companyId         String
+  company           Company  @relation(fields: [companyId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  discoveredLeads   DiscoveredLead[]
+  marketOpportunities MarketOpportunity[]
+  approvalRequests  ApprovalRequest[]
+
+  @@index([companyId, status])
+  @@index([mode])
+}
+
+// ── Requirement 6: Public lead discovery with full provenance ────────────
+model DiscoveredLead {
+  id                    String   @id @default(cuid())
+  businessName          String
+  officialWebsite       String?
+  publicBusinessCategory String?
+  businessLocation      String?  // City, State, Country (free-text from source)
+  countryId             String?
+  publicContactChannel  String?  // Public contact channel where permitted (e.g. "info@", contact form URL)
+  publiclyStatedProducts String? // JSON array
+  publicBusinessProfile String?  // Free-text profile from source
+  // ── Mandatory provenance fields (Requirement 6) ──
+  sourceUrl             String   // Where the lead was found
+  sourceProviderId      String?
+  sourceProvider        DataProvider? @relation(fields: [sourceProviderId], references: [id])
+  discoveryTimestamp    DateTime @default(now())
+  applicableUsageRestrictions String? // License/reuse restrictions
+  confidenceLevel       String   @default("medium") // low|medium|high
+  dataFreshness         String   @default("fresh") // fresh|recent|stale|expired
+  reviewStatus          String   @default("pending") // pending|reviewed|approved|rejected
+  evidenceOfRelevance   String?  // JSON array of evidence snippets supporting relevance
+  dedupHash             String?  @unique // Normalized hash for auto-deduplication
+  leadId                String?  // Links to CRM Lead once promoted
+  campaignId            String?
+  campaign              DiscoveryCampaign? @relation(fields: [campaignId], references: [id])
+  companyId             String
+  company               Company  @relation(fields: [companyId], references: [id])
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  intentSignals         BuyerIntentSignal[]
+
+  @@index([companyId, reviewStatus])
+  @@index([campaignId])
+  @@index([sourceProviderId])
+}
+
+// ── Requirement 7: AI buyer intent signals (evidence-based) ──────────────
+model BuyerIntentSignal {
+  id                String   @id @default(cuid())
+  discoveredLeadId  String?
+  discoveredLead    DiscoveredLead? @relation(fields: [discoveredLeadId], references: [id])
+  leadId            String?
+  lead              Lead?    @relation(fields: [leadId], references: [id])
+  signalType        String   // public_request|rfq|procurement_opportunity|business_expansion|announced_project|service_requirement|repeated_interest|website_enquiry
+  evidenceUrl       String?
+  evidenceText      String   // The actual evidence snippet (never invented)
+  signalStrength    Int      @default(50) // 0-100 — AI-assessed strength based on evidence clarity
+  detectedAt        DateTime @default(now())
+  detectedBy        String   @default("ai_engine") // ai_engine|manual
+  companyId         String
+  createdAt         DateTime @default(now())
+
+  @@index([discoveredLeadId])
+  @@index([leadId])
+  @@index([companyId, signalType])
+}
+
+// ── Requirement 7: Explainable lead score breakdown ──────────────────────
+model LeadScoreBreakdown {
+  id          String   @id @default(cuid())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  dimension   String   // industry_relevance|geographic_match|product_service_match|buying_intent|business_suitability|data_freshness|source_reliability
+  score       Int      // 0-100
+  maxScore    Int      @default(100)
+  evidence    String?  // Explanation of why this score was assigned
+  computedAt  DateTime @default(now())
+
+  @@index([leadId])
+}
+
+// ── Requirement 12: Generic approval engine (Suggest/Approve/Automate) ───
+model ApprovalRequest {
+  id              String   @id @default(cuid())
+  requestType     String   // paid_subscription|ad_spend|public_publishing|bulk_export|outbound_campaign|contact_lead|credential_change|integration_change
+  requesterId     String?
+  resourceType    String?  // lead|campaign|content|integration|expense
+  resourceId      String?
+  payload         String   // JSON — the proposed action details
+  autonomyLevel   String   @default("approval_required") // suggest_only|approval_required|approved_automation
+  status          String   @default("pending") // pending|approved|rejected|expired|auto_executed
+  approverId      String?
+  approverNote    String?
+  approvedAt      DateTime?
+  expiresAt       DateTime?
+  leadId          String?
+  lead            Lead?    @relation(fields: [leadId], references: [id])
+  campaignId      String?
+  campaign        DiscoveryCampaign? @relation(fields: [campaignId], references: [id])
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId, status])
+  @@index([requestType, status])
+}
+
+// ── Requirement 13: Cost intelligence (free-first, USD) ──────────────────
+model CostEvent {
+  id                String   @id @default(cuid())
+  provider          String   // e.g. "google_trends", "openai", "z_ai"
+  operation         String   // e.g. "api_call", "tts_synthesis", "lead_discovery"
+  estimatedCostUsd  Float    @default(0)
+  actualCostUsd     Float    @default(0)
+  freeTierUsed      Boolean  @default(true)
+  budgetPreference  String   @default("free_first") // free_only|free_first|paid_with_approval
+  approvalRequired  Boolean  @default(false)
+  approvalRequestId String?
+  quotaBefore       Int?     // Remaining quota before this operation
+  quotaAfter        Int?     // Remaining quota after
+  warningTriggered  Boolean  @default(false) // true if quota exhaustion warning fired
+  dataProviderId    String?
+  dataProvider      DataProvider? @relation(fields: [dataProviderId], references: [id])
+  timestamp         DateTime @default(now())
+  companyId         String
+  company           Company  @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, timestamp])
+  @@index([provider, timestamp])
+}
+
+// ── Requirement 9: Real website growth / SEO audit ───────────────────────
+model WebsiteAudit {
+  id              String   @id @default(cuid())
+  url             String
+  auditType       String   @default("full") // full|technical_seo|content|performance|structured_data
+  overallScore    Int      @default(0) // 0-100
+  issues          String   // JSON array of {severity, category, title, detail, recommendation}
+  recommendations String   // JSON array of prioritized recommendations
+  pageSpeedScore  Int?
+  contentGaps     String?  // JSON array of identified content gaps
+  landingPageSuggestions String? // JSON
+  conversionOptSuggestions String? // JSON
+  structuredDataIssues String? // JSON
+  internalLinkSuggestions String? // JSON
+  leadFormOptSuggestions String? // JSON
+  auditedAt       DateTime @default(now())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, auditedAt])
+  @@index([url])
+}
+
+// ── Requirement 10: Social media audience growth analytics ───────────────
+model SocialAudienceMetric {
+  id              String   @id @default(cuid())
+  socialAccountId String   // Links to SocialAccount.id
+  platform        String   // meta|linkedin|x|tiktok|youtube|pinterest|instagram
+  followersCount  Int      @default(0)
+  followingCount  Int?
+  postsCount      Int?
+  engagementRate  Float?   // Percentage (likes+comments+shares)/followers
+  avgLikesPerPost Float?
+  avgCommentsPerPost Float?
+  growthDelta     Int      @default(0) // Net follower change since last snapshot
+  topHashtags     String?  // JSON array
+  bestPostingTime String?  // ISO day/hour recommendation
+  recordedAt      DateTime @default(now())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, recordedAt])
+  @@index([socialAccountId, recordedAt])
+}
+
+model ContentCalendarItem {
+  id              String   @id @default(cuid())
+  platform        String   // meta|linkedin|x|tiktok|youtube|pinterest|blog|email
+  scheduledAt     DateTime
+  contentId       String?  // Links to Content.id if drafted
+  title           String
+  status          String   @default("draft") // draft|scheduled|published|failed|cancelled
+  aiGenerated     Boolean  @default(false)
+  hashtags        String?  // JSON array
+  approvalRequired Boolean @default(true)
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId, scheduledAt])
+  @@index([platform, status])
+}
+
+// ── Requirement 14: Data retention / deletion policies ───────────────────
+model DataRetentionPolicy {
+  id              String   @id @default(cuid())
+  dataType        String   // lead|discovered_lead|call_recording|transcript|audit_log|consent_record
+  retentionDays   Int      @default(365) // 0 = retain indefinitely
+  deletionAction  String   @default("auto_delete") // auto_delete|anonymize|archive
+  isActive        Boolean  @default(true)
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([companyId, dataType])
+}
+
+// ── Requirement 3 Mode A: Universal discovery — market opportunities ─────
+model MarketOpportunity {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  opportunityType String   // emerging_demand|new_segment|geographic_expansion|product_gap|trend_surge
+  industryId      String?
+  countryIds      String?  // JSON array of Country ids
+  evidence        String   // JSON array of evidence snippets (source URL + text)
+  confidenceLevel String   @default("medium") // low|medium|high
+  estimatedSize   String?  // Free-text market size estimate
+  recommendedAction String? // AI-suggested next step
+  campaignId      String?
+  campaign        DiscoveryCampaign? @relation(fields: [campaignId], references: [id])
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  detectedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([companyId, opportunityType])
+  @@index([campaignId])
+}
+
+// ── MerlinStacks integration: external self-hosted service connections ─────
+// Tracks connections to the 4 MerlinStacks services (socaliseit, overseek,
+// personaliseit, true-video-product-gallery) and any future external services.
+// Each connection stores baseUrl, apiKey, status, and sync metadata.
+model ExternalServiceConnection {
+  id              String   @id @default(cuid())
+  serviceSlug     String   // socaliseit|overseek|personaliseit|true_video_product_gallery|<custom>
+  serviceName     String   // Human-readable name
+  baseUrl         String   // Base URL of the self-hosted instance
+  apiKey          String?  // API key or token (stored encrypted in production)
+  apiSecret       String?  // Optional secret
+  status          String   @default("disconnected") // disconnected|connected|error|syncing
+  lastSyncAt      DateTime?
+  lastSyncStatus  String?  // success|partial|failed
+  lastSyncError   String?
+  syncCount       Int      @default(0)
+  capabilities    String?  // JSON array of enabled capabilities
+  metadata        String?  // JSON — service-specific config (workspace IDs, store URLs, etc.)
+  isActive        Boolean  @default(true)
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([companyId, serviceSlug])
+  @@index([companyId, status])
+  @@index([serviceSlug])
 }

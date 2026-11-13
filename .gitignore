@@ -65,3 +65,4 @@ upload/
 tool-results/
 db/*.backup
 db/*.db
+prisma/db/

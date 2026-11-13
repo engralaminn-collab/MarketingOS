@@ -38,6 +38,7 @@ import {
   PhoneCall,
   Headphones,
   Sparkles,
+  Rocket,
 } from 'lucide-react';
 
 // Lazy load views
@@ -64,6 +65,7 @@ const IntegrationsView = lazy(() => import('@/components/views/integrations-view
 const MessagesView = lazy(() => import('@/components/views/messages-view'));
 const AnnouncementsView = lazy(() => import('@/components/views/announcements-view'));
 const AuditLogsView = lazy(() => import('@/components/views/audit-logs-view'));
+const GrowthEngineView = lazy(() => import('@/components/views/growth-engine-view').then(m => ({ default: m.GrowthEngineView })));
 
 const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   dashboard: DashboardView,
@@ -90,6 +92,7 @@ const views: Record<ViewId, React.LazyExoticComponent<React.ComponentType>> = {
   'voice-studio': VoiceStudioView,
   'contact-center': ContactCenterView,
   'billing-voice': BillingView,
+  'growth-engine': GrowthEngineView,
 };
 
 interface NavItem {
@@ -113,6 +116,7 @@ const navItems: NavItem[] = [
   { id: 'seo', label: 'SEO Engine', icon: <Search className="w-4 h-4" />, section: 'Marketing' },
   { id: 'campaigns', label: 'Campaigns', icon: <Megaphone className="w-4 h-4" />, section: 'Marketing' },
   { id: 'content', label: 'Content', icon: <FileText className="w-4 h-4" />, section: 'Marketing' },
+  { id: 'growth-engine', label: 'Growth Engine', icon: <Rocket className="w-4 h-4" />, badge: 'AI', section: 'Marketing' },
   { id: 'voice-agents', label: 'Voice Agents', icon: <Bot className="w-4 h-4" />, section: 'Voice Center' },
   { id: 'calls', label: 'Call Center', icon: <PhoneCall className="w-4 h-4" />, badge: 'Live', section: 'Voice Center' },
   { id: 'voice-studio', label: 'Voice Studio', icon: <Sparkles className="w-4 h-4" />, section: 'Voice Center' },
