@@ -1,0 +1,159 @@
+{
+  "note": "Out-of-band link verification. The build sandbox only has outbound access to github.com / npm / pypi, so it records every other website as `blocked` even when the site is healthy. Each entry here was checked from a general network on the date shown, and is merged into docs/link-verification.json by scripts/verify-reference-links.mjs. The original sandbox probe result is preserved under `sandboxProbe` so the record never overstates what the sandbox itself could see.",
+  "checkedAt": "2026-10-26",
+  "method": "page-fetch | host-probe (robots.txt returns the host's own text with HTTP 200, which proves TLS + DNS + origin are live)",
+  "entries": [
+    {
+      "url": "https://buffer.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "page-fetch",
+      "title": "Buffer: Social media management for everyone",
+      "description": "Social media workspace for publishing, ideas, community replies and analytics across Facebook, Instagram, TikTok, LinkedIn, Threads, Bluesky, YouTube Shorts, Pinterest, Mastodon, X and Substack."
+    },
+    {
+      "url": "https://hetrixtools.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "host-probe",
+      "title": "HetrixTools",
+      "description": "Server and uptime monitoring, blacklist monitoring and infrastructure alerts."
+    },
+    {
+      "url": "https://hatchable.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "host-probe",
+      "title": "Hatchable",
+      "description": "Hosted app/site publishing console (robots.txt exposes app, sites, announcements and content sitemaps)."
+    },
+    {
+      "url": "https://www.larksuite.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "host-probe",
+      "title": "Lark",
+      "description": "Collaboration suite: docs, sheets, base, IM and approvals (Lark Suite by ByteDance)."
+    },
+    {
+      "url": "https://www.enerpize.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "page-fetch",
+      "title": "Accounting, Sales, Cloud Business Management Software",
+      "description": "Cloud all-in-one ERP: sales and POS, accounting, inventory, HRM and payroll, CRM, projects and industry-specific configurations."
+    },
+    {
+      "url": "https://www.aipraktor.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "page-fetch",
+      "title": "AiPraktor — ব্যবসা চালান আপনি, ঝামেলা সামলাবে AI",
+      "description": "Bangladesh-focused AI sales agent for Messenger, Instagram, WhatsApp and Facebook comments: catalogue lookup by photo, order taking, voice-note orders, Steadfast/Pathao courier tracking, review requests and human handoff."
+    },
+    {
+      "url": "https://supercool.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "page-fetch",
+      "title": "SuperCool",
+      "description": "Conversational 'Humanoid' agents with a face and voice that can join Zoom/Meet/Teams/Webex calls, hold their own phone number and build artifacts while you talk."
+    },
+    {
+      "url": "https://join.supercool.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "page-fetch",
+      "title": "SuperCool System",
+      "description": "One-chat AI film studio: screenplay, scenes, voices, score, trailer and poster, with dubbing into 30+ languages."
+    },
+    {
+      "url": "https://www.refine.ink",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "host-probe",
+      "title": "Refine",
+      "description": "Writing/editing workspace with an /app application area."
+    },
+    {
+      "url": "https://mat3ra.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "page-fetch",
+      "title": "Mat3ra: Materials R&D Cloud",
+      "description": "Cloud materials R&D ecosystem: structure design, simulation workflows (Quantum ESPRESSO, VASP, LAMMPS, GROMACS), data standards and ML models."
+    },
+    {
+      "url": "https://platform.mat3ra.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "host-probe",
+      "title": "Mat3ra Platform",
+      "description": "Hosted Mat3ra account, simulation and data platform (REST API, CLI and remote desktop)."
+    },
+    {
+      "url": "https://stackoverflow.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "host-probe",
+      "title": "Stack Overflow",
+      "description": "Q&A reference for implementation problems. robots.txt publishes Content-signal: search=no, ai-train=no — cite and link, do not scrape or train on it."
+    },
+    {
+      "url": "https://openrouter.ai",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "host-probe",
+      "title": "OpenRouter",
+      "description": "Single API and model catalogue across many providers, with ordered model fallback and provider routing."
+    },
+    {
+      "url": "https://openrouter.ai/blog/tutorials/build-tool-calling-agent-loop",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "page-fetch",
+      "title": "Build a Reliable Tool-Calling Agent Loop on OpenRouter",
+      "description": "Reference implementation of a capped tool-calling loop: send tool definitions on every turn, return one result per tool-call id, stop on no-calls, repeat and iteration caps, plus fallback and concurrency controls. Published 2026-09-17, updated 2026-09-24."
+    },
+    {
+      "url": "https://coder.qwen.ai",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "host-probe",
+      "title": "Qwen Coder",
+      "description": "Qwen coding assistant web application."
+    },
+    {
+      "url": "https://cline.bot",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "host-probe",
+      "title": "Cline",
+      "description": "Autonomous coding agent for the editor and terminal; robots.txt disallows /dashboard, /account and /api/."
+    },
+    {
+      "url": "https://www.mureka.ai",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "host-probe",
+      "title": "Mureka",
+      "description": "AI music generation: songs, instrumentals, reference-audio style transfer and API access."
+    },
+    {
+      "url": "https://astryx.atmeta.com",
+      "status": "ok",
+      "httpStatus": 200,
+      "method": "host-probe",
+      "title": "Astryx",
+      "description": "Meta-hosted creative tooling site (has a playground area and component library)."
+    },
+    {
+      "url": "https://developer.meta.com/ai",
+      "status": "http-403",
+      "httpStatus": 403,
+      "method": "page-fetch",
+      "title": "Meta for Developers — AI",
+      "description": "Meta's AI developer documentation. Automated requests are refused (HTTP 403), so the page could not be read; the URL is reachable but gated behind bot protection. Treat as access-restricted rather than verified."
+    }
+  ]
+}

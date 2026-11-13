@@ -146,3 +146,16 @@ export const ROLE_HIERARCHY = {
 export function hasMinRole(userRole: string, requiredRole: string): boolean {
   return hasPermission(userRole, requiredRole);
 }
+
+
+// Restored from arena branch (PR #21)
+
+export function isSecureTransport(request: Request): boolean {
+  if (process.env.NODE_ENV !== 'production') return true;
+  const forwarded = request.headers.get('x-forwarded-proto')?.split(',')[0].trim().toLowerCase();
+  try {
+    return (forwarded || new URL(request.url).protocol.replace(':', '')) === 'https';
+  } catch {
+    return false;
+  }
+}

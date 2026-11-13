@@ -186,3 +186,59 @@ export function safeWebhookFetchOptions(): RequestInit {
     },
   };
 }
+
+
+// Restored from arena branch (PR #21)
+
+export interface SafeTextResponse {
+  readonly status: number;
+  readonly statusText: string;
+  readonly ok: boolean;
+  readonly headers: Headers;
+  text(): Promise<string>;
+  json<T = unknown>(): Promise<T>;
+}
+
+export async function safeFetchText(
+  input: string,
+  init: RequestInit & { timeoutMs?: number; maxResponseBytes?: number } = {},
+): Promise<SafeTextResponse> {
+  const allowed = isUrlSafe(input);
+  if (!allowed) {
+    throw new Error(`URL failed SSRF safety check: ${input}`);
+  }
+
+  const timeoutMs = Math.min(init.timeoutMs ?? 10_000, 30_000);
+  const maxResponseBytes = Math.min(init.maxResponseBytes ?? 1_048_576, 10 * 1024 * 1024);
+
+  const headers = new Headers(init.headers);
+  if (!headers.has('user-agent')) headers.set('user-agent', 'MarketingOS-SafeFetcher/1.0');
+  headers.set('accept-encoding', 'identity');
+
+  const { timeoutMs: _t, maxResponseBytes: _m, ...fetchInit } = init;
+  void _t; void _m;
+
+  const res = await fetch(input, {
+    ...fetchInit,
+    headers,
+    redirect: 'error',
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+
+  const text = async () => {
+    const body = await res.text();
+    if (body.length > maxResponseBytes) {
+      throw new Error('Response exceeds the configured size limit');
+    }
+    return body;
+  };
+
+  return {
+    status: res.status,
+    statusText: res.statusText,
+    ok: res.ok,
+    headers: res.headers,
+    text,
+    json: async <T = unknown>() => JSON.parse(await text()) as T,
+  };
+}

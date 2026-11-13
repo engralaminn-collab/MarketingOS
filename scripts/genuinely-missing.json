@@ -1,0 +1,586 @@
+[
+  {
+    "filepath": ".dockerignore",
+    "pr": 2
+  },
+  {
+    "filepath": ".node-version",
+    "pr": 2
+  },
+  {
+    "filepath": ".nvmrc",
+    "pr": 2
+  },
+  {
+    "filepath": ".secretlintrc.json",
+    "pr": 21
+  },
+  {
+    "filepath": "deploy/caddy/Caddyfile",
+    "pr": 19
+  },
+  {
+    "filepath": "deploy/nginx/marketingos.conf",
+    "pr": 19
+  },
+  {
+    "filepath": "deploy/pm2/ecosystem.config.cjs",
+    "pr": 19
+  },
+  {
+    "filepath": "docker-compose.local-ai.yml",
+    "pr": 14
+  },
+  {
+    "filepath": "docker-compose.prod.yml",
+    "pr": 2
+  },
+  {
+    "filepath": "docs/AGENCY-OPERATIONS.md",
+    "pr": 17
+  },
+  {
+    "filepath": "docs/COMPLETE-AUDIT-2026-10-28.md",
+    "pr": 19
+  },
+  {
+    "filepath": "docs/DEPLOYMENT-REVERSE-PROXY.md",
+    "pr": 19
+  },
+  {
+    "filepath": "docs/DEPLOYMENT.md",
+    "pr": 2
+  },
+  {
+    "filepath": "docs/EXPANDED-GITHUB-REFERENCE-AUDIT.md",
+    "pr": 14
+  },
+  {
+    "filepath": "docs/IMPLEMENTATION-ROADMAP.md",
+    "pr": 21
+  },
+  {
+    "filepath": "docs/INTEGRATIONS-AND-CREDENTIALS.md",
+    "pr": 21
+  },
+  {
+    "filepath": "docs/OPEN-SOURCE-MEDIA-REFERENCE-REVIEW.md",
+    "pr": 14
+  },
+  {
+    "filepath": "docs/REFERENCE-AND-PROJECT-AUDIT.md",
+    "pr": 14
+  },
+  {
+    "filepath": "docs/REFERENCE-LIBRARY.md",
+    "pr": 17
+  },
+  {
+    "filepath": "docs/REPOSITORY-AUDIT-2026-10-29.md",
+    "pr": 21
+  },
+  {
+    "filepath": "docs/SELF-HOSTED-AI.md",
+    "pr": 14
+  },
+  {
+    "filepath": "docs/SETUP-BOT.md",
+    "pr": 21
+  },
+  {
+    "filepath": "docs/SUBMITTED-LINKS-AUDIT.md",
+    "pr": 17
+  },
+  {
+    "filepath": "docs/TESTING-AND-DEPLOYMENT.md",
+    "pr": 21
+  },
+  {
+    "filepath": "docs/link-verification.json",
+    "pr": 17
+  },
+  {
+    "filepath": "prisma/changes/20261029_setupbot_additive.sql",
+    "pr": 21
+  },
+  {
+    "filepath": "prisma/departments.ts",
+    "pr": 19
+  },
+  {
+    "filepath": "prisma/seed-agency.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "public/fonts/geist-latin.woff2",
+    "pr": 9
+  },
+  {
+    "filepath": "public/fonts/geist-mono-latin.woff2",
+    "pr": 9
+  },
+  {
+    "filepath": "scripts/agency-backup.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "scripts/audit-submitted-links.mjs",
+    "pr": 17
+  },
+  {
+    "filepath": "scripts/build-reference-library.mjs",
+    "pr": 17
+  },
+  {
+    "filepath": "scripts/data/external-verification.json",
+    "pr": 17
+  },
+  {
+    "filepath": "scripts/data/reference-links.json",
+    "pr": 17
+  },
+  {
+    "filepath": "scripts/data/submitted-links-2026-10-26.txt",
+    "pr": 17
+  },
+  {
+    "filepath": "scripts/db-backup.sh",
+    "pr": 2
+  },
+  {
+    "filepath": "scripts/db-restore.sh",
+    "pr": 2
+  },
+  {
+    "filepath": "scripts/db-sync-schema.sh",
+    "pr": 2
+  },
+  {
+    "filepath": "scripts/init-sqlite-schema.mjs",
+    "pr": 15
+  },
+  {
+    "filepath": "scripts/preflight-persistence.sh",
+    "pr": 2
+  },
+  {
+    "filepath": "scripts/setup.sh",
+    "pr": 18
+  },
+  {
+    "filepath": "scripts/test-bun-isolated.mjs",
+    "pr": 21
+  },
+  {
+    "filepath": "scripts/verify-reference-links.mjs",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/agency/agents/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/agency/backups/[id]/verify/route.ts",
+    "pr": 19
+  },
+  {
+    "filepath": "src/app/api/agency/backups/route.ts",
+    "pr": 19
+  },
+  {
+    "filepath": "src/app/api/agency/departments/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/agency/readiness/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/agency/sops/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/ai/agent-loop/route.ts",
+    "pr": 15
+  },
+  {
+    "filepath": "src/app/api/ai/free-hub/route.ts",
+    "pr": 15
+  },
+  {
+    "filepath": "src/app/api/ai/generate-music/route.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/app/api/ai/music-status/route.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/app/api/ai/provider-status/route.ts",
+    "pr": 13
+  },
+  {
+    "filepath": "src/app/api/ai/transcribe/route.ts",
+    "pr": 15
+  },
+  {
+    "filepath": "src/app/api/assignments/[id]/submissions/[submissionId]/route.ts",
+    "pr": 19
+  },
+  {
+    "filepath": "src/app/api/brand/personas/[id]/render/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/brand/personas/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/brand/voices/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/clients/[id]/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/clients/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/deployments/route.ts",
+    "pr": 18
+  },
+  {
+    "filepath": "src/app/api/ecosystem/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/email/send/route.ts",
+    "pr": 15
+  },
+  {
+    "filepath": "src/app/api/knowledge/wiki/route.ts",
+    "pr": 15
+  },
+  {
+    "filepath": "src/app/api/marketing-assets/[id]/route.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/app/api/marketing-assets/route.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/app/api/media/lipsync/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/media/talking-head/audio/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/media/talking-head/route.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/app/api/messages/[id]/read/route.ts",
+    "pr": 19
+  },
+  {
+    "filepath": "src/app/api/seo/crawl/route.ts",
+    "pr": 15
+  },
+  {
+    "filepath": "src/app/api/setup-bot/import/route.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/app/api/setup-bot/route.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/app/api/social-accounts/test/route.ts",
+    "pr": 13
+  },
+  {
+    "filepath": "src/app/api/social/publish/route.ts",
+    "pr": 20
+  },
+  {
+    "filepath": "src/app/api/team/accept/route.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/app/api/v1/projects/[projectId]/import-setup/route.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/app/api/workflows/[id]/runs/route.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/app/invite/invite-acceptance-view.tsx",
+    "pr": 14
+  },
+  {
+    "filepath": "src/app/invite/page.tsx",
+    "pr": 14
+  },
+  {
+    "filepath": "src/components/studio/lead-enrichment-panel.tsx",
+    "pr": 15
+  },
+  {
+    "filepath": "src/components/studio/live-talk-studio.tsx",
+    "pr": 17
+  },
+  {
+    "filepath": "src/components/studio/openseo-crawler-panel.tsx",
+    "pr": 15
+  },
+  {
+    "filepath": "src/components/studio/publishing-email-panel.tsx",
+    "pr": 15
+  },
+  {
+    "filepath": "src/components/studio/radar-icp-panel.tsx",
+    "pr": 15
+  },
+  {
+    "filepath": "src/components/studio/study-roadmap-panel.tsx",
+    "pr": 17
+  },
+  {
+    "filepath": "src/components/studio/utm-attribution-panel.tsx",
+    "pr": 15
+  },
+  {
+    "filepath": "src/components/studio/video-captioner-panel.tsx",
+    "pr": 15
+  },
+  {
+    "filepath": "src/components/views/agency-console-view.tsx",
+    "pr": 17
+  },
+  {
+    "filepath": "src/components/views/deployments-view.tsx",
+    "pr": 18
+  },
+  {
+    "filepath": "src/components/views/ecosystem-view.tsx",
+    "pr": 17
+  },
+  {
+    "filepath": "src/components/views/free-ai-hub-view.tsx",
+    "pr": 15
+  },
+  {
+    "filepath": "src/components/views/knowledge-wiki-view.tsx",
+    "pr": 15
+  },
+  {
+    "filepath": "src/components/views/marketing-studio-view.tsx",
+    "pr": 14
+  },
+  {
+    "filepath": "src/components/views/outreach-hub-view.tsx",
+    "pr": 15
+  },
+  {
+    "filepath": "src/components/views/setup-bot-view.tsx",
+    "pr": 21
+  },
+  {
+    "filepath": "src/components/views/talking-head-view.tsx",
+    "pr": 17
+  },
+  {
+    "filepath": "src/components/views/ukvi-hub-view.tsx",
+    "pr": 15
+  },
+  {
+    "filepath": "src/components/views/workflow-studio-view.tsx",
+    "pr": 15
+  },
+  {
+    "filepath": "src/data/reference-library.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/hooks/use-api.ts",
+    "pr": 15
+  },
+  {
+    "filepath": "src/lib/agency.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/lib/ai-provider.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/lib/backup.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/lib/comfyui.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/lib/credential-vault.ts",
+    "pr": 13
+  },
+  {
+    "filepath": "src/lib/credentials.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/lib/csv.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/lib/firecrawl-scraper.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/lib/free-ai-stack.ts",
+    "pr": 15
+  },
+  {
+    "filepath": "src/lib/local-tts.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/lib/login-lock.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/lib/marketing-studio.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/lib/outbound-safety.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/lib/setup-bot/contract.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/lib/setup-bot/handoff.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/lib/setup-bot/import.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/lib/setup-bot/privacy.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/lib/setup-bot/request.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/lib/setup-bot/state.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/lib/setup-bot/validation.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/lib/site.ts",
+    "pr": 19
+  },
+  {
+    "filepath": "src/lib/social-provider.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/lib/talking-head.ts",
+    "pr": 17
+  },
+  {
+    "filepath": "src/lib/tool-credentials.ts",
+    "pr": 14
+  },
+  {
+    "filepath": "src/lib/workflows.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "src/types/optional-modules.d.ts",
+    "pr": 15
+  },
+  {
+    "filepath": "tests/agency-backup-routes.test.ts",
+    "pr": 19
+  },
+  {
+    "filepath": "tests/ai-provider.test.ts",
+    "pr": 13
+  },
+  {
+    "filepath": "tests/comfyui-adapter.test.mjs",
+    "pr": 14
+  },
+  {
+    "filepath": "tests/comfyui-video.test.mjs",
+    "pr": 14
+  },
+  {
+    "filepath": "tests/credential-vault.test.ts",
+    "pr": 13
+  },
+  {
+    "filepath": "tests/db-safety.test.mjs",
+    "pr": 21
+  },
+  {
+    "filepath": "tests/firecrawl-scraper.test.mjs",
+    "pr": 14
+  },
+  {
+    "filepath": "tests/free-ai-stack.test.mjs",
+    "pr": 15
+  },
+  {
+    "filepath": "tests/local-tts.test.mjs",
+    "pr": 14
+  },
+  {
+    "filepath": "tests/marketing-safety-routes.test.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "tests/marketing-studio.test.mjs",
+    "pr": 14
+  },
+  {
+    "filepath": "tests/repaired-routes.test.ts",
+    "pr": 15
+  },
+  {
+    "filepath": "tests/setup-bot-handoff.test.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "tests/setup-bot-remote-flow.test.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "tests/setup-bot-routes.test.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "tests/setup-bot-validation.test.ts",
+    "pr": 21
+  },
+  {
+    "filepath": "tests/social-provider.test.ts",
+    "pr": 13
+  }
+]
