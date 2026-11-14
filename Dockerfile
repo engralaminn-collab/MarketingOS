@@ -2,12 +2,13 @@
 # Multi-stage build: deps → build → runner
 
 # ─── Stage 1: Dependencies ─────────────────────────────────────────────────────
-FROM node:20-slim AS deps
+FROM node:22-slim AS deps
 WORKDIR /app
 
 # Install system dependencies for sharp (native image processing)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libvips-dev \
+    openssl \
     python3 \
     make \
     g++ \
@@ -17,7 +18,7 @@ COPY package.json package-lock.json* bun.lock* ./
 RUN npm ci --ignore-scripts
 
 # ─── Stage 2: Build ───────────────────────────────────────────────────────────
-FROM node:20-slim AS builder
+FROM node:22-slim AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -36,7 +37,7 @@ ENV VAULT_MASTER_KEY="build-time-placeholder-not-used-at-runtime"
 RUN npm run build
 
 # ─── Stage 3: Runner ──────────────────────────────────────────────────────────
-FROM node:20-slim AS runner
+FROM node:22-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -47,6 +48,7 @@ ENV HOSTNAME=0.0.0.0
 # Install runtime deps for sharp
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libvips42 \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
