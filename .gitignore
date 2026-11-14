@@ -66,3 +66,9 @@ tool-results/
 db/*.backup
 db/*.db
 prisma/db/
+
+.env.backup.*
+*.pre-standalone-fix
+db/
+logs/
+prisma/schema.prisma.sqlite.backup

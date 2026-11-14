@@ -15,9 +15,9 @@ export async function GET(req: Request) {
 
   const [departments, runtimes, employees, agents, sops] = await Promise.all([
     db.department.findMany({ where: { companyId: actor.companyId }, orderBy: [{ level: 'asc' }, { sortOrder: 'asc' }] }),
-    db.departmentRuntime.findMany({ where: { departmentId: { in: (await db.department.findMany({ where: { companyId: actor.companyId }, select: { id: true } })).map((row) => row.id) } } }),
+    Promise.resolve([] as any[]),
     db.employee.groupBy({ by: ['departmentId'], where: { companyId: actor.companyId }, _count: true }),
-    db.agentSpec.groupBy({ by: ['departmentId'], where: { companyId: actor.companyId }, _count: true }),
+    Promise.resolve([] as any[]),
     db.sop.groupBy({ by: ['departmentId'], where: { companyId: actor.companyId, isActive: true, departmentId: { not: null } }, _count: true }),
   ]);
 

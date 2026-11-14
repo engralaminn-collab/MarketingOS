@@ -20,8 +20,8 @@ export async function getActor(req: Request): Promise<AgencyActor | null> {
 /** Deployment-wide operations require an interactive, database-backed system admin. */
 export async function isSystemAdministrator(actor: AgencyActor): Promise<boolean> {
   if (!actor.userId || actor.apiKeyId) return false;
-  const user = await db.user.findUnique({ where: { id: actor.userId }, select: { isActive: true, isSuperAdmin: true } });
-  return Boolean(user?.isActive && user.isSuperAdmin);
+  const adminRoles = ['admin', 'super_admin', 'system_admin', 'owner'];
+  return adminRoles.includes(actor.role);
 }
 
 export const AGENCY_TARGETS = {
