@@ -4,35 +4,47 @@ import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 
-const BACKUP_DIR = process.env.BACKUP_DIR || '/home/alamin/backups';
+const BACKUP_BASE = '/home/alamin/backups';
+const BACKUP_DIRS = [
+  path.join(BACKUP_BASE, 'daily'),
+  path.join(BACKUP_BASE, 'weekly'),
+  BACKUP_BASE,
+];
 
 export async function GET(req: Request) {
   const actor = await getActor(req);
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!(await isSystemAdministrator(actor))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
-    const files = await readdir(BACKUP_DIR).catch(() => []);
-    const backups = [];
-    for (const file of files) {
-      const fullPath = path.join(BACKUP_DIR, file);
-      const s = await stat(fullPath).catch(() => null);
-      if (s) {
-        backups.push({
-          filename: file,
-          sizeBytes: s.size,
-          createdAt: s.mtime.toISOString(),
-          kind: file.includes('weekly') ? 'weekly' : 'daily',
-        });
+    const backups: Array<{ filename: string; directory: string; sizeBytes: number; createdAt: string; kind: string }> = [];
+
+    for (const dir of BACKUP_DIRS) {
+      const files = await readdir(dir).catch(() => []);
+      for (const file of files) {
+        if (!file.endsWith('.tar.gz') && !file.endsWith('.sql') && !file.endsWith('.sql.gz')) continue;
+        const fullPath = path.join(dir, file);
+        const s = await stat(fullPath).catch(() => null);
+        if (s && s.isFile()) {
+          backups.push({
+            filename: file,
+            directory: dir,
+            sizeBytes: s.size,
+            createdAt: s.mtime.toISOString(),
+            kind: dir.includes('weekly') ? 'weekly' : dir.includes('daily') ? 'daily' : 'manual',
+          });
+        }
       }
     }
+
     backups.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
     return NextResponse.json({
       data: backups,
       meta: {
-        directory: BACKUP_DIR,
+        directory: BACKUP_BASE,
         engine: 'postgresql',
         retentionNote: 'Daily backups via cron. 7-day daily / 30-day weekly retention.',
         total: backups.length,
@@ -46,6 +58,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const actor = await getActor(req);
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!(await isSystemAdministrator(actor))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
