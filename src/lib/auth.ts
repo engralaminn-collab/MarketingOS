@@ -1,4 +1,3 @@
-// @ts-nocheck — temporary: see audit for fix plan
 import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
 

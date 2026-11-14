@@ -1,4 +1,3 @@
-// @ts-nocheck — temporary: see audit for fix plan
 // ─── MarketingOS Security Utilities ────────────────────────────────────
 // Rate limiting, input sanitization, audit logging, permission checks
 // ───────────────────────────────────────────────────────────────────────────────

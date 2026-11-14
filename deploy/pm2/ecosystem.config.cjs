@@ -21,7 +21,8 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: '3055',
         HOSTNAME: '127.0.0.1',
-        NEXT_TELEMETRY_DISABLED: '1'
+        NEXT_TELEMETRY_DISABLED: '1',
+        DATABASE_URL: 'postgresql://marketingos_user:HkLb1VWkR5XBblEdnkDnMlLh6AKCRr@localhost:5432/marketingos_prod?schema=public'
       },
       out_file: path.join(ROOT, 'logs', 'pm2-out.log'),
       error_file: path.join(ROOT, 'logs', 'pm2-error.log'),

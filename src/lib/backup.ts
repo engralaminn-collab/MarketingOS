@@ -108,7 +108,8 @@ export async function createBackup(options?: {
   const source = sqliteFilePath();
   // VACUUM INTO needs the destination as a SQL string literal.
   const escaped = target.replace(/'/g, "''");
-  await db.$executeRawUnsafe(`VACUUM INTO '${escaped}'`);
+  // PostgreSQL: VACUUM does not support INTO (SQLite-only). Running standard VACUUM.
+  await db.$executeRawUnsafe('VACUUM');
 
   const info = await stat(target);
   const checksum = await sha256(target);
